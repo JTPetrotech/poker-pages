@@ -54,7 +54,8 @@ engine/        the poker rules, with no knowledge of networking
   game.js      table state machine: blinds, betting, side pots, payouts
   hand.js      5-to-7-card hand evaluation
   cards.js     deck and shuffle
-test/run.js    36 tests — `node test/run.js`
+test/run.js    tests — `node test/run.js`
+build.js       stamps a version onto module URLs — run before committing
 ```
 
 The engine is shared with the server version of this game and is covered by the
@@ -69,3 +70,15 @@ chips are never created or destroyed and no card is dealt twice.
 - **Some networks block peer-to-peer connections.** Home internet is almost
   always fine; locked-down school or office WiFi sometimes isn't.
 - **Nothing is saved.** When the host's tab closes, the table is gone.
+
+## Deploying a change
+
+GitHub Pages caches assets for ten minutes and browsers hold ES modules longer,
+so an update can otherwise leave a host and a guest running different versions
+of the code against each other. Stamp the module URLs before you commit:
+
+```bash
+node build.js
+node test/run.js
+git commit -am "..." && git push
+```
