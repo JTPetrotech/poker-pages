@@ -394,6 +394,7 @@ function initVaultUi() {
     const taken = vault.withdraw(app.buyIn);
     if (taken <= 0) return modalError('Not enough in your vault.');
     app.pendingBuyIn = taken;
+    vault.setAtTable(app.code, taken);
     paintVault();
     send({ t: 'sit', seat, name: app.name, buyIn: taken });
     closeSeatDialog();
@@ -425,7 +426,10 @@ function initVaultUi() {
 function cashOut(amount, reason) {
   if (app.cashedOut) return;
   app.cashedOut = true;
-  const chips = Math.max(0, Math.floor(amount || 0));
+  // clearAtTable reports what we were last recorded as holding, which is the
+  // fallback when we have no fresher number to hand.
+  const staked = vault.clearAtTable();
+  const chips = Math.max(0, Math.floor(amount ?? staked));
   if (chips > 0) {
     vault.deposit(chips);
     paintVault();
@@ -599,10 +603,14 @@ function render(state) {
     app.betDirty = false;
   }
 
-  if (app.pendingBuyIn && state.seats.some((x) => x && x.isMe)) {
+  const seatedNow = state.seats.find((x) => x && x.isMe);
+  if (app.pendingBuyIn && seatedNow) {
     app.pendingBuyIn = 0;
     app.cashedOut = false;
   }
+  // Mirror the stack into storage continuously, so losing the tab can't lose
+  // the chips. setAtTable skips the write when nothing changed.
+  if (seatedNow && !app.cashedOut) vault.setAtTable(app.code, seatedNow.chips);
 
   renderBoard(state);
   renderSeats(state);
@@ -931,9 +939,22 @@ setInterval(() => {
 
 show($('game'), false);
 show($('modal'), false);
+
+// A previous session that never cashed out gets settled up now.
+const stranded = vault.recoverStranded();
+
 initLobby();
 initGame();
 initVaultUi();
+
+if (stranded > 0) {
+  lobbyError('');
+  const note = document.createElement('p');
+  note.className = 'busy';
+  note.textContent = `${fmt(stranded)} chips were still on a table last time — returned to your vault.`;
+  $('lobbyVault').closest('.lobby-card').insertBefore(note, $('lobbyError'));
+  paintVault();
+}
 
 // Opened an invite link with a saved name? Walk straight in.
 if (codeFromUrl() && store.name) {

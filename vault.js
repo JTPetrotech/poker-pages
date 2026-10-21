@@ -13,6 +13,9 @@ export const STARTING_VAULT = 10_000;
 
 const BLANK = {
   name: '',
+  // Chips currently sitting on a table. Tracked continuously so that a closed
+  // tab, a crash or a dead connection can never swallow them.
+  atTable: null,
   vault: STARTING_VAULT,
   handsPlayed: 0,
   biggestPot: 0,
@@ -72,6 +75,39 @@ export function deposit(amount) {
   p.vault += add;
   write(p);
   return p.vault;
+}
+
+/** Remember what we're holding at a table, so it survives anything. */
+export function setAtTable(code, amount) {
+  const p = read();
+  const chips = Math.max(0, Math.floor(amount) || 0);
+  if (p.atTable && p.atTable.code === code && p.atTable.amount === chips) return;
+  p.atTable = { code, amount: chips };
+  write(p);
+}
+
+/** Stop tracking a table and report what was staked there. */
+export function clearAtTable() {
+  const p = read();
+  const amount = p.atTable ? p.atTable.amount : 0;
+  if (!p.atTable) return 0;
+  p.atTable = null;
+  write(p);
+  return amount;
+}
+
+/**
+ * Called on load: if a previous session left chips on a table and never
+ * cashed out — tab closed, browser crashed, host vanished — take them back.
+ */
+export function recoverStranded() {
+  const p = read();
+  if (!p.atTable) return 0;
+  const amount = Math.max(0, Math.floor(p.atTable.amount) || 0);
+  p.atTable = null;
+  p.vault += amount;
+  write(p);
+  return amount;
 }
 
 export function recordHand({ pot, handName } = {}) {

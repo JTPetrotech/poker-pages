@@ -2,6 +2,7 @@ import { score5, compareScores, bestHand } from '../engine/hand.js';
 import { Table } from '../engine/game.js';
 import { makeDeck, shuffle } from '../engine/cards.js';
 import { decide, equity, BOT_STYLES } from '../bot.js';
+import * as vault from '../vault.js';
 
 let passed = 0;
 let failed = 0;
@@ -551,6 +552,87 @@ test('buy-ins are honoured and clamped to the table maximum', () => {
   eq(t.seats[2].chips, 10, 'raised to one big blind');
   t.sit('d', 'D', 3);
   eq(t.seats[3].chips, 1000, 'defaults to the standard stack');
+});
+
+// ------------------------------------------------------------------ vault
+
+// vault.js talks to localStorage; give it one.
+globalThis.localStorage = {
+  _d: {},
+  getItem(k) { return Object.prototype.hasOwnProperty.call(this._d, k) ? this._d[k] : null; },
+  setItem(k, v) { this._d[k] = String(v); },
+  removeItem(k) { delete this._d[k]; },
+  clear() { this._d = {}; },
+};
+
+function freshVault() {
+  globalThis.localStorage.clear();
+}
+
+test('a new vault starts with the house stake', () => {
+  freshVault();
+  eq(vault.balance(), 10000);
+});
+
+test('buying in takes chips out, cashing out puts them back', () => {
+  freshVault();
+  const took = vault.withdraw(1500);
+  eq(took, 1500);
+  eq(vault.balance(), 8500);
+  vault.deposit(2300); // won some
+  eq(vault.balance(), 10800);
+});
+
+test('you cannot withdraw more than you have', () => {
+  freshVault();
+  const took = vault.withdraw(999999);
+  eq(took, 10000, 'capped at the balance');
+  eq(vault.balance(), 0);
+  assert(vault.balance() >= 0, 'never goes negative');
+});
+
+test('chips left on a table are recovered on the next visit', () => {
+  freshVault();
+  vault.withdraw(1000);
+  vault.setAtTable('ABCD', 1000);
+  vault.setAtTable('ABCD', 2650);  // won a few hands
+  eq(vault.balance(), 9000, 'the stack is not in the vault while in play');
+
+  // Tab closes without cashing out; next load settles up.
+  const recovered = vault.recoverStranded();
+  eq(recovered, 2650, 'recovers the latest stack, not the buy-in');
+  eq(vault.balance(), 11650);
+  eq(vault.recoverStranded(), 0, 'only recovers once');
+});
+
+test('cashing out clears the table record so it is not credited twice', () => {
+  freshVault();
+  vault.withdraw(1000);
+  vault.setAtTable('ABCD', 1400);
+  const staked = vault.clearAtTable();
+  eq(staked, 1400);
+  vault.deposit(staked);
+  eq(vault.balance(), 10400);
+  eq(vault.recoverStranded(), 0, 'nothing left stranded');
+  eq(vault.balance(), 10400, 'balance unchanged by the recovery check');
+});
+
+test('an empty vault reloads, a full one does not', () => {
+  freshVault();
+  vault.withdraw(10000);
+  eq(vault.balance(), 0);
+  vault.reload();
+  eq(vault.balance(), 10000);
+  vault.reload();
+  eq(vault.balance(), 10000, 'reloading a full vault is a no-op');
+});
+
+test('a corrupted vault falls back to a sane balance', () => {
+  freshVault();
+  globalThis.localStorage.setItem('pn.profile.v1', 'not json at all');
+  eq(vault.balance(), 10000, 'unreadable storage starts fresh');
+  globalThis.localStorage.setItem('pn.profile.v1', JSON.stringify({ vault: -500 }));
+  eq(vault.balance(), 0, 'a negative balance is clamped');
 });
 
 // ------------------------------------------------------------------ report
