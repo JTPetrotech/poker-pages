@@ -1,6 +1,6 @@
-import { HostNet, GuestNet } from './net.js?v=mvirozjd';
-import { TableHost } from './host.js?v=mvirozjd';
-import * as vault from './vault.js?v=mvirozjd';
+import { HostNet, GuestNet } from './net.js?v=mvirsc30';
+import { TableHost } from './host.js?v=mvirsc30';
+import * as vault from './vault.js?v=mvirsc30';
 
 const $ = (id) => document.getElementById(id);
 
@@ -963,10 +963,10 @@ if (codeFromUrl() && store.name) {
 }
 
 // The host's tab IS the table, so make closing it a deliberate act.
-window.addEventListener('pagehide', () => {
-  const me = mySeat();
-  if (me) cashOut(me.chips);
-});
+// Note: deliberately no pagehide/unload cash-out. pagehide also fires when a
+// tab is merely backgrounded, which cashed players out mid-game and credited
+// their stack twice. The stack is mirrored into storage on every state update
+// instead, and recoverStranded() settles up on the next load.
 
 window.addEventListener('beforeunload', (e) => {
   if (!app.isHost || !app.state) return;

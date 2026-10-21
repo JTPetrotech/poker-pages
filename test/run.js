@@ -635,6 +635,20 @@ test('a corrupted vault falls back to a sane balance', () => {
   eq(vault.balance(), 0, 'a negative balance is clamped');
 });
 
+test('a stack is never credited twice', () => {
+  freshVault();
+  vault.withdraw(1000);
+  vault.setAtTable('ABCD', 1000);
+  // Something cashes us out...
+  const first = vault.clearAtTable();
+  vault.deposit(first);
+  eq(vault.balance(), 10000);
+  // ...and anything that tries again finds nothing left to credit.
+  eq(vault.clearAtTable(), 0);
+  eq(vault.recoverStranded(), 0);
+  eq(vault.balance(), 10000, 'balance is unchanged by repeat attempts');
+});
+
 // ------------------------------------------------------------------ report
 
 console.log('\n');
