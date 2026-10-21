@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Poker Night</title>
+<meta name="description" content="Play-money No-Limit Texas Hold'em with your friends. Share a table code and deal." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%82%A1%3C/text%3E%3C/svg%3E" />
+<link rel="stylesheet" href="style.css" />
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body>
+
+<!-- ------------------------------------------------------------ lobby -->
+<div id="lobby" class="lobby">
+  <div class="lobby-card">
+    <h1>Poker Night</h1>
+    <p class="tagline">No-Limit Hold'em with your friends. Play money, no accounts.</p>
+
+    <label class="field">
+      <span>Your name</span>
+      <input id="nameInput" maxlength="16" placeholder="e.g. JT" autocomplete="nickname" />
+    </label>
+
+    <div class="lobby-tabs">
+      <button class="tab active" data-tab="join">Join a table</button>
+      <button class="tab" data-tab="create">New table</button>
+    </div>
+
+    <div id="tab-join" class="tab-panel active">
+      <label class="field">
+        <span>Table code</span>
+        <input id="codeInput" maxlength="8" placeholder="ABCD" autocapitalize="characters" spellcheck="false" />
+      </label>
+      <button id="joinBtn" class="primary">Join table</button>
+    </div>
+
+    <div id="tab-create" class="tab-panel">
+      <div class="row">
+        <label class="field">
+          <span>Small blind</span>
+          <input id="sbInput" type="number" value="5" min="1" />
+        </label>
+        <label class="field">
+          <span>Big blind</span>
+          <input id="bbInput" type="number" value="10" min="2" />
+        </label>
+      </div>
+      <div class="row">
+        <label class="field">
+          <span>Starting chips</span>
+          <input id="stackInput" type="number" value="1000" min="20" step="100" />
+        </label>
+        <label class="field">
+          <span>Max seats</span>
+          <input id="seatsInput" type="number" value="6" min="2" max="9" />
+        </label>
+      </div>
+      <button id="createBtn" class="primary">Create table</button>
+      <p class="host-note">You'll be the host. Keep this tab open while you play — your
+        browser deals the cards, so closing it ends the table.</p>
+    </div>
+
+    <p id="lobbyError" class="error" hidden></p>
+    <p id="lobbyBusy" class="busy" hidden>Connecting…</p>
+    <p class="fineprint">Play money only. Nothing here involves real stakes.</p>
+  </div>
+</div>
+
+<!-- ------------------------------------------------------------ game -->
+<div id="game" class="game" hidden>
+
+  <header class="topbar">
+    <div class="brand">Poker&nbsp;Night</div>
+    <button id="codeChip" class="chip" title="Copy the invite link">
+      Table <strong id="codeLabel">----</strong>
+      <span class="copy-hint">copy link</span>
+    </button>
+    <div class="chip muted" id="blindsLabel">5 / 10</div>
+    <div id="hostBadge" class="chip host" hidden title="Your browser is running this table">Hosting</div>
+    <div class="spacer"></div>
+    <div id="connDot" class="conn" title="Connection">●</div>
+    <button id="sitOutBtn" class="ghost" hidden>Sit out</button>
+    <button id="leaveBtn" class="ghost">Leave</button>
+    <button id="panelToggle" class="ghost" aria-label="Toggle chat">Chat</button>
+  </header>
+
+  <main class="main">
+    <section class="felt-wrap">
+      <div id="felt" class="felt">
+        <div class="felt-inner">
+          <div id="potBox" class="pot" hidden><span id="potLabel">0</span></div>
+          <div id="board" class="board"></div>
+          <div id="centerMsg" class="center-msg"></div>
+        </div>
+        <div id="seats"></div>
+      </div>
+    </section>
+
+    <aside id="panel" class="panel">
+      <div class="panel-tabs">
+        <button class="ptab active" data-ptab="chat">Chat</button>
+        <button class="ptab" data-ptab="log">Hand log</button>
+        <button class="ptab" data-ptab="chips">Chips</button>
+      </div>
+      <div id="ppanel-chat" class="ppanel active">
+        <div id="chatList" class="scroller"></div>
+        <form id="chatForm" class="chat-form">
+          <input id="chatInput" maxlength="200" placeholder="Say something…" autocomplete="off" />
+          <button class="primary small">Send</button>
+        </form>
+      </div>
+      <div id="ppanel-log" class="ppanel">
+        <div id="logList" class="scroller mono"></div>
+      </div>
+      <div id="ppanel-chips" class="ppanel">
+        <div id="chipList" class="scroller"></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer id="actionbar" class="actionbar">
+    <div id="waitingMsg" class="waiting"></div>
+
+    <div id="controls" class="controls" hidden>
+      <div class="bet-controls">
+        <input id="betRange" type="range" min="0" max="100" value="0" />
+        <div class="bet-row">
+          <input id="betAmount" type="number" inputmode="numeric" />
+          <button class="quick" data-q="min">Min</button>
+          <button class="quick" data-q="half">½ Pot</button>
+          <button class="quick" data-q="pot">Pot</button>
+          <button class="quick" data-q="max">All in</button>
+        </div>
+      </div>
+      <div class="act-row">
+        <button id="foldBtn" class="act fold">Fold</button>
+        <button id="checkBtn" class="act check">Check</button>
+        <button id="callBtn" class="act call">Call</button>
+        <button id="raiseBtn" class="act raise">Raise</button>
+      </div>
+    </div>
+
+    <div id="idleControls" class="controls" hidden>
+      <button id="rebuyBtn" class="primary" hidden>Top up chips</button>
+      <button id="startBtn" class="primary" hidden>Deal now</button>
+    </div>
+  </footer>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
