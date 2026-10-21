@@ -1,5 +1,6 @@
 import { HostNet, GuestNet } from './net.js';
 import { TableHost } from './host.js';
+import * as vault from './vault.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -38,6 +39,10 @@ const app = {
   net: null,      // HostNet when hosting, GuestNet when joining
   host: null,     // TableHost — only set in the hosting tab
   isHost: false,
+  dialogSeat: -1,
+  buyIn: 0,
+  pendingBuyIn: 0,  // withdrawn but not yet confirmed in a seat
+  cashedOut: false,
   code: null,
   name: '',
   state: null,
@@ -71,8 +76,23 @@ function makeCode() {
   return [...buf].map((n) => CODE_ALPHABET[n % CODE_ALPHABET.length]).join('');
 }
 
+function paintVault() {
+  const bal = vault.balance();
+  const lobby = $('lobbyVault');
+  if (lobby) lobby.textContent = fmt(bal);
+  const chip = $('vaultLabel');
+  if (chip) chip.textContent = fmt(bal);
+  const reload = $('lobbyReload');
+  if (reload) reload.hidden = bal > 0;
+}
+
 function initLobby() {
-  $('nameInput').value = store.name;
+  $('nameInput').value = store.name || vault.profile().name;
+  paintVault();
+  $('lobbyReload').addEventListener('click', () => {
+    vault.reload();
+    paintVault();
+  });
   const urlCode = codeFromUrl();
   if (urlCode) $('codeInput').value = urlCode;
 
@@ -136,6 +156,7 @@ function readName() {
     return false;
   }
   store.name = app.name;
+  vault.setName(app.name);
   return true;
 }
 
@@ -256,14 +277,159 @@ function onMessage(msg) {
       render(msg.state);
       break;
     }
+    case 'cashout':
+      cashOut(msg.amount, 'stand');
+      break;
     case 'chat':
       addChat(msg.from, msg.text);
       break;
     case 'error': {
+      // A rejected sit leaves chips in limbo — put them straight back.
+      if (app.pendingBuyIn) {
+        vault.deposit(app.pendingBuyIn);
+        app.pendingBuyIn = 0;
+        paintVault();
+      }
       if ($('game').hidden) lobbyError(msg.message);
       else toast(msg.message);
       break;
     }
+  }
+}
+
+
+// ---------------------------------------------------------------- vault & seats
+
+/**
+ * Chips move between the vault and the table in exactly two places: a buy-in
+ * takes them out, cashing out puts them back. Everything in between is the
+ * table's business.
+ */
+
+function maxBuyIn() {
+  const cfg = app.config || {};
+  return cfg.maxBuyIn || (cfg.startingStack || 1000) * 10;
+}
+
+function buyInBounds() {
+  const cfg = app.config || {};
+  const bal = vault.balance();
+  const min = Math.min(cfg.bigBlind || 10, bal);
+  const max = Math.min(bal, maxBuyIn());
+  return { min, max, bal };
+}
+
+function setBuyIn(value) {
+  const { min, max } = buyInBounds();
+  const v = Math.max(min, Math.min(max, Math.round(value || 0)));
+  app.buyIn = v;
+  $('buyInRange').value = String(v);
+  $('buyInAmount').value = String(v);
+  $('buyInLabel').textContent = fmt(v);
+}
+
+function openSeatDialog(seat) {
+  app.dialogSeat = seat;
+  const cfg = app.config || {};
+  const { min, max, bal } = buyInBounds();
+  const seated = !!mySeat();
+
+  $('modalTitle').textContent = seated ? 'Fill this seat' : 'Take a seat';
+  $('modalSub').innerHTML = `Seat ${seat + 1} · Vault <strong>${fmt(bal)}</strong> chips`;
+  modalError('');
+
+  // Hosts can add bots; you can only sit down yourself if you're not already in.
+  show($('botSection'), !!app.isHost);
+  const canSit = !seated && bal > 0;
+  show($('buyInBlock'), canSit);
+  show($('emptyVault'), !seated && bal <= 0);
+
+  if (canSit) {
+    $('buyInRange').min = String(min);
+    $('buyInRange').max = String(max);
+    $('buyInAmount').min = String(min);
+    $('buyInAmount').max = String(max);
+    setBuyIn(Math.min(cfg.startingStack || 1000, max));
+  }
+
+  show($('modal'), true);
+}
+
+function closeSeatDialog() {
+  show($('modal'), false);
+  app.dialogSeat = -1;
+}
+
+function modalError(msg) {
+  const el = $('modalError');
+  el.textContent = msg;
+  el.hidden = !msg;
+}
+
+function initVaultUi() {
+  $('modalClose').addEventListener('click', closeSeatDialog);
+  $('modal').addEventListener('click', (e) => {
+    if (e.target === $('modal')) closeSeatDialog();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !$('modal').hidden) closeSeatDialog();
+  });
+
+  $('buyInRange').addEventListener('input', (e) => setBuyIn(Number(e.target.value)));
+  $('buyInAmount').addEventListener('input', (e) => setBuyIn(Number(e.target.value)));
+
+  for (const b of document.querySelectorAll('.buyin-row .quick')) {
+    b.addEventListener('click', () => {
+      const { min, max } = buyInBounds();
+      if (b.dataset.b === 'min') setBuyIn(min);
+      else if (b.dataset.b === 'half') setBuyIn(Math.round(max / 2));
+      else setBuyIn(max);
+    });
+  }
+
+  $('sitConfirm').addEventListener('click', () => {
+    const seat = app.dialogSeat;
+    if (seat < 0) return;
+    // Take the chips out now; refund if the table turns us away.
+    const taken = vault.withdraw(app.buyIn);
+    if (taken <= 0) return modalError('Not enough in your vault.');
+    app.pendingBuyIn = taken;
+    paintVault();
+    send({ t: 'sit', seat, name: app.name, buyIn: taken });
+    closeSeatDialog();
+  });
+
+  $('vaultReload').addEventListener('click', () => {
+    vault.reload();
+    paintVault();
+    openSeatDialog(app.dialogSeat);
+  });
+
+  for (const b of document.querySelectorAll('.bot-pick')) {
+    b.addEventListener('click', () => {
+      send({ t: 'addbot', seat: app.dialogSeat, style: b.dataset.style });
+      closeSeatDialog();
+    });
+  }
+
+  $('vaultChip').addEventListener('click', () => {
+    const p = vault.profile();
+    toast(
+      `Vault: ${fmt(p.vault)} chips · ${p.handsPlayed} hands played` +
+      (p.biggestPot ? ` · biggest pot ${fmt(p.biggestPot)}` : ''),
+    );
+  });
+}
+
+/** Put table chips back in the vault — once, no matter how we got here. */
+function cashOut(amount, reason) {
+  if (app.cashedOut) return;
+  app.cashedOut = true;
+  const chips = Math.max(0, Math.floor(amount || 0));
+  if (chips > 0) {
+    vault.deposit(chips);
+    paintVault();
+    if (reason) toast(`${fmt(chips)} chips returned to your vault.`);
   }
 }
 
@@ -275,6 +441,7 @@ function enterGame() {
   $('codeLabel').textContent = app.code;
   show($('hostBadge'), app.isHost);
   $('blindsLabel').textContent = `${app.config.smallBlind} / ${app.config.bigBlind}`;
+  paintVault();
   history.replaceState(null, '', `#${app.code}`);
   document.title = `Poker Night · ${app.code}`;
 }
@@ -295,7 +462,9 @@ function initGame() {
       ? 'You are hosting. Leaving ends the table for everyone. Leave anyway?'
       : 'Leave the table?';
     if (!confirm(warning)) return;
+    const me = mySeat();
     send({ t: 'stand' });
+    cashOut(me ? me.chips : 0);
     teardown();
     location.href = location.pathname;
     location.reload();
@@ -335,7 +504,21 @@ function initGame() {
     if (!legal) return;
     act(legal.canBet ? 'bet' : 'raise', app.betTo);
   });
-  $('rebuyBtn').addEventListener('click', () => send({ t: 'rebuy' }));
+  $('rebuyBtn').addEventListener('click', () => {
+    const { min, max } = buyInBounds();
+    if (max <= 0) {
+      toast('Your vault is empty. Open the vault chip to reload.');
+      return;
+    }
+    const amount = vault.withdraw(Math.min(app.config?.startingStack || 1000, max));
+    if (amount < min) {
+      vault.deposit(amount);
+      toast('Not enough left in your vault for a top-up.');
+      return;
+    }
+    paintVault();
+    send({ t: 'rebuy', amount });
+  });
   $('startBtn').addEventListener('click', () => send({ t: 'start' }));
 
   $('betRange').addEventListener('input', (e) => setBet(Number(e.target.value), true));
@@ -416,6 +599,11 @@ function render(state) {
     app.betDirty = false;
   }
 
+  if (app.pendingBuyIn && state.seats.some((x) => x && x.isMe)) {
+    app.pendingBuyIn = 0;
+    app.cashedOut = false;
+  }
+
   renderBoard(state);
   renderSeats(state);
   renderActionBar(state, prev);
@@ -490,9 +678,12 @@ function renderSeats(state) {
     if (!p) {
       const btn = document.createElement('button');
       btn.className = 'empty-seat';
-      btn.textContent = me ? `Seat ${seat + 1}` : `Sit here`;
-      btn.disabled = !!me;
-      btn.addEventListener('click', () => send({ t: 'sit', seat, name: app.name }));
+      // Once you're seated the only thing left to do with an empty seat is
+      // fill it with a bot, and only the host can do that.
+      const canOpen = !me || app.isHost;
+      btn.textContent = me ? (app.isHost ? `+ Add AI` : `Seat ${seat + 1}`) : 'Sit here';
+      btn.disabled = !canOpen;
+      btn.addEventListener('click', () => openSeatDialog(seat));
       el.appendChild(btn);
       host.appendChild(el);
       continue;
@@ -557,6 +748,18 @@ function renderSeats(state) {
     el.append(cards, box);
 
     // Outside the box: .seat-box clips its overflow for the timer bar.
+    if (p.bot && app.isHost) {
+      const kick = document.createElement('button');
+      kick.className = 'kick-bot';
+      kick.textContent = '×';
+      kick.title = `Remove ${p.name}`;
+      kick.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        send({ t: 'removebot', seat });
+      });
+      el.appendChild(kick);
+    }
+
     if (state.button === seat) {
       const d = document.createElement('div');
       d.className = 'dealer-btn';
@@ -578,6 +781,7 @@ function renderSeats(state) {
 
 function seatTag(p, state) {
   if (p.disconnected) return { cls: 'away', text: 'disconnected' };
+  if (p.bot && !p.inHand && state.stage === 'idle') return { cls: 'bot', text: 'computer' };
   if (p.chips === 0 && !p.inHand) return { cls: 'away', text: 'out of chips' };
   if (p.allIn) return { cls: 'allin', text: 'all in' };
   if (p.folded) return { cls: '', text: 'folded' };
@@ -726,8 +930,10 @@ setInterval(() => {
 }, 500);
 
 show($('game'), false);
+show($('modal'), false);
 initLobby();
 initGame();
+initVaultUi();
 
 // Opened an invite link with a saved name? Walk straight in.
 if (codeFromUrl() && store.name) {
@@ -736,6 +942,11 @@ if (codeFromUrl() && store.name) {
 }
 
 // The host's tab IS the table, so make closing it a deliberate act.
+window.addEventListener('pagehide', () => {
+  const me = mySeat();
+  if (me) cashOut(me.chips);
+});
+
 window.addEventListener('beforeunload', (e) => {
   if (!app.isHost || !app.state) return;
   const seated = app.state.seats.filter(Boolean).length;

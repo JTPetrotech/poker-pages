@@ -16,6 +16,8 @@ export class Table {
     this.smallBlind = opts.smallBlind ?? 5;
     this.bigBlind = opts.bigBlind ?? 10;
     this.startingStack = opts.startingStack ?? 1000;
+    // A cap stops anyone sitting down with an absurd stack from their vault.
+    this.maxBuyIn = opts.maxBuyIn ?? this.startingStack * 10;
     this.maxSeats = opts.maxSeats ?? 9;
     this.hostId = opts.hostId || null;
 
@@ -60,16 +62,24 @@ export class Table {
     return this.players().filter((p) => p.chips > 0 && !p.sitOut);
   }
 
-  sit(id, name, seat) {
+  sit(id, name, seat, opts = {}) {
     if (seat < 0 || seat >= this.maxSeats) throw new Error('No such seat.');
     if (this.seats[seat]) throw new Error('That seat is taken.');
     const existing = this.playerById(id);
     if (existing) throw new Error('You are already seated.');
+    // Players bring their own buy-in from their vault; the table only enforces
+    // that it sits between one big blind and the table maximum.
+    const requested = Number(opts.buyIn);
+    const buyIn = Number.isFinite(requested) && requested > 0
+      ? Math.min(Math.max(Math.floor(requested), this.bigBlind), this.maxBuyIn)
+      : this.startingStack;
     this.seats[seat] = {
       id,
       name,
       seat,
-      chips: this.startingStack,
+      bot: !!opts.bot,
+      botStyle: opts.botStyle || null,
+      chips: buyIn,
       cards: [],
       bet: 0,
       committed: 0,
@@ -84,7 +94,7 @@ export class Table {
       handsPlayed: 0,
       netResult: 0,
     };
-    this.pushLog(`${name} sat down in seat ${seat + 1} with ${this.startingStack}.`);
+    this.pushLog(`${name} sat down in seat ${seat + 1} with ${buyIn}.`);
     return this.seats[seat];
   }
 
@@ -106,15 +116,19 @@ export class Table {
     return p;
   }
 
-  rebuy(id) {
+  rebuy(id, amount) {
     const p = this.playerById(id);
     if (!p) throw new Error('You are not seated.');
     if (p.chips > 0) throw new Error('You still have chips.');
     if (p.inHand && this.inHandStage()) throw new Error('Wait for the hand to finish.');
-    p.chips = this.startingStack;
-    p.netResult -= this.startingStack;
+    const requested = Number(amount);
+    const topUp = Number.isFinite(requested) && requested > 0
+      ? Math.min(Math.max(Math.floor(requested), this.bigBlind), this.maxBuyIn)
+      : this.startingStack;
+    p.chips = topUp;
+    p.netResult -= topUp;
     p.sitOut = false;
-    this.pushLog(`${p.name} topped up to ${this.startingStack}.`);
+    this.pushLog(`${p.name} topped up with ${topUp}.`);
   }
 
   setSitOut(id, value) {
@@ -596,6 +610,7 @@ export class Table {
       smallBlind: this.smallBlind,
       bigBlind: this.bigBlind,
       startingStack: this.startingStack,
+      maxBuyIn: this.maxBuyIn,
       community: this.community,
       pot: this.displayPot(),
       potTotal: this.potTotal,
@@ -620,6 +635,7 @@ export class Table {
           allIn: p.allIn,
           inHand: p.inHand,
           sitOut: p.sitOut,
+          bot: !!p.bot,
           disconnected: p.disconnected,
           lastAction: p.lastAction,
           handsPlayed: p.handsPlayed,

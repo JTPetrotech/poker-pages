@@ -1,6 +1,7 @@
 import { score5, compareScores, bestHand } from '../engine/hand.js';
 import { Table } from '../engine/game.js';
 import { makeDeck, shuffle } from '../engine/cards.js';
+import { decide, equity, BOT_STYLES } from '../bot.js';
 
 let passed = 0;
 let failed = 0;
@@ -475,6 +476,81 @@ test('the shuffle actually moves cards around', () => {
     if (shuffle(makeDeck()).join('') === sorted) sameCount++;
   }
   eq(sameCount, 0, 'no shuffle returned the deck in order');
+});
+
+// ------------------------------------------------------------------ bots
+
+test('equity: a made straight flush is unbeatable', () => {
+  const e = equity(C('9s 8s'), C('7s 6s 5s'), 3, 120);
+  eq(e, 1, 'nothing can beat it on a locked board');
+});
+
+test('equity: aces beat a random hand far more often than not', () => {
+  const e = equity(C('As Ad'), [], 1, 400);
+  assert(e > 0.8, `aces should win about 85% heads-up, got ${e.toFixed(2)}`);
+});
+
+test('equity: the worst hand is a clear underdog to the best', () => {
+  const strong = equity(C('As Ad'), C('Ah 7c 2d'), 1, 300);
+  const weak = equity(C('7s 2d'), C('Ah 7c 2d'), 1, 300);
+  assert(strong > weak, 'trip aces beat bottom two pair');
+});
+
+test('bots only ever choose legal actions', () => {
+  for (const style of Object.keys(BOT_STYLES)) {
+    const t = seatPlayers(4, { chips: 1000 });
+    for (const p of t.players()) { p.bot = true; p.botStyle = style; }
+
+    for (let hand = 0; hand < 12; hand++) {
+      if (t.eligibleForHand().length < 2) break;
+      if (!t.startHand()) break;
+      let guard = 0;
+      while (t.inHandStage()) {
+        if (++guard > 400) throw new Error(`hand stalled (${style})`);
+        const p = t.seats[t.actingSeat];
+        const move = decide(t, p);
+        // Throws if the move is not legal for this player right now.
+        t.act(p.id, move.action, move.amount);
+      }
+      eq(
+        t.players().reduce((s, p) => s + p.chips, 0),
+        4000,
+        `chips conserved in bot play (${style})`,
+      );
+    }
+  }
+});
+
+test('a bot never folds when checking is free', () => {
+  for (let seed = 0; seed < 25; seed++) {
+    const t = seatPlayers(3, { chips: 1000 });
+    for (const p of t.players()) { p.bot = true; p.botStyle = 'rock'; }
+    t.startHand();
+    // Walk to a spot where the acting player can check.
+    let guard = 0;
+    while (t.inHandStage() && guard++ < 60) {
+      const p = t.seats[t.actingSeat];
+      const legal = t.legalActions(p);
+      if (legal.canCheck) {
+        const move = decide(t, p);
+        assert(move.action !== 'fold', 'folding for free is never right');
+        break;
+      }
+      t.act(p.id, 'call');
+    }
+  }
+});
+
+test('buy-ins are honoured and clamped to the table maximum', () => {
+  const t = new Table({ id: 'B', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 2000, maxSeats: 6 });
+  t.sit('a', 'A', 0, { buyIn: 300 });
+  eq(t.seats[0].chips, 300, 'sits with what was brought');
+  t.sit('b', 'B', 1, { buyIn: 99999 });
+  eq(t.seats[1].chips, 2000, 'clamped to the table maximum');
+  t.sit('c', 'C', 2, { buyIn: 1 });
+  eq(t.seats[2].chips, 10, 'raised to one big blind');
+  t.sit('d', 'D', 3);
+  eq(t.seats[3].chips, 1000, 'defaults to the standard stack');
 });
 
 // ------------------------------------------------------------------ report

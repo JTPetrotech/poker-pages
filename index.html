@@ -22,6 +22,9 @@
       <input id="nameInput" maxlength="16" placeholder="e.g. JT" autocomplete="nickname" />
     </label>
 
+    <p class="vault-line">Your vault: <strong id="lobbyVault">10,000</strong> chips
+      <button id="lobbyReload" class="linkish" hidden>Reload</button></p>
+
     <div class="lobby-tabs">
       <button class="tab active" data-tab="join">Join a table</button>
       <button class="tab" data-tab="create">New table</button>
@@ -77,6 +80,7 @@
       <span class="copy-hint">copy link</span>
     </button>
     <div class="chip muted" id="blindsLabel">5 / 10</div>
+    <button class="chip vault" id="vaultChip" title="Your chips between games">Vault <strong id="vaultLabel">0</strong></button>
     <div id="hostBadge" class="chip host" hidden title="Your browser is running this table">Hosting</div>
     <div class="spacer"></div>
     <div id="connDot" class="conn" title="Connection">●</div>
@@ -146,6 +150,45 @@
       <button id="startBtn" class="primary" hidden>Deal now</button>
     </div>
   </footer>
+</div>
+
+<!-- ------------------------------------------------------------ seat dialog -->
+<div id="modal" class="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button id="modalClose" class="modal-x" aria-label="Close">&times;</button>
+    <h2 id="modalTitle">Take a seat</h2>
+    <p class="modal-sub" id="modalSub">Seat 1</p>
+
+    <div id="buyInBlock">
+      <label class="field">
+        <span>Buy in with <strong id="buyInLabel">1,000</strong></span>
+        <input id="buyInRange" type="range" min="0" max="100" value="0" />
+      </label>
+      <div class="buyin-row">
+        <input id="buyInAmount" type="number" inputmode="numeric" />
+        <button class="quick" data-b="min">Min</button>
+        <button class="quick" data-b="half">Half</button>
+        <button class="quick" data-b="max">Max</button>
+      </div>
+      <button id="sitConfirm" class="primary">Sit down</button>
+    </div>
+
+    <div id="emptyVault" class="empty-vault" hidden>
+      <p>Your vault is empty.</p>
+      <button id="vaultReload" class="primary">Reload 10,000 chips</button>
+    </div>
+
+    <div id="botSection" class="bot-section" hidden>
+      <div class="divider"><span>or seat a computer player</span></div>
+      <div class="bot-row">
+        <button class="bot-pick" data-style="rock">Cautious<small>folds a lot</small></button>
+        <button class="bot-pick" data-style="shark">Solid<small>plays well</small></button>
+        <button class="bot-pick" data-style="maniac">Wild<small>bets everything</small></button>
+      </div>
+    </div>
+
+    <p id="modalError" class="error" hidden></p>
+  </div>
 </div>
 
 <script type="module" src="app.js"></script>

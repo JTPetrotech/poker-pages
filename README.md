@@ -15,10 +15,30 @@ introduces two browsers to each other; once connected, cards go peer to peer.
 That has one consequence worth knowing: **the host's tab is the table.** If the
 host closes it, the game ends for everyone. The page warns before that happens.
 
+## Vault
+
+Your chips live in a **vault** between games. You take some out to buy into a
+table and they go back when you cash out, so a good night actually counts for
+something. It starts at 10,000 and reloads free when it runs dry.
+
+The vault is saved in your browser, which means it is per device: your
+Chromebook vault and your phone vault are separate, and clearing site data
+resets it. Carrying one balance across devices needs real accounts, which
+needs a server this site doesn't have.
+
+## Computer players
+
+The host can fill any empty seat with a bot in three flavours — Cautious,
+Solid and Wild. They aren't running a script of "raise with aces": each one
+deals out the rest of the board and the opponents' cards a few hundred times
+to estimate how often its hand actually wins, then weighs that against the pot
+odds it's being offered. Solid plays a reasonable game.
+
 ## Playing
 
 - Share the invite link (the `Table ABCD` chip at the top copies it) or read out the 4-letter code.
-- Click a seat to sit down. Hands deal automatically once two people are seated.
+- Click a seat to choose your buy-in and sit down. Hands deal automatically once two players are seated.
+- Hosts can click any empty seat to add a computer player, and the small × on a bot removes it.
 - Keyboard during your turn: `F` fold, `C` check/call, `R` bet/raise.
 - 45 seconds to act, then you check if it's free, otherwise you fold.
 - Out of chips? **Top up** returns you to the starting stack.
