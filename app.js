@@ -1,6 +1,6 @@
-import { HostNet, GuestNet } from './net.js?v=mvis3p31';
-import { TableHost } from './host.js?v=mvis3p31';
-import * as vault from './vault.js?v=mvis3p31';
+import { HostNet, GuestNet } from './net.js?v=mviu0e6l';
+import { TableHost } from './host.js?v=mviu0e6l';
+import * as vault from './vault.js?v=mviu0e6l';
 
 const $ = (id) => document.getElementById(id);
 
@@ -118,6 +118,14 @@ function initLobby() {
     if (e.key === 'Enter') document.querySelector('.tab-panel.active .primary').click();
   });
 
+  $('soloBtn').addEventListener('click', () => {
+    if (vault.balance() <= 0) {
+      lobbyError('Your vault is empty — reload it above first.');
+      return;
+    }
+    startSession(playSolo);
+  });
+
   $('createBtn').addEventListener('click', () => {
     const options = {
       smallBlind: Number($('sbInput').value),
@@ -167,7 +175,7 @@ async function startSession(attempt) {
   app.connecting = true;
   lobbyError('');
   $('lobbyBusy').hidden = false;
-  document.querySelectorAll('.lobby-card .primary').forEach((b) => { b.disabled = true; });
+  document.querySelectorAll('.lobby-card .primary, #soloBtn').forEach((b) => { b.disabled = true; });
   try {
     await attempt();
   } catch (err) {
@@ -180,7 +188,7 @@ async function startSession(attempt) {
   } finally {
     app.connecting = false;
     $('lobbyBusy').hidden = true;
-    document.querySelectorAll('.lobby-card .primary').forEach((b) => { b.disabled = false; });
+    document.querySelectorAll('.lobby-card .primary, #soloBtn').forEach((b) => { b.disabled = false; });
   }
 }
 
@@ -231,6 +239,27 @@ async function hostTable(options) {
     return;
   }
   throw new Error('Could not claim a table code. Try again.');
+}
+
+
+/**
+ * Solo mode: host a private table, take a seat and fill four more with bots,
+ * in one go. The table still has a code, so a friend can drop into the spare
+ * seat later if you want one.
+ */
+const SOLO_OPPONENTS = ['shark', 'rock', 'maniac', 'shark'];
+
+async function playSolo() {
+  const cfg = { smallBlind: 5, bigBlind: 10, startingStack: 1000, maxSeats: 6 };
+  await hostTable(cfg);
+
+  const buyIn = vault.withdraw(Math.min(cfg.startingStack, vault.balance()));
+  app.pendingBuyIn = buyIn;
+  vault.setAtTable(app.code, buyIn);
+  paintVault();
+  send({ t: 'sit', seat: 0, name: app.name, buyIn });
+
+  SOLO_OPPONENTS.forEach((style, i) => send({ t: 'addbot', seat: i + 1, style }));
 }
 
 async function joinTable(code) {

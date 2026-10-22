@@ -26,6 +26,12 @@ Chromebook vault and your phone vault are separate, and clearing site data
 resets it. Carrying one balance across devices needs real accounts, which
 needs a server this site doesn't have.
 
+## Playing on your own
+
+**Play against 4 computer players** on the lobby screen deals you straight into
+a table with four bots of mixed styles. It still has a table code, and a seat
+is left spare, so a friend can join partway through if one turns up.
+
 ## Computer players
 
 The host can fill any empty seat with a bot in three flavours — Cautious,

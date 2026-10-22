@@ -702,3 +702,24 @@ input { font: inherit; }
   .modal-card { padding: 18px; }
   .bot-pick { font-size: 12px; }
 }
+
+/* ---------------------------------------------------------------- solo mode */
+
+.solo { margin-top: 18px; }
+
+.solo-btn {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  font-weight: 600;
+  text-align: center;
+}
+.solo-btn small { color: var(--muted); font-size: 11px; font-weight: 400; }
+.solo-btn:hover { border-color: var(--green); background: #eaf7f0; }
+.solo-btn:disabled { opacity: 0.55; cursor: progress; }
