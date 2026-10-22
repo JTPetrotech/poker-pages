@@ -1,5 +1,5 @@
-import { makeDeck, shuffle } from './cards.js?v=mvk6crhl';
-import { bestHand, compareScores } from './hand.js?v=mvk6crhl';
+import { makeDeck, shuffle } from './cards.js?v=mvk6uw5s';
+import { bestHand, compareScores } from './hand.js?v=mvk6uw5s';
 
 export const STAGES = ['idle', 'preflop', 'flop', 'turn', 'river', 'showdown', 'handover'];
 
@@ -35,6 +35,8 @@ export class Table {
     this.results = null;
     this.pots = [];
     this.log = [];
+    // Things worth telling a specific player about, drained by the host.
+    this.events = [];
     this.actionDeadline = 0;
   }
 
@@ -95,6 +97,7 @@ export class Table {
       netResult: 0,
       // Running tally of how this player actually behaves, so opponents can
       // tell a raise from someone who raises constantly from a real one.
+      queuedChips: 0,
       stats: { actions: 0, raises: 0, calls: 0, folds: 0 },
     };
     this.pushLog(`${name} sat down in seat ${seat + 1} with ${buyIn}.`);
@@ -135,27 +138,52 @@ export class Table {
   }
 
   /**
-   * Bring more chips from the vault to the table. Only between hands: adding
-   * to a live stack is against table stakes, and would let someone reload
-   * after seeing their cards.
+   * Bring more chips from the vault to the table.
+   *
+   * Asking during a hand you are still contesting does not fail — it queues,
+   * and the chips arrive when the hand ends. That is how a real table works,
+   * and refusing outright meant the control was unusable for anyone who plays
+   * most of their hands to the end.
    */
   addChips(id, amount) {
     const p = this.playerById(id);
     if (!p) throw new Error('You are not seated.');
-    // Only blocked while actually contesting a hand. Once folded you are no
-    // longer in it, so topping up affects nothing that is still live.
-    if (p.inHand && !p.folded && this.inHandStage()) {
-      throw new Error('You can add chips between hands, not while playing one.');
-    }
-    const room = this.maxBuyIn - p.chips;
+
+    const queued = p.queuedChips || 0;
+    const room = this.maxBuyIn - p.chips - queued;
     if (room <= 0) throw new Error('You are already at the table maximum.');
-    const added = Math.min(Math.floor(Number(amount) || 0), room);
-    if (added <= 0) throw new Error('Nothing to add.');
-    p.chips += added;
-    p.netResult -= added;
+
+    const want = Math.min(Math.floor(Number(amount) || 0), room);
+    if (want <= 0) throw new Error('Nothing to add.');
+
+    if (p.inHand && !p.folded && this.inHandStage()) {
+      p.queuedChips = queued + want;
+      this.pushLog(`${p.name} will add ${want} chips after this hand.`);
+      this.events.push({ type: 'queued', id: p.id, amount: want });
+      return { queued: want };
+    }
+
+    this.giveChips(p, want);
+    return { added: want };
+  }
+
+  giveChips(p, amount) {
+    p.chips += amount;
+    p.netResult -= amount;
     p.sitOut = false;
-    this.pushLog(`${p.name} adds ${added} chips.`);
-    return added;
+    this.pushLog(`${p.name} adds ${amount} chips.`);
+    this.events.push({ type: 'added', id: p.id, amount });
+  }
+
+  /** Release anything that was queued while a hand was running. */
+  releaseQueuedChips() {
+    for (const p of this.players()) {
+      if (!p.queuedChips) continue;
+      const room = Math.max(0, this.maxBuyIn - p.chips);
+      const amount = Math.min(p.queuedChips, room);
+      p.queuedChips = 0;
+      if (amount > 0) this.giveChips(p, amount);
+    }
   }
 
   setSitOut(id, value) {
@@ -610,6 +638,7 @@ export class Table {
   }
 
   finishHand() {
+    this.releaseQueuedChips();
     this.potTotal = 0;
     this.currentBet = 0;
     this.stage = 'handover';
@@ -686,6 +715,7 @@ export class Table {
             chips: viewer.chips,
             cards: viewer.cards,
             legal: this.legalActions(viewer),
+            queuedChips: viewer.queuedChips || 0,
           }
         : null,
       log: this.log.slice(-40),

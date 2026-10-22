@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvk6crhl';
-import { TableHost } from './host.js?v=mvk6crhl';
-import * as vault from './vault.js?v=mvk6crhl';
-import * as cloud from './cloud.js?v=mvk6crhl';
-import { bestHand } from './engine/hand.js?v=mvk6crhl';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvk6crhl';
+import { HostNet, GuestNet } from './net.js?v=mvk6uw5s';
+import { TableHost } from './host.js?v=mvk6uw5s';
+import * as vault from './vault.js?v=mvk6uw5s';
+import * as cloud from './cloud.js?v=mvk6uw5s';
+import { bestHand } from './engine/hand.js?v=mvk6uw5s';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvk6uw5s';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 12;
+const BUILD = 13;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -343,6 +343,12 @@ function onMessage(msg) {
       bubbleAtMySeat(`+${fmt(msg.amount)} chips`);
       break;
     }
+    case 'queued': {
+      app.pendingAdd = 0;
+      bubbleAtMySeat(`+${fmt(msg.amount)} after this hand`);
+      toast(`${fmt(msg.amount)} chips will be added when this hand ends.`);
+      break;
+    }
     case 'cashout':
       cashOut(msg.amount, 'stand');
       break;
@@ -434,12 +440,14 @@ function openAddChips() {
 
   const cfg = app.config || {};
   const bal = vault.balance();
-  const room = Math.max(0, maxBuyIn() - me.chips);
+  const queued = app.state?.you?.queuedChips || 0;
+  const room = Math.max(0, maxBuyIn() - me.chips - queued);
   const max = Math.min(bal, room);
 
   $('modalTitle').textContent = 'Add chips';
   $('modalSub').innerHTML =
-    `At the table <strong>${fmt(me.chips)}</strong> · Vault <strong>${fmt(bal)}</strong>`;
+    `At the table <strong>${fmt(me.chips)}</strong> · Vault <strong>${fmt(bal)}</strong>`
+    + (queued ? ` · <strong>${fmt(queued)}</strong> arriving after this hand` : '');
   modalError('');
   show($('botSection'), false);
   show($('emptyVault'), bal <= 0);
@@ -561,6 +569,10 @@ function initVaultUi() {
   }
 
   $('vaultChip').addEventListener('click', () => {
+    if (mySeat()) {
+      openAddChips();
+      return;
+    }
     const p = vault.profile();
     toast(
       `Vault: ${fmt(p.vault)} chips · ${p.handsPlayed} hands played` +
@@ -1322,12 +1334,9 @@ function renderActionBar(state, prev) {
     !!me && (state.stage === 'idle' || state.stage === 'handover') &&
     state.seats.filter((s) => s && s.chips > 0 && !s.sitOut).length >= 2;
   const canRebuy = !!(me && me.chips === 0 && !me.inHand);
-  const inLiveHand = ['preflop', 'flop', 'turn', 'river'].includes(state.stage)
-    && !!me?.inHand && !me?.folded;
-  const canAdd = !!(
-    me && me.chips > 0 && !inLiveHand &&
-    vault.balance() > 0 && me.chips < maxBuyIn()
-  );
+  // Offered whenever there is room and something in the vault; if a hand is
+  // running the table queues it rather than refusing.
+  const canAdd = !!(me && vault.balance() > 0 && me.chips < maxBuyIn());
   show($('addChipsBtn'), canAdd);
   show($('startBtn'), canStart);
   show($('rebuyBtn'), canRebuy);

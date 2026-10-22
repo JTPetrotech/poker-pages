@@ -699,11 +699,10 @@ test('a brand new account starts with a full vault', () => {
 test('chips can be added between hands, within the table maximum', () => {
   const t = new Table({ id: 'A', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 2000, maxSeats: 4 });
   t.sit('a', 'A', 0, { buyIn: 500 });
-  const added = t.addChips('a', 400);
-  eq(added, 400);
+  eq(t.addChips('a', 400).added, 400);
   eq(t.seats[0].chips, 900);
   // Capped at the table maximum rather than refused outright.
-  eq(t.addChips('a', 5000), 1100, 'tops up to the maximum, no further');
+  eq(t.addChips('a', 5000).added, 1100, 'tops up to the maximum, no further');
   eq(t.seats[0].chips, 2000);
 });
 
@@ -715,12 +714,37 @@ test('adding chips is refused once at the maximum', () => {
   assert(threw, 'no room left');
 });
 
-test('chips cannot be added in the middle of a hand', () => {
+test('chips asked for mid-hand are queued, not refused', () => {
   const t = seatPlayers(3, { chips: 1000 });
+  t.maxBuyIn = 50000;
   t.startHand();
-  let threw = false;
-  try { t.addChips(t.players()[0].id, 500); } catch { threw = true; }
-  assert(threw, 'table stakes: no reloading once the cards are out');
+  const p = t.players()[0];
+  const before = p.chips;
+  const result = t.addChips(p.id, 500);
+  eq(result.queued, 500, 'queued rather than applied');
+  eq(p.chips, before, 'the live stack is untouched — table stakes');
+
+  // They arrive once the hand is over.
+  while (t.inHandStage()) {
+    const actor = t.seats[t.actingSeat];
+    const legal = t.legalActions(actor);
+    t.act(actor.id, legal.canCheck ? 'check' : 'fold');
+  }
+  eq(p.queuedChips, 0, 'queue is cleared');
+  assert(p.chips >= before + 500 - 1000, 'the chips were released after the hand');
+});
+
+test('queued chips still respect the table maximum', () => {
+  const t = new Table({ id: 'Q', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 1200, maxSeats: 3 });
+  t.sit('a', 'A', 0, { buyIn: 1000 });
+  t.sit('b', 'B', 1, { buyIn: 1000 });
+  t.startHand();
+  const a = t.playerById('a');
+  // The blind is already posted, so the room left is measured from the
+  // current stack, not the buy-in.
+  const room = 1200 - a.chips;
+  eq(t.addChips('a', 5000).queued, room, 'only the room that exists is queued');
+  assert(room > 0 && room < 5000, 'the cap really did bite');
 });
 
 test('a folded player may top up while the hand finishes', () => {
@@ -729,8 +753,7 @@ test('a folded player may top up while the hand finishes', () => {
   t.startHand();
   const p = t.seats[t.actingSeat];
   t.act(p.id, 'fold');
-  const added = t.addChips(p.id, 500);
-  eq(added, 500, 'folded means no longer in the hand');
+  eq(t.addChips(p.id, 500).added, 500, 'folded means no longer in the hand');
   eq(p.chips, 1500);
 });
 

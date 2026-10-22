@@ -1,5 +1,5 @@
-import { Table } from './engine/game.js?v=mvk6crhl';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvk6crhl';
+import { Table } from './engine/game.js?v=mvk6uw5s';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvk6uw5s';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;
@@ -42,7 +42,7 @@ export class TableHost {
       smallBlind,
       bigBlind,
       startingStack: clampInt(options.startingStack, 20, 1_000_000, 1000),
-      maxBuyIn: clampInt(options.maxBuyIn, 20, 10_000_000, bigBlind * 400),
+      maxBuyIn: clampInt(options.maxBuyIn, 20, 50_000_000, Math.max(bigBlind * 4000, 250_000)),
       maxSeats: clampInt(options.maxSeats, 2, 9, 6),
     });
     this.table.minRaise = bigBlind;
@@ -69,9 +69,20 @@ export class TableHost {
   }
 
   broadcastState() {
+    this.drainEvents();
     const now = Date.now();
     for (const token of this.members) {
       this.deliver(token, { t: 'state', now, state: this.table.snapshot(token) });
+    }
+  }
+
+  /** Deliver per-player notices the table raised, then clear them. */
+  drainEvents() {
+    const { events } = this.table;
+    while (events.length) {
+      const e = events.shift();
+      if (e.type === 'added') this.deliver(e.id, { t: 'added', amount: e.amount });
+      else if (e.type === 'queued') this.deliver(e.id, { t: 'queued', amount: e.amount });
     }
   }
 
@@ -140,11 +151,9 @@ export class TableHost {
         table.rebuy(token, Number(msg.amount) || table.startingStack);
         this.#scheduleStart(IDLE_START_DELAY_MS);
         break;
-      case 'addchips': {
-        const added = table.addChips(token, msg.amount);
-        this.deliver(token, { t: 'added', amount: added });
+      case 'addchips':
+        table.addChips(token, msg.amount);
         break;
-      }
       case 'sitout':
         table.setSitOut(token, !!msg.value);
         break;
