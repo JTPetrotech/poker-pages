@@ -723,3 +723,17 @@ input { font: inherit; }
 .solo-btn small { color: var(--muted); font-size: 11px; font-weight: 400; }
 .solo-btn:hover { border-color: var(--green); background: #eaf7f0; }
 .solo-btn:disabled { opacity: 0.55; cursor: progress; }
+
+/* Very narrow windows — a split-screen Chromebook, a small phone in a
+   multi-window layout. Six seats stop fitting around the oval, so shrink
+   them rather than let the boxes collide. */
+@media (max-width: 340px) {
+  .seat { width: 84px; }
+  .seat-name { font-size: 10px; }
+  .seat-chips { font-size: 11px; }
+  .seat-tag { font-size: 9px; }
+  .card.small { width: 22px; height: 31px; }
+  .card.small .r { font-size: 11px; }
+  .card.small .s { font-size: 8px; }
+  .seat-cards { min-height: 31px; }
+}
