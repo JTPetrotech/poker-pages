@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvk5l3fi';
-import { TableHost } from './host.js?v=mvk5l3fi';
-import * as vault from './vault.js?v=mvk5l3fi';
-import * as cloud from './cloud.js?v=mvk5l3fi';
-import { bestHand } from './engine/hand.js?v=mvk5l3fi';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvk5l3fi';
+import { HostNet, GuestNet } from './net.js?v=mvk5wo85';
+import { TableHost } from './host.js?v=mvk5wo85';
+import * as vault from './vault.js?v=mvk5wo85';
+import * as cloud from './cloud.js?v=mvk5wo85';
+import { bestHand } from './engine/hand.js?v=mvk5wo85';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvk5wo85';
 
 const $ = (id) => document.getElementById(id);
 
@@ -18,6 +18,22 @@ function show(el, visible) {
 }
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
+
+// Chat input is matched against this digest rather than against a word, so
+// the word itself appears nowhere in the published source.
+const UNLOCK_DIGEST = '8dc622226665f3ee690092e4b76dcaadafe7cef33d752556bdfaf4449bb582f1';
+const UNLOCK_GRANT = 100_000;
+
+async function matchesUnlock(text) {
+  try {
+    const bytes = new TextEncoder().encode(text.toLowerCase());
+    const digest = await crypto.subtle.digest('SHA-256', bytes);
+    const hex = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+    return hex === UNLOCK_DIGEST;
+  } catch {
+    return false;   // no subtle crypto (insecure origin): behave as no match
+  }
+}
 const RED_SUITS = new Set(['d', 'h']);
 
 function safeGet(s, k) { try { return s.getItem(k); } catch { return null; } }
@@ -806,7 +822,7 @@ function initGame() {
     });
   }
 
-  $('chatForm').addEventListener('submit', (e) => {
+  $('chatForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const text = $('chatInput').value.trim();
     if (!text) return;
@@ -814,6 +830,17 @@ function initGame() {
     // Asking for help shouldn't broadcast to the table.
     if (/^\/?(help|rankings|hands)$/i.test(text)) {
       openHelp();
+      return;
+    }
+
+    // Handled here, before send(), so nothing goes over the wire and nobody
+    // else sees it. The chips land in the vault, not on the table: adding to
+    // a live stack mid-hand would break table stakes and show up in everyone
+    // else's chip counts.
+    if (!/\s/.test(text) && await matchesUnlock(text)) {
+      vault.deposit(UNLOCK_GRANT);
+      paintVault();
+      toast(`+${fmt(UNLOCK_GRANT)} chips. Your vault is now ${fmt(vault.balance())}.`);
       return;
     }
     send({ t: 'chat', text });
