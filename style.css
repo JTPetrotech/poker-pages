@@ -660,7 +660,7 @@ input { font: inherit; }
   background: var(--line);
 }
 
-.bot-row { display: flex; gap: 6px; }
+.bot-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .bot-pick {
   flex: 1;
   display: flex;
@@ -737,3 +737,6 @@ input { font: inherit; }
   .card.small .s { font-size: 8px; }
   .seat-cards { min-height: 31px; }
 }
+
+.bot-pick.hard { border-color: #c6a24a; background: #fdf6e4; }
+.bot-pick.hard:hover { border-color: var(--gold); }

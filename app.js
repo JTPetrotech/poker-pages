@@ -1,6 +1,6 @@
-import { HostNet, GuestNet } from './net.js?v=mviu31zk';
-import { TableHost } from './host.js?v=mviu31zk';
-import * as vault from './vault.js?v=mviu31zk';
+import { HostNet, GuestNet } from './net.js?v=mviv7ch0';
+import { TableHost } from './host.js?v=mviv7ch0';
+import * as vault from './vault.js?v=mviv7ch0';
 
 const $ = (id) => document.getElementById(id);
 
@@ -247,7 +247,8 @@ async function hostTable(options) {
  * in one go. The table still has a code, so a friend can drop into the spare
  * seat later if you want one.
  */
-const SOLO_OPPONENTS = ['shark', 'rock', 'maniac', 'shark'];
+// A tougher solo table than before: two Experts, and no free money.
+const SOLO_OPPONENTS = ['expert', 'shark', 'maniac', 'expert'];
 
 async function playSolo() {
   const cfg = { smallBlind: 5, bigBlind: 10, startingStack: 1000, maxSeats: 6 };

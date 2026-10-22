@@ -34,11 +34,42 @@ is left spare, so a friend can join partway through if one turns up.
 
 ## Computer players
 
-The host can fill any empty seat with a bot in three flavours — Cautious,
-Solid and Wild. They aren't running a script of "raise with aces": each one
-deals out the rest of the board and the opponents' cards a few hundred times
-to estimate how often its hand actually wins, then weighs that against the pot
-odds it's being offered. Solid plays a reasonable game.
+The host can fill any empty seat with a bot: **Cautious**, **Solid**, **Wild**
+or **Expert**. Three things drive how they play.
+
+**They estimate equity by simulation.** Several hundred times a decision, the
+bot deals out the rest of the board and the opponents' cards and counts how
+often it ends up winning. That number is then weighed against the pot odds it
+is being offered.
+
+**They do not assume you hold random cards.** Each opponent is given a range
+inferred from what they have actually done, and the simulation only deals them
+hands inside it. Crucially the range depends on *who* is raising: a player who
+raises a third of the time is not representing much, and the bots track how
+often each opponent actually raises to work that out.
+
+**Preflop is decided by hand strength and position**, not simulation. Against
+random hands nearly everything looks playable heads-up, which is the leak that
+makes a naive bot easy to beat.
+
+Expert reads opponents tighter than the others and varies its bet sizing so it
+is harder to put on a hand.
+
+### Measuring them
+
+```bash
+node bench.js 1200
+```
+
+pits the styles against each other and against a baseline that calls
+everything, reporting big blinds per 100 hands. Run it after any change to
+`bot.js`: an early version of the range modelling made the bots fold so much
+that the reckless Wild bot beat them by 119 bb/100, which no unit test would
+ever have caught.
+
+Expect noise. Heads-up matches with deep stacks swing wildly — if two seat
+orders disagree by 60 bb/100, the result is variance, not a finding. Measuring
+against a fixed, non-adapting opponent is far more stable than bot-vs-bot.
 
 ## Playing
 

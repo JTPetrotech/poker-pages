@@ -1,7 +1,7 @@
 import { score5, compareScores, bestHand } from '../engine/hand.js';
 import { Table } from '../engine/game.js';
 import { makeDeck, shuffle } from '../engine/cards.js';
-import { decide, equity, BOT_STYLES } from '../bot.js';
+import { decide, equity, chen, BOT_STYLES } from '../bot.js';
 import * as vault from '../vault.js';
 
 let passed = 0;
@@ -482,18 +482,35 @@ test('the shuffle actually moves cards around', () => {
 // ------------------------------------------------------------------ bots
 
 test('equity: a made straight flush is unbeatable', () => {
-  const e = equity(C('9s 8s'), C('7s 6s 5s'), 3, 120);
+  const e = equity(C('9s 8s'), C('7s 6s 5s'), [1, 1, 1], 120);
   eq(e, 1, 'nothing can beat it on a locked board');
 });
 
 test('equity: aces beat a random hand far more often than not', () => {
-  const e = equity(C('As Ad'), [], 1, 400);
+  const e = equity(C('As Ad'), [], [1], 400);
   assert(e > 0.8, `aces should win about 85% heads-up, got ${e.toFixed(2)}`);
 });
 
+test('equity: a tighter opponent range lowers our equity', () => {
+  // Same hand, same board — but an opponent who only plays premium hands is
+  // a far worse opponent to be up against.
+  const vsAny = equity(C('Kh Qd'), C('Kc 7s 2d'), [1], 600);
+  const vsTight = equity(C('Kh Qd'), C('Kc 7s 2d'), [0.05], 600);
+  assert(vsAny > vsTight, `random ${vsAny.toFixed(2)} should beat tight ${vsTight.toFixed(2)}`);
+});
+
+test('chen ranks starting hands sensibly', () => {
+  eq(chen(C('As Ad')), 20, 'aces are the top of the scale');
+  eq(chen(C('Ks Kd')), 16, 'kings next');
+  assert(chen(C('As Ks')) > chen(C('As Kd')), 'suited beats offsuit');
+  assert(chen(C('As Kd')) > chen(C('7h 2c')), 'ace-king beats the worst hand');
+  assert(chen(C('Js Ts')) > chen(C('Jh 5c')), 'connected and suited beats disconnected');
+  assert(chen(C('7h 2c')) >= 0, 'never negative');
+});
+
 test('equity: the worst hand is a clear underdog to the best', () => {
-  const strong = equity(C('As Ad'), C('Ah 7c 2d'), 1, 300);
-  const weak = equity(C('7s 2d'), C('Ah 7c 2d'), 1, 300);
+  const strong = equity(C('As Ad'), C('Ah 7c 2d'), [1], 300);
+  const weak = equity(C('7s 2d'), C('Ah 7c 2d'), [1], 300);
   assert(strong > weak, 'trip aces beat bottom two pair');
 });
 

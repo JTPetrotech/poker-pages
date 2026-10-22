@@ -1,5 +1,5 @@
-import { makeDeck, shuffle } from './cards.js?v=mviu31zk';
-import { bestHand, compareScores } from './hand.js?v=mviu31zk';
+import { makeDeck, shuffle } from './cards.js?v=mviv7ch0';
+import { bestHand, compareScores } from './hand.js?v=mviv7ch0';
 
 export const STAGES = ['idle', 'preflop', 'flop', 'turn', 'river', 'showdown', 'handover'];
 
@@ -93,6 +93,9 @@ export class Table {
       lastAction: null,
       handsPlayed: 0,
       netResult: 0,
+      // Running tally of how this player actually behaves, so opponents can
+      // tell a raise from someone who raises constantly from a real one.
+      stats: { actions: 0, raises: 0, calls: 0, folds: 0 },
     };
     this.pushLog(`${name} sat down in seat ${seat + 1} with ${buyIn}.`);
     return this.seats[seat];
@@ -324,6 +327,13 @@ export class Table {
       }
       default:
         throw new Error(`Unknown action: ${action}`);
+    }
+
+    if (p.stats) {
+      p.stats.actions++;
+      if (p.lastAction === 'fold') p.stats.folds++;
+      else if (p.lastAction === 'call') p.stats.calls++;
+      else if (p.lastAction === 'bet' || p.lastAction === 'raise') p.stats.raises++;
     }
 
     p.hasActed = true;
