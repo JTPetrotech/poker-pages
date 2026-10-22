@@ -202,8 +202,8 @@ input { font: inherit; }
   width: 100%;
   max-width: 940px;
   aspect-ratio: 16 / 10;
-  /* With a fixed ratio this is what lets a short window shrink the table
-     instead of pushing the action buttons off the bottom of the screen. */
+  /* sizeFelt() in app.js overrides these with exact pixels once laid out —
+     percentage max-height is ignored inside an auto-height grid row. */
   max-height: 100%;
   margin: auto;
 }

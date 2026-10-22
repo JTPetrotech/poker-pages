@@ -1,6 +1,6 @@
-import { HostNet, GuestNet } from './net.js?v=mvk4xk3p';
-import { TableHost } from './host.js?v=mvk4xk3p';
-import * as vault from './vault.js?v=mvk4xk3p';
+import { HostNet, GuestNet } from './net.js?v=mvk509qh';
+import { TableHost } from './host.js?v=mvk509qh';
+import * as vault from './vault.js?v=mvk509qh';
 
 const $ = (id) => document.getElementById(id);
 
@@ -40,6 +40,7 @@ const app = {
   host: null,     // TableHost — only set in the hosting tab
   isHost: false,
   user: null,
+  sized: false,
   dialogSeat: -1,
   buyIn: 0,
   pendingBuyIn: 0,  // withdrawn but not yet confirmed in a seat
@@ -665,6 +666,7 @@ function enterGame() {
   history.replaceState(null, '', `#${app.code}`);
   addChat('', 'Type "help" here for hand rankings.', true);
   document.title = `Poker Night · ${app.code}`;
+  sizeFelt();
 }
 
 function initGame() {
@@ -819,6 +821,47 @@ function updateRaiseLabel() {
   btn.textContent = `${verb} ${fmt(app.betTo)}`;
 }
 
+
+// ---------------------------------------------------------------- table sizing
+
+/**
+ * Size the table to the space actually available.
+ *
+ * CSS alone cannot do this: `max-height: 100%` on the felt resolves against a
+ * grid row of automatic height, so it is ignored, and the table overflows a
+ * short window — which is why the game needed full screen on a Chromebook.
+ * Seats are positioned in percentages, so they follow whatever we set here.
+ */
+function sizeFelt() {
+  const wrap = document.querySelector('.felt-wrap');
+  const felt = $('felt');
+  if (!wrap || !felt) return;
+
+  const cs = getComputedStyle(wrap);
+  const availW = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const availH = wrap.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  if (availW <= 0 || availH <= 0) return;
+
+  // Portrait-ish on a phone, landscape on anything wider.
+  const ratio = availW < 620 ? 0.95 : 1.6;
+
+  let w = Math.min(availW, 940);
+  let h = w / ratio;
+  if (h > availH) {
+    h = availH;
+    w = h * ratio;
+  }
+
+  felt.style.width = `${Math.floor(w)}px`;
+  felt.style.height = `${Math.floor(h)}px`;
+}
+
+let sizeTimer = null;
+function scheduleSizeFelt() {
+  clearTimeout(sizeTimer);
+  sizeTimer = setTimeout(sizeFelt, 60);
+}
+
 // ---------------------------------------------------------------- render
 
 function render(state) {
@@ -838,6 +881,11 @@ function render(state) {
   // Mirror the stack into storage continuously, so losing the tab can't lose
   // the chips. setAtTable skips the write when nothing changed.
   if (seatedNow && !app.cashedOut) vault.setAtTable(app.code, seatedNow.chips);
+
+  if (!app.sized) {
+    app.sized = true;
+    sizeFelt();
+  }
 
   renderBoard(state);
   renderSeats(state);
@@ -1176,6 +1224,8 @@ initLobby();
 initGame();
 initVaultUi();
 initAuthUi();
+window.addEventListener('resize', scheduleSizeFelt);
+window.addEventListener('orientationchange', scheduleSizeFelt);
 setAuthMode('in');
 
 // With a Firebase project configured, sign-in comes first and the lobby waits.
