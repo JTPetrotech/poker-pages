@@ -1,6 +1,6 @@
-import { HostNet, GuestNet } from './net.js?v=mvk509qh';
-import { TableHost } from './host.js?v=mvk509qh';
-import * as vault from './vault.js?v=mvk509qh';
+import { HostNet, GuestNet } from './net.js?v=mvk52ixs';
+import { TableHost } from './host.js?v=mvk52ixs';
+import * as vault from './vault.js?v=mvk52ixs';
 
 const $ = (id) => document.getElementById(id);
 
@@ -862,6 +862,18 @@ function scheduleSizeFelt() {
   sizeTimer = setTimeout(sizeFelt, 60);
 }
 
+/**
+ * Watch the space the table sits in rather than just the window. The action
+ * bar grows when it is your turn, which shrinks that space without the window
+ * changing at all — measuring once on entry got this wrong by 96px.
+ */
+function watchFeltSpace() {
+  const wrap = document.querySelector('.felt-wrap');
+  if (!wrap || typeof ResizeObserver !== 'function') return;
+  // Safe from feedback: sizeFelt only ever resizes the felt, never the wrap.
+  new ResizeObserver(() => sizeFelt()).observe(wrap);
+}
+
 // ---------------------------------------------------------------- render
 
 function render(state) {
@@ -1224,6 +1236,7 @@ initLobby();
 initGame();
 initVaultUi();
 initAuthUi();
+watchFeltSpace();
 window.addEventListener('resize', scheduleSizeFelt);
 window.addEventListener('orientationchange', scheduleSizeFelt);
 setAuthMode('in');
