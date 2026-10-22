@@ -1,6 +1,6 @@
-import { HostNet, GuestNet } from './net.js?v=mvirsc30';
-import { TableHost } from './host.js?v=mvirsc30';
-import * as vault from './vault.js?v=mvirsc30';
+import { HostNet, GuestNet } from './net.js?v=mvis2kbn';
+import { TableHost } from './host.js?v=mvis2kbn';
+import * as vault from './vault.js?v=mvis2kbn';
 
 const $ = (id) => document.getElementById(id);
 
