@@ -151,6 +151,7 @@ input { font: inherit; }
 .game { display: flex; flex-direction: column; height: 100%; }
 
 .topbar {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -189,6 +190,8 @@ input { font: inherit; }
   place-items: center;
   padding: 16px;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   background: radial-gradient(900px 500px at 50% 40%, #eef3f0, var(--bg));
 }
 
@@ -199,6 +202,10 @@ input { font: inherit; }
   width: 100%;
   max-width: 940px;
   aspect-ratio: 16 / 10;
+  /* With a fixed ratio this is what lets a short window shrink the table
+     instead of pushing the action buttons off the bottom of the screen. */
+  max-height: 100%;
+  margin: auto;
 }
 
 .felt-inner {
@@ -445,6 +452,7 @@ input { font: inherit; }
 /* ---------------------------------------------------------------- action bar */
 
 .actionbar {
+  flex-shrink: 0;
   border-top: 1px solid var(--line);
   background: var(--bg-2);
   padding: 10px 12px;
@@ -776,3 +784,100 @@ input { font: inherit; }
   border-radius: 9px;
 }
 .atab.active { background: #e6ecf1; color: var(--text); border-color: #b9c5cf; }
+
+/* ---------------------------------------------------------------- short screens
+
+   A Chromebook outside full screen loses a lot of height to the browser bar
+   and the shelf. These steps keep the table, the cards and the action buttons
+   all on screen rather than requiring full screen to play. */
+
+@media (max-height: 760px) {
+  .felt-wrap { padding: 8px; }
+  .topbar { padding: 6px 10px; gap: 6px; }
+  .chip { padding: 4px 9px; font-size: 12px; }
+  .actionbar { min-height: 0; padding: 7px 10px; }
+  .act { padding: 11px 8px; font-size: 14px; }
+  .card { width: 38px; height: 54px; }
+  .card .r { font-size: 17px; }
+  .card .s { font-size: 13px; }
+  .board { min-height: 54px; }
+}
+
+@media (max-height: 620px) {
+  .felt-wrap { padding: 4px; }
+  .topbar { padding: 4px 8px; font-size: 12px; }
+  .brand { display: none; }
+  .actionbar { padding: 5px 8px; }
+  .act { padding: 9px 6px; font-size: 13px; }
+  .controls { gap: 6px; }
+  .bet-row .quick { padding: 6px 4px; font-size: 11px; }
+  #betRange { height: 14px; }
+  .card { width: 30px; height: 43px; }
+  .card .r { font-size: 14px; }
+  .card .s { font-size: 11px; }
+  .card.small { width: 23px; height: 33px; }
+  .card.small .r { font-size: 11px; }
+  .card.small .s { font-size: 8px; }
+  .seat-cards { min-height: 33px; margin-bottom: 2px; }
+  .seat-box { padding: 4px 6px; }
+  .seat-name { font-size: 10px; }
+  .seat-chips { font-size: 11px; }
+  .seat-tag { font-size: 9px; }
+  .board { min-height: 43px; gap: 4px; }
+  .pot { padding: 2px 10px; font-size: 12px; }
+  .center-msg { font-size: 11px; }
+}
+
+@media (max-height: 500px) {
+  .seat { width: 86px; }
+  .card { width: 26px; height: 37px; }
+  .card .r { font-size: 12px; }
+  .card .s { font-size: 9px; }
+  .board { min-height: 37px; }
+  .act { padding: 8px 4px; font-size: 12px; }
+  .center-msg { display: none; }
+}
+
+/* ---------------------------------------------------------------- hand rankings */
+
+.modal-card.wide { max-width: 460px; }
+
+.rank-list { display: flex; flex-direction: column; gap: 7px; }
+
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+}
+
+.rank-no {
+  width: 18px;
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rank-text { flex: 1; min-width: 0; }
+.rank-name { font-size: 13px; font-weight: 650; }
+.rank-note { font-size: 11px; color: var(--muted); }
+
+.rank-cards { display: flex; gap: 2px; flex-shrink: 0; }
+.rank-cards .card { width: 21px; height: 30px; border-radius: 3px; box-shadow: none; }
+.rank-cards .card .r { font-size: 10px; }
+.rank-cards .card .s { font-size: 8px; }
+
+.rank-foot { margin: 14px 0 0; font-size: 11.5px; color: var(--muted); text-align: center; }
+
+@media (max-width: 440px) {
+  .rank-row { gap: 6px; padding: 5px 6px; }
+  .rank-cards .card { width: 17px; height: 24px; }
+  .rank-cards .card .r { font-size: 9px; }
+  .rank-cards .card .s { font-size: 7px; }
+  .rank-name { font-size: 12px; }
+  .rank-note { display: none; }
+}

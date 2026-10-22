@@ -1,6 +1,6 @@
-import { HostNet, GuestNet } from './net.js?v=mvj0wc08';
-import { TableHost } from './host.js?v=mvj0wc08';
-import * as vault from './vault.js?v=mvj0wc08';
+import { HostNet, GuestNet } from './net.js?v=mvk4xk3p';
+import { TableHost } from './host.js?v=mvk4xk3p';
+import * as vault from './vault.js?v=mvk4xk3p';
 
 const $ = (id) => document.getElementById(id);
 
@@ -403,7 +403,9 @@ function initVaultUi() {
     if (e.target === $('modal')) closeSeatDialog();
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !$('modal').hidden) closeSeatDialog();
+    if (e.key !== 'Escape') return;
+    if (!$('helpModal').hidden) show($('helpModal'), false);
+    else if (!$('modal').hidden) closeSeatDialog();
   });
 
   $('buyInRange').addEventListener('input', (e) => setBuyIn(Number(e.target.value)));
@@ -603,6 +605,54 @@ function initAuthUi() {
   });
 }
 
+
+// ---------------------------------------------------------------- hand rankings
+
+const HAND_RANKINGS = [
+  ['Royal Flush', 'The best hand there is', 'As Ks Qs Js Ts'],
+  ['Straight Flush', 'Five in a row, all one suit', '9h 8h 7h 6h 5h'],
+  ['Four of a Kind', 'All four of one rank', 'Qs Qh Qd Qc 3s'],
+  ['Full House', 'Three of one, two of another', 'Js Jh Jd 8c 8s'],
+  ['Flush', 'Any five of one suit', 'Kd Jd 9d 6d 2d'],
+  ['Straight', 'Five in a row, suits mixed', 'Tc 9d 8s 7h 6c'],
+  ['Three of a Kind', 'Three of one rank', '7s 7h 7d Kc 4s'],
+  ['Two Pair', 'Two pairs', 'As Ad 5c 5h 9s'],
+  ['One Pair', 'Two of the same rank', 'Ts Td Ac 7h 3s'],
+  ['High Card', 'Nothing made — highest card plays', 'Ad Qs 9h 5c 2d'],
+];
+
+function openHelp() {
+  const list = $('rankList');
+  if (!list.childElementCount) {
+    HAND_RANKINGS.forEach(([name, note, cards], i) => {
+      const row = document.createElement('div');
+      row.className = 'rank-row';
+
+      const no = document.createElement('div');
+      no.className = 'rank-no';
+      no.textContent = String(i + 1);
+
+      const text = document.createElement('div');
+      text.className = 'rank-text';
+      const n = document.createElement('div');
+      n.className = 'rank-name';
+      n.textContent = name;
+      const d = document.createElement('div');
+      d.className = 'rank-note';
+      d.textContent = note;
+      text.append(n, d);
+
+      const hand = document.createElement('div');
+      hand.className = 'rank-cards';
+      for (const c of cards.split(' ')) hand.appendChild(cardEl(c, false, false));
+
+      row.append(no, text, hand);
+      list.appendChild(row);
+    });
+  }
+  show($('helpModal'), true);
+}
+
 // ---------------------------------------------------------------- game shell
 
 function enterGame() {
@@ -613,6 +663,7 @@ function enterGame() {
   $('blindsLabel').textContent = `${app.config.smallBlind} / ${app.config.bigBlind}`;
   paintVault();
   history.replaceState(null, '', `#${app.code}`);
+  addChat('', 'Type "help" here for hand rankings.', true);
   document.title = `Poker Night · ${app.code}`;
 }
 
@@ -662,8 +713,18 @@ function initGame() {
     e.preventDefault();
     const text = $('chatInput').value.trim();
     if (!text) return;
-    send({ t: 'chat', text });
     $('chatInput').value = '';
+    // Asking for help shouldn't broadcast to the table.
+    if (/^\/?(help|rankings|hands)$/i.test(text)) {
+      openHelp();
+      return;
+    }
+    send({ t: 'chat', text });
+  });
+
+  $('helpClose').addEventListener('click', () => show($('helpModal'), false));
+  $('helpModal').addEventListener('click', (e) => {
+    if (e.target === $('helpModal')) show($('helpModal'), false);
   });
 
   $('foldBtn').addEventListener('click', () => act('fold'));
@@ -1105,6 +1166,7 @@ setInterval(() => {
 
 show($('game'), false);
 show($('modal'), false);
+show($('helpModal'), false);
 show($('authScreen'), false);
 
 // A previous session that never cashed out gets settled up now.
