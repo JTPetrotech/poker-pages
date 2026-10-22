@@ -1,6 +1,6 @@
-import { HostNet, GuestNet } from './net.js?v=mvk52ixs';
-import { TableHost } from './host.js?v=mvk52ixs';
-import * as vault from './vault.js?v=mvk52ixs';
+import { HostNet, GuestNet } from './net.js?v=mvk549qc';
+import { TableHost } from './host.js?v=mvk549qc';
+import * as vault from './vault.js?v=mvk549qc';
 
 const $ = (id) => document.getElementById(id);
 
@@ -845,10 +845,16 @@ function sizeFelt() {
   // Portrait-ish on a phone, landscape on anything wider.
   const ratio = availW < 620 ? 0.95 : 1.6;
 
+  // Seats straddle the table edge, so half of each box sits outside the felt.
+  // Reserve that at the top and bottom or the nearest seats get clipped.
+  const seat = document.querySelector('.seat');
+  const overhang = seat ? Math.min(64, seat.getBoundingClientRect().height / 2 + 4) : 42;
+  const usableH = Math.max(140, availH - overhang * 2);
+
   let w = Math.min(availW, 940);
   let h = w / ratio;
-  if (h > availH) {
-    h = availH;
+  if (h > usableH) {
+    h = usableH;
     w = h * ratio;
   }
 
