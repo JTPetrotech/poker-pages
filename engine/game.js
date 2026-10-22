@@ -1,5 +1,5 @@
-import { makeDeck, shuffle } from './cards.js?v=mvk67v9m';
-import { bestHand, compareScores } from './hand.js?v=mvk67v9m';
+import { makeDeck, shuffle } from './cards.js?v=mvk69zwz';
+import { bestHand, compareScores } from './hand.js?v=mvk69zwz';
 
 export const STAGES = ['idle', 'preflop', 'flop', 'turn', 'river', 'showdown', 'handover'];
 
@@ -142,8 +142,10 @@ export class Table {
   addChips(id, amount) {
     const p = this.playerById(id);
     if (!p) throw new Error('You are not seated.');
-    if (p.inHand && this.inHandStage()) {
-      throw new Error('You can add chips between hands, not during one.');
+    // Only blocked while actually contesting a hand. Once folded you are no
+    // longer in it, so topping up affects nothing that is still live.
+    if (p.inHand && !p.folded && this.inHandStage()) {
+      throw new Error('You can add chips between hands, not while playing one.');
     }
     const room = this.maxBuyIn - p.chips;
     if (room <= 0) throw new Error('You are already at the table maximum.');

@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvk67v9m';
-import { TableHost } from './host.js?v=mvk67v9m';
-import * as vault from './vault.js?v=mvk67v9m';
-import * as cloud from './cloud.js?v=mvk67v9m';
-import { bestHand } from './engine/hand.js?v=mvk67v9m';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvk67v9m';
+import { HostNet, GuestNet } from './net.js?v=mvk69zwz';
+import { TableHost } from './host.js?v=mvk69zwz';
+import * as vault from './vault.js?v=mvk69zwz';
+import * as cloud from './cloud.js?v=mvk69zwz';
+import { bestHand } from './engine/hand.js?v=mvk69zwz';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvk69zwz';
 
 const $ = (id) => document.getElementById(id);
 
@@ -1322,9 +1322,10 @@ function renderActionBar(state, prev) {
     !!me && (state.stage === 'idle' || state.stage === 'handover') &&
     state.seats.filter((s) => s && s.chips > 0 && !s.sitOut).length >= 2;
   const canRebuy = !!(me && me.chips === 0 && !me.inHand);
-  const betweenHands = !['preflop', 'flop', 'turn', 'river'].includes(state.stage) || !me?.inHand;
+  const inLiveHand = ['preflop', 'flop', 'turn', 'river'].includes(state.stage)
+    && !!me?.inHand && !me?.folded;
   const canAdd = !!(
-    me && me.chips > 0 && betweenHands &&
+    me && me.chips > 0 && !inLiveHand &&
     vault.balance() > 0 && me.chips < maxBuyIn()
   );
   show($('addChipsBtn'), canAdd);

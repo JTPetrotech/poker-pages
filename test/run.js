@@ -723,6 +723,17 @@ test('chips cannot be added in the middle of a hand', () => {
   assert(threw, 'table stakes: no reloading once the cards are out');
 });
 
+test('a folded player may top up while the hand finishes', () => {
+  const t = seatPlayers(3, { chips: 1000 });
+  t.maxBuyIn = 5000;
+  t.startHand();
+  const p = t.seats[t.actingSeat];
+  t.act(p.id, 'fold');
+  const added = t.addChips(p.id, 500);
+  eq(added, 500, 'folded means no longer in the hand');
+  eq(p.chips, 1500);
+});
+
 test('added chips count against your result, not as winnings', () => {
   const t = new Table({ id: 'A', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 5000, maxSeats: 4 });
   t.sit('a', 'A', 0, { buyIn: 1000 });
