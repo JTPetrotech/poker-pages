@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvk5ftz9';
-import { TableHost } from './host.js?v=mvk5ftz9';
-import * as vault from './vault.js?v=mvk5ftz9';
-import * as cloud from './cloud.js?v=mvk5ftz9';
-import { bestHand } from './engine/hand.js?v=mvk5ftz9';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvk5ftz9';
+import { HostNet, GuestNet } from './net.js?v=mvk5hx82';
+import { TableHost } from './host.js?v=mvk5hx82';
+import * as vault from './vault.js?v=mvk5hx82';
+import * as cloud from './cloud.js?v=mvk5hx82';
+import { bestHand } from './engine/hand.js?v=mvk5hx82';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvk5hx82';
 
 const $ = (id) => document.getElementById(id);
 
@@ -43,6 +43,7 @@ const app = {
   host: null,     // TableHost — only set in the hosting tab
   isHost: false,
   user: null,
+  unread: false,
   sized: false,
   dialogSeat: -1,
   buyIn: 0,
@@ -745,7 +746,7 @@ function enterGame() {
   paintVault();
   history.replaceState(null, '', `#${app.code}`);
   addChat('', 'Type "help" here for hand rankings.', true);
-  document.title = `Poker Night · ${app.code}`;
+  document.title = `Side Pot · ${app.code}`;
   sizeFelt();
 }
 
@@ -778,7 +779,18 @@ function initGame() {
     send({ t: 'sitout', value: !(me && me.sitOut) });
   });
 
-  $('panelToggle').addEventListener('click', () => $('panel').classList.toggle('hidden'));
+  const togglePanel = () => {
+    const hidden = $('panel').classList.toggle('hidden');
+    if (!hidden) {
+      // Opening it clears the unread marker.
+      app.unread = false;
+      show($('chatDot'), false);
+      $('chatInput').focus();
+    }
+    $('chatFab').classList.toggle('open', !hidden);
+  };
+  $('panelToggle').addEventListener('click', togglePanel);
+  $('chatFab').addEventListener('click', togglePanel);
   // On a phone the table is what matters; chat is a tap away.
   if (window.innerWidth < 860) $('panel').classList.add('hidden');
 
@@ -1278,6 +1290,10 @@ function cardEl(card, hidden, highlight) {
 }
 
 function addChat(from, text, system) {
+  if (!system && $('panel').classList.contains('hidden')) {
+    app.unread = true;
+    show($('chatDot'), true);
+  }
   const list = $('chatList');
   const atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
   const d = document.createElement('div');

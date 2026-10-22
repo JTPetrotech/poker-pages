@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Poker Night</title>
+<title>Side Pot</title>
 <meta name="description" content="Play-money No-Limit Texas Hold'em with your friends. Share a table code and deal." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%82%A1%3C/text%3E%3C/svg%3E" />
-<link rel="stylesheet" href="style.css?v=mvk5ftz9" />
+<link rel="stylesheet" href="style.css?v=mvk5hx82" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
@@ -14,7 +14,7 @@
 <!-- ------------------------------------------------------------ sign in -->
 <div id="authScreen" class="lobby" hidden>
   <div class="lobby-card">
-    <h1>Poker Night</h1>
+    <h1>Side Pot</h1>
     <p class="tagline">Sign in to keep your chips wherever you play.</p>
 
     <div class="lobby-tabs">
@@ -49,7 +49,7 @@
 <!-- ------------------------------------------------------------ lobby -->
 <div id="lobby" class="lobby">
   <div class="lobby-card">
-    <h1>Poker Night</h1>
+    <h1>Side Pot</h1>
     <p class="tagline">No-Limit Hold'em with your friends. Play money, no accounts.</p>
 
     <div id="whoami" class="whoami" hidden>
@@ -122,7 +122,7 @@
 <div id="game" class="game" hidden>
 
   <header class="topbar">
-    <div class="brand">Poker&nbsp;Night</div>
+    <div class="brand">Side&nbsp;Pot</div>
     <button id="codeChip" class="chip" title="Copy the invite link">
       Table <strong id="codeLabel">----</strong>
       <span class="copy-hint">copy link</span>
@@ -169,6 +169,12 @@
         <div id="chipList" class="scroller"></div>
       </div>
     </aside>
+    <button id="chatFab" class="chat-fab" aria-label="Open chat" title="Chat">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.4 9.4 0 0 1-2.8-.4L4 21l1.4-4.1A8.2 8.2 0 0 1 3 11.5 8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z" />
+      </svg>
+      <span id="chatDot" class="chat-dot" hidden></span>
+    </button>
   </main>
 
   <footer id="actionbar" class="actionbar">
@@ -258,6 +264,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvk5ftz9"></script>
+<script type="module" src="app.js?v=mvk5hx82"></script>
 </body>
 </html>

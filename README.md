@@ -1,4 +1,4 @@
-# ♠ Poker Night
+# ♠ Side Pot
 
 Play-money No-Limit Texas Hold'em with your friends, in the browser.
 No server, no accounts, nothing to install.
