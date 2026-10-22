@@ -881,3 +881,40 @@ input { font: inherit; }
   .rank-name { font-size: 12px; }
   .rank-note { display: none; }
 }
+
+/* ---------------------------------------------------------------- your hand */
+
+.your-hand {
+  margin-bottom: 14px;
+  padding: 11px 12px;
+  background: #eaf7f0;
+  border: 1px solid rgba(31, 138, 77, 0.45);
+  border-radius: 10px;
+}
+
+.your-hand-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.your-hand-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--green);
+  margin-bottom: 7px;
+}
+
+.your-hand .rank-cards .card { width: 26px; height: 37px; border-radius: 4px; }
+.your-hand .rank-cards .card .r { font-size: 12px; }
+.your-hand .rank-cards .card .s { font-size: 9px; }
+
+.your-hand-note { margin-top: 7px; font-size: 11px; color: var(--muted); }
+
+.rank-row.mine {
+  border-color: var(--green);
+  background: #eaf7f0;
+  box-shadow: 0 0 0 1px rgba(31, 138, 77, 0.25);
+}
+.rank-row.mine .rank-no { color: var(--green); font-weight: 700; }

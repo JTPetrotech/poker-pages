@@ -1,6 +1,6 @@
-import { HostNet, GuestNet } from './net.js?v=mvk549qc';
-import { TableHost } from './host.js?v=mvk549qc';
-import * as vault from './vault.js?v=mvk549qc';
+import { HostNet, GuestNet } from './net.js?v=mvk5aqwb';
+import { TableHost } from './host.js?v=mvk5aqwb';
+import * as vault from './vault.js?v=mvk5aqwb';
 
 const $ = (id) => document.getElementById(id);
 
@@ -622,6 +622,82 @@ const HAND_RANKINGS = [
   ['High Card', 'Nothing made — highest card plays', 'Ad Qs 9h 5c 2d'],
 ];
 
+
+/** Where each hand category sits in the rankings list, best first. */
+const CATEGORY_ROW = { 7: 2, 6: 3, 5: 4, 4: 5, 3: 6, 2: 7, 1: 8, 0: 9 };
+
+/** Before the flop there is no five-card hand yet — name the two you hold. */
+function startingHandName(cards) {
+  const [a, b] = cards;
+  const hi = Math.max(cardValue(a), cardValue(b));
+  const lo = Math.min(cardValue(a), cardValue(b));
+  if (hi === lo) return `Pocket ${RANK_PLURALS[hi]}`;
+  const suited = cardSuit(a) === cardSuit(b) ? ', suited' : '';
+  return `${RANK_NAMES[hi]}-${RANK_NAMES[lo]}${suited}`;
+}
+
+/**
+ * What the viewer is actually holding right now: their best five once there
+ * is a board, or their two cards before the flop.
+ */
+function currentHand() {
+  const state = app.state;
+  const you = state?.you;
+  if (!you || !Array.isArray(you.cards) || you.cards.length < 2) return null;
+  if (you.cards.some((c) => !c || c === '??')) return null;
+
+  const me = mySeat();
+  if (me && me.folded) {
+    return { name: 'You folded this hand', cards: you.cards, note: 'Wait for the next deal.', row: -1 };
+  }
+
+  const board = state.community || [];
+  if (board.length < 3) {
+    return {
+      name: startingHandName(you.cards),
+      cards: you.cards,
+      note: 'No five-card hand yet — the flop decides that.',
+      row: -1,
+    };
+  }
+
+  const hand = bestHand([...you.cards, ...board]);
+  const category = hand.score[0];
+  const row = category === 8 ? (hand.score[1] === 14 ? 0 : 1) : CATEGORY_ROW[category];
+  return {
+    name: hand.name,
+    cards: hand.cards,
+    note: 'Your best five right now, from your two cards and the board.',
+    row,
+  };
+}
+
+function paintYourHand() {
+  const box = $('yourHand');
+  const info = currentHand();
+  document.querySelectorAll('.rank-row').forEach((r) => r.classList.remove('mine'));
+
+  if (!info) {
+    show(box, false);
+    return;
+  }
+
+  $('yourHandName').textContent = info.name;
+  $('yourHandNote').textContent = info.note;
+  const cards = $('yourHandCards');
+  cards.innerHTML = '';
+  for (const c of info.cards) cards.appendChild(cardEl(c, false, false));
+  show(box, true);
+
+  if (info.row >= 0) {
+    const row = document.querySelectorAll('.rank-row')[info.row];
+    if (row) {
+      row.classList.add('mine');
+      row.scrollIntoView({ block: 'nearest' });
+    }
+  }
+}
+
 function openHelp() {
   const list = $('rankList');
   if (!list.childElementCount) {
@@ -651,6 +727,7 @@ function openHelp() {
       list.appendChild(row);
     });
   }
+  paintYourHand();
   show($('helpModal'), true);
 }
 
