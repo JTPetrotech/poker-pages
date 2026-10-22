@@ -918,3 +918,18 @@ input { font: inherit; }
   box-shadow: 0 0 0 1px rgba(31, 138, 77, 0.25);
 }
 .rank-row.mine .rank-no { color: var(--green); font-weight: 700; }
+
+/* On a narrow screen the chat used to steal height from the table, squashing
+   the seats into each other. Let it cover the table instead — the table keeps
+   its size, and the action buttons stay reachable underneath. */
+@media (max-width: 860px) {
+  .main { position: relative; }
+  .panel {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-height: none;
+    border-top: 0;
+    z-index: 30;
+  }
+}
