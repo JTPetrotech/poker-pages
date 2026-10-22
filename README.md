@@ -82,3 +82,14 @@ node build.js
 node test/run.js
 git commit -am "..." && git push
 ```
+
+### The one cache you cannot stamp
+
+`build.js` stamps the stylesheet and every module, so those update instantly.
+`index.html` cannot stamp itself, and GitHub Pages serves it with a ten-minute
+cache that cannot be overridden. So for up to ten minutes after a deploy, a
+browser that has been here before may still load the previous page, which
+points at the previous assets.
+
+A hard refresh (Ctrl+Shift+R) gets it immediately. First-time visitors always
+get the current version.
