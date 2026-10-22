@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvk5hx82';
-import { TableHost } from './host.js?v=mvk5hx82';
-import * as vault from './vault.js?v=mvk5hx82';
-import * as cloud from './cloud.js?v=mvk5hx82';
-import { bestHand } from './engine/hand.js?v=mvk5hx82';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvk5hx82';
+import { HostNet, GuestNet } from './net.js?v=mvk5l3fi';
+import { TableHost } from './host.js?v=mvk5l3fi';
+import * as vault from './vault.js?v=mvk5l3fi';
+import * as cloud from './cloud.js?v=mvk5l3fi';
+import { bestHand } from './engine/hand.js?v=mvk5l3fi';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvk5l3fi';
 
 const $ = (id) => document.getElementById(id);
 
@@ -779,20 +779,23 @@ function initGame() {
     send({ t: 'sitout', value: !(me && me.sitOut) });
   });
 
-  const togglePanel = () => {
-    const hidden = $('panel').classList.toggle('hidden');
-    if (!hidden) {
-      // Opening it clears the unread marker.
+  const setPanel = (open) => {
+    $('panel').classList.toggle('hidden', !open);
+    // The button would otherwise sit on top of the Send button.
+    show($('chatFab'), !open);
+    if (open) {
       app.unread = false;
       show($('chatDot'), false);
       $('chatInput').focus();
     }
-    $('chatFab').classList.toggle('open', !hidden);
   };
+  const togglePanel = () => setPanel($('panel').classList.contains('hidden'));
+
   $('panelToggle').addEventListener('click', togglePanel);
   $('chatFab').addEventListener('click', togglePanel);
-  // On a phone the table is what matters; chat is a tap away.
-  if (window.innerWidth < 860) $('panel').classList.add('hidden');
+  $('panelClose').addEventListener('click', () => setPanel(false));
+  // Start closed on a phone, where the panel covers the table.
+  setPanel(window.innerWidth >= 860);
 
   for (const tab of document.querySelectorAll('.ptab')) {
     tab.addEventListener('click', () => {

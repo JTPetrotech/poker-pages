@@ -966,3 +966,15 @@ input { font: inherit; }
   background: var(--red);
   border: 2px solid var(--bg-2);
 }
+
+.panel-close {
+  flex: 0 0 auto;
+  width: 38px;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+}
+.panel-close:hover { color: var(--text); }
