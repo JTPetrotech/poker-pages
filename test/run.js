@@ -584,6 +584,8 @@ globalThis.localStorage = {
 
 function freshVault() {
   globalThis.localStorage.clear();
+  // The vault now keeps an in-memory copy, so clearing storage is not enough.
+  vault.detach();
 }
 
 test('a new vault starts with the house stake', () => {
@@ -644,12 +646,16 @@ test('an empty vault reloads, a full one does not', () => {
   eq(vault.balance(), 10000, 'reloading a full vault is a no-op');
 });
 
-test('a corrupted vault falls back to a sane balance', () => {
+test('unreadable storage starts a fresh vault', () => {
   freshVault();
   globalThis.localStorage.setItem('pn.profile.v1', 'not json at all');
-  eq(vault.balance(), 10000, 'unreadable storage starts fresh');
+  eq(vault.balance(), 10000);
+});
+
+test('a negative stored balance is clamped to zero', () => {
+  freshVault();
   globalThis.localStorage.setItem('pn.profile.v1', JSON.stringify({ vault: -500 }));
-  eq(vault.balance(), 0, 'a negative balance is clamped');
+  eq(vault.balance(), 0);
 });
 
 test('a stack is never credited twice', () => {
@@ -664,6 +670,30 @@ test('a stack is never credited twice', () => {
   eq(vault.clearAtTable(), 0);
   eq(vault.recoverStranded(), 0);
   eq(vault.balance(), 10000, 'balance is unchanged by repeat attempts');
+});
+
+test('a signed-in account replaces the local profile', () => {
+  freshVault();
+  vault.withdraw(2000);                 // local profile: 8,000 left
+  eq(vault.balance(), 8000);
+
+  const saved = [];
+  vault.adopt({ vault: 25000, handsPlayed: 7 }, { uid: 'u1', save: (p) => saved.push(p.vault) });
+  eq(vault.balance(), 25000, 'the account profile wins, not the device one');
+  eq(vault.profile().handsPlayed, 7);
+
+  vault.deposit(500);
+  eq(saved[saved.length - 1], 25500, 'writes are pushed to the account');
+
+  vault.detach();
+  eq(vault.balance(), 8000, 'signing out returns to this device profile');
+});
+
+test('a brand new account starts with a full vault', () => {
+  freshVault();
+  vault.adopt(null, { uid: 'u2', save: () => {} });
+  eq(vault.balance(), 10000);
+  vault.detach();
 });
 
 // ------------------------------------------------------------------ report

@@ -24,9 +24,13 @@ const BLANK = {
   created: null,
 };
 
-function read() {
+let cache = null;
+let remote = null;        // { uid, save(profile) } once signed in
+let storageKey = KEY;
+
+function readStored() {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(storageKey);
     if (!raw) return { ...BLANK, created: Date.now() };
     const parsed = JSON.parse(raw);
     const profile = { ...BLANK, ...parsed };
@@ -38,11 +42,44 @@ function read() {
   }
 }
 
+function read() {
+  if (!cache) cache = readStored();
+  return cache;
+}
+
 function write(profile) {
+  cache = profile;
   try {
-    localStorage.setItem(KEY, JSON.stringify(profile));
-  } catch { /* private mode: the vault just won't persist */ }
+    localStorage.setItem(storageKey, JSON.stringify(profile));
+  } catch { /* private mode: the local mirror just won't persist */ }
+  // Signed in, the local copy is only a mirror — the account is the truth.
+  if (remote) remote.save(profile);
   return profile;
+}
+
+/**
+ * Attach a signed-in account. `profile` is whatever the account already had,
+ * or null for a brand new one. Reads stay synchronous because the profile is
+ * held in memory from here on; writes mirror locally and sync to the account.
+ */
+export function adopt(profile, backend) {
+  storageKey = `${KEY}:${backend.uid}`;
+  remote = backend;
+  const merged = { ...BLANK, ...(profile || {}) };
+  merged.vault = Math.max(0, Math.floor(Number(merged.vault) || 0));
+  if (!merged.created) merged.created = Date.now();
+  return write(merged);
+}
+
+/** Sign out: forget the account's profile and fall back to this device's. */
+export function detach() {
+  remote = null;
+  storageKey = KEY;
+  cache = null;
+}
+
+export function isCloudBacked() {
+  return remote !== null;
 }
 
 export function profile() {

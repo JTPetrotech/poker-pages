@@ -1,6 +1,6 @@
-import { HostNet, GuestNet } from './net.js?v=mviv7ch0';
-import { TableHost } from './host.js?v=mviv7ch0';
-import * as vault from './vault.js?v=mviv7ch0';
+import { HostNet, GuestNet } from './net.js?v=mvj0wc08';
+import { TableHost } from './host.js?v=mvj0wc08';
+import * as vault from './vault.js?v=mvj0wc08';
 
 const $ = (id) => document.getElementById(id);
 
@@ -39,6 +39,7 @@ const app = {
   net: null,      // HostNet when hosting, GuestNet when joining
   host: null,     // TableHost — only set in the hosting tab
   isHost: false,
+  user: null,
   dialogSeat: -1,
   buyIn: 0,
   pendingBuyIn: 0,  // withdrawn but not yet confirmed in a seat
@@ -465,6 +466,141 @@ function cashOut(amount, reason) {
     paintVault();
     if (reason) toast(`${fmt(chips)} chips returned to your vault.`);
   }
+}
+
+
+// ---------------------------------------------------------------- accounts
+
+/**
+ * Sign-in, when a Firebase project is configured. Without one the site runs
+ * exactly as it always has: no accounts, vault saved in this browser.
+ */
+
+let authMode = 'in';   // 'in' to sign in, 'up' to create an account
+
+function authError(msg) {
+  const el = $('authError');
+  el.textContent = msg || '';
+  el.hidden = !msg;
+}
+
+function authBusy(on) {
+  $('authBusy').hidden = !on;
+  $('authSubmit').disabled = on;
+}
+
+function setAuthMode(mode) {
+  authMode = mode;
+  document.querySelectorAll('.atab').forEach((t) => t.classList.toggle('active', t.dataset.atab === mode));
+  show($('authNameField'), mode === 'up');
+  $('authSubmit').textContent = mode === 'up' ? 'Create account' : 'Sign in';
+  $('authPassword').setAttribute('autocomplete', mode === 'up' ? 'new-password' : 'current-password');
+  show($('authForgot'), mode === 'in');
+  authError('');
+}
+
+async function startCloud() {
+  const ready = await cloud.initCloud();
+  if (!ready) return false;
+
+  cloud.onAuth(async (user) => {
+    if (!user) {
+      vault.detach();
+      app.user = null;
+      show($('authScreen'), true);
+      show($('lobby'), false);
+      return;
+    }
+
+    app.user = user;
+    // Pull this account's profile, or start one for a new player.
+    let stored = null;
+    try {
+      stored = await cloud.loadProfile(user.uid);
+    } catch {
+      // Offline or rules not set: fall back to the device copy rather than
+      // locking someone out of a game they can otherwise play.
+      toast('Could not reach your account. Using the chips saved on this device.');
+    }
+    const profile = vault.adopt(stored, {
+      uid: user.uid,
+      save: (p) => cloud.saveProfile(user.uid, p),
+    });
+    if (!stored) cloud.createProfile(user.uid, profile).catch(() => {});
+
+    const name = user.name || profile.name || 'Player';
+    app.name = name;
+    store.name = name;
+    vault.setName(name);
+
+    show($('authScreen'), false);
+    show($('lobby'), true);
+    show($('whoami'), true);
+    show($('nameField'), false);
+    $('whoamiName').textContent = name;
+    $('nameInput').value = name;
+    paintVault();
+  });
+
+  return true;
+}
+
+function initAuthUi() {
+  document.querySelectorAll('.atab').forEach((t) => {
+    t.addEventListener('click', () => setAuthMode(t.dataset.atab));
+  });
+
+  $('authSubmit').addEventListener('click', async () => {
+    const email = $('authEmail').value.trim();
+    const password = $('authPassword').value;
+    const name = $('authName').value.trim().slice(0, 16);
+    if (!email) return authError('Enter your email address.');
+    if (!password) return authError('Enter your password.');
+    if (authMode === 'up' && !name) return authError('Pick a display name so players know who you are.');
+
+    authBusy(true);
+    authError('');
+    try {
+      if (authMode === 'up') await cloud.signUp(email, password, name);
+      else await cloud.signIn(email, password);
+      $('authPassword').value = '';
+    } catch (err) {
+      authError(err.message);
+    } finally {
+      authBusy(false);
+    }
+  });
+
+  for (const id of ['authEmail', 'authPassword', 'authName']) {
+    $(id).addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') $('authSubmit').click();
+    });
+  }
+
+  $('authForgot').addEventListener('click', async () => {
+    const email = $('authEmail').value.trim();
+    if (!email) return authError('Enter your email address first, then tap this again.');
+    try {
+      await cloud.resetPassword(email);
+      authError('');
+      $('authBusy').textContent = 'Check your email for a reset link.';
+      $('authBusy').hidden = false;
+    } catch (err) {
+      authError(err.message);
+    }
+  });
+
+  $('signOutBtn').addEventListener('click', async () => {
+    if (app.net) {
+      const me = mySeat();
+      send({ t: 'stand' });
+      cashOut(me ? me.chips : 0);
+      teardown();
+    }
+    cloud.flush();
+    await cloud.signOutUser();
+    location.reload();
+  });
 }
 
 // ---------------------------------------------------------------- game shell
@@ -969,6 +1105,7 @@ setInterval(() => {
 
 show($('game'), false);
 show($('modal'), false);
+show($('authScreen'), false);
 
 // A previous session that never cashed out gets settled up now.
 const stranded = vault.recoverStranded();
@@ -976,6 +1113,17 @@ const stranded = vault.recoverStranded();
 initLobby();
 initGame();
 initVaultUi();
+initAuthUi();
+setAuthMode('in');
+
+// With a Firebase project configured, sign-in comes first and the lobby waits.
+if (cloud.isConfigured()) {
+  show($('lobby'), false);
+  show($('authScreen'), true);
+  startCloud().catch(() => {
+    authError('Could not load sign-in. Check the Firebase settings in firebase-config.js.');
+  });
+}
 
 if (stranded > 0) {
   lobbyError('');

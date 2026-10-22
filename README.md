@@ -15,6 +15,57 @@ introduces two browsers to each other; once connected, cards go peer to peer.
 That has one consequence worth knowing: **the host's tab is the table.** If the
 host closes it, the game ends for everyone. The page warns before that happens.
 
+## Accounts
+
+Without a Firebase project configured the site runs with no sign-in at all,
+and the vault is saved in whichever browser you played in. Configure one and
+sign-in becomes required, and your chips follow you to any device.
+
+### Setting it up (about 10 minutes, free, no card)
+
+1. Go to <https://console.firebase.google.com> and **Add project**. Any name.
+   Decline Google Analytics — nothing here needs it.
+2. In the left sidebar: **Build → Authentication → Get started**, choose
+   **Email/Password**, switch the first toggle on, **Save**.
+3. **Build → Firestore Database → Create database**. Pick a location near you
+   and start in **production mode** (the rules below replace the defaults).
+4. Open the **Rules** tab and paste this, then **Publish**:
+
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /players/{uid} {
+         allow read: if request.auth != null;
+         allow write: if request.auth != null && request.auth.uid == uid;
+       }
+     }
+   }
+   ```
+
+   This is what actually protects the data: anyone signed in can read a
+   profile, but only you can write your own.
+5. **Project settings** (the gear) → scroll to **Your apps** → the `</>` web
+   icon. Register the app, and copy the `firebaseConfig` object it shows you.
+6. Paste those values into `firebase-config.js`, then run `node build.js` and
+   commit.
+7. **Authentication → Settings → Authorized domains** → add
+   `jtpetrotech.github.io`, or sign-in is refused from the live site.
+
+The config values are public by design — they identify the project, they do
+not grant access. They are meant to sit in client code.
+
+### What accounts change
+
+- Sign-in is required before the lobby.
+- The vault lives on the account, so it follows you between devices.
+- Your display name comes from the account rather than being typed each time.
+- Writes are debounced: a stack changes on every action, and one network
+  round trip per chip would be slow and wasteful.
+
+If the account cannot be reached mid-session, the game keeps running on the
+local copy rather than interrupting a hand.
+
 ## Vault
 
 Your chips live in a **vault** between games. You take some out to buy into a

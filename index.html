@@ -6,10 +6,45 @@
 <title>Poker Night</title>
 <meta name="description" content="Play-money No-Limit Texas Hold'em with your friends. Share a table code and deal." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%82%A1%3C/text%3E%3C/svg%3E" />
-<link rel="stylesheet" href="style.css?v=mviv7ch0" />
+<link rel="stylesheet" href="style.css?v=mvj0wc08" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
+
+<!-- ------------------------------------------------------------ sign in -->
+<div id="authScreen" class="lobby" hidden>
+  <div class="lobby-card">
+    <h1>Poker Night</h1>
+    <p class="tagline">Sign in to keep your chips wherever you play.</p>
+
+    <div class="lobby-tabs">
+      <button class="atab active" data-atab="in">Sign in</button>
+      <button class="atab" data-atab="up">Create account</button>
+    </div>
+
+    <label class="field" id="authNameField" hidden>
+      <span>Display name</span>
+      <input id="authName" maxlength="16" placeholder="What players see at the table" autocomplete="nickname" />
+    </label>
+
+    <label class="field">
+      <span>Email</span>
+      <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+    </label>
+
+    <label class="field">
+      <span>Password</span>
+      <input id="authPassword" type="password" placeholder="At least 6 characters" autocomplete="current-password" />
+    </label>
+
+    <button id="authSubmit" class="primary">Sign in</button>
+    <button id="authForgot" class="linkish block">Forgot your password?</button>
+
+    <p id="authError" class="error" hidden></p>
+    <p id="authBusy" class="busy" hidden>One moment…</p>
+    <p class="fineprint">Play money only. Nothing here involves real stakes.</p>
+  </div>
+</div>
 
 <!-- ------------------------------------------------------------ lobby -->
 <div id="lobby" class="lobby">
@@ -17,7 +52,12 @@
     <h1>Poker Night</h1>
     <p class="tagline">No-Limit Hold'em with your friends. Play money, no accounts.</p>
 
-    <label class="field">
+    <div id="whoami" class="whoami" hidden>
+      Playing as <strong id="whoamiName">—</strong>
+      <button id="signOutBtn" class="linkish">Sign out</button>
+    </div>
+
+    <label class="field" id="nameField">
       <span>Your name</span>
       <input id="nameInput" maxlength="16" placeholder="e.g. JT" autocomplete="nickname" />
     </label>
@@ -200,6 +240,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mviv7ch0"></script>
+<script type="module" src="app.js?v=mvj0wc08"></script>
 </body>
 </html>

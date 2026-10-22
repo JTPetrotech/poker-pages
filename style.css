@@ -740,3 +740,39 @@ input { font: inherit; }
 
 .bot-pick.hard { border-color: #c6a24a; background: #fdf6e4; }
 .bot-pick.hard:hover { border-color: var(--gold); }
+
+/* ---------------------------------------------------------------- accounts */
+
+.linkish.block {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 0;
+  text-align: center;
+}
+
+.whoami {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.whoami strong { color: var(--text); }
+.whoami .linkish { margin-left: auto; padding: 0; }
+
+.atab {
+  flex: 1;
+  padding: 9px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  border-radius: 9px;
+}
+.atab.active { background: #e6ecf1; color: var(--text); border-color: #b9c5cf; }
