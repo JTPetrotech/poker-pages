@@ -6,7 +6,7 @@
 <title>Side Pot</title>
 <meta name="description" content="Play-money No-Limit Texas Hold'em with your friends. Share a table code and deal." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%82%A1%3C/text%3E%3C/svg%3E" />
-<link rel="stylesheet" href="style.css?v=mvk5wo85" />
+<link rel="stylesheet" href="style.css?v=mvk67v9m" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
@@ -115,6 +115,7 @@
     <p id="lobbyError" class="error" hidden></p>
     <p id="lobbyBusy" class="busy" hidden>Connecting…</p>
     <p class="fineprint">Play money only. Nothing here involves real stakes.</p>
+    <p class="build">Update <span class="build-no" id="lobbyBuild">0</span></p>
   </div>
 </div>
 
@@ -178,6 +179,8 @@
     </button>
   </main>
 
+  <div id="buildTag" class="build-tag">Update <span class="build-no" id="buildNo">0</span></div>
+
   <footer id="actionbar" class="actionbar">
     <div id="waitingMsg" class="waiting"></div>
 
@@ -202,6 +205,7 @@
 
     <div id="idleControls" class="controls" hidden>
       <button id="rebuyBtn" class="primary" hidden>Top up chips</button>
+      <button id="addChipsBtn" class="primary" hidden>Add chips from vault</button>
       <button id="startBtn" class="primary" hidden>Deal now</button>
     </div>
   </footer>
@@ -265,6 +269,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvk5wo85"></script>
+<script type="module" src="app.js?v=mvk67v9m"></script>
 </body>
 </html>

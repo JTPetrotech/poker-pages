@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvk5wo85';
-import { TableHost } from './host.js?v=mvk5wo85';
-import * as vault from './vault.js?v=mvk5wo85';
-import * as cloud from './cloud.js?v=mvk5wo85';
-import { bestHand } from './engine/hand.js?v=mvk5wo85';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvk5wo85';
+import { HostNet, GuestNet } from './net.js?v=mvk67v9m';
+import { TableHost } from './host.js?v=mvk67v9m';
+import * as vault from './vault.js?v=mvk67v9m';
+import * as cloud from './cloud.js?v=mvk67v9m';
+import { bestHand } from './engine/hand.js?v=mvk67v9m';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvk67v9m';
 
 const $ = (id) => document.getElementById(id);
 
@@ -16,6 +16,12 @@ function show(el, visible) {
   el.hidden = !visible;
   el.style.display = visible ? '' : 'none';
 }
+
+/**
+ * Shown at the bottom of the screen. Goes up by one for each substantial
+ * change, so it is clear at a glance whether a browser has the latest build.
+ */
+const BUILD = 12;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -60,6 +66,9 @@ const app = {
   isHost: false,
   user: null,
   unread: false,
+  dialogMode: 'sit',
+  pendingAdd: 0,
+  addBounds: null,
   sized: false,
   dialogSeat: -1,
   buyIn: 0,
@@ -329,6 +338,11 @@ function onMessage(msg) {
       render(msg.state);
       break;
     }
+    case 'added': {
+      app.pendingAdd = 0;
+      bubbleAtMySeat(`+${fmt(msg.amount)} chips`);
+      break;
+    }
     case 'cashout':
       cashOut(msg.amount, 'stand');
       break;
@@ -337,9 +351,10 @@ function onMessage(msg) {
       break;
     case 'error': {
       // A rejected sit leaves chips in limbo — put them straight back.
-      if (app.pendingBuyIn) {
-        vault.deposit(app.pendingBuyIn);
+      if (app.pendingBuyIn || app.pendingAdd) {
+        vault.deposit(app.pendingBuyIn + app.pendingAdd);
         app.pendingBuyIn = 0;
+        app.pendingAdd = 0;
         paintVault();
       }
       if ($('game').hidden) lobbyError(msg.message);
@@ -351,6 +366,33 @@ function onMessage(msg) {
 
 
 // ---------------------------------------------------------------- vault & seats
+
+/**
+ * A short-lived bubble above a seat, for things worth announcing that the
+ * stack number alone does not make obvious — like chips arriving from the
+ * vault. Lives on the felt rather than inside the seat, because the seats are
+ * rebuilt on every state update and would wipe it.
+ */
+function bubbleAtSeat(seatEl, text) {
+  const felt = $('felt');
+  if (!felt || !seatEl) return;
+  const feltBox = felt.getBoundingClientRect();
+  const seatBox = seatEl.getBoundingClientRect();
+
+  const bubble = document.createElement('div');
+  bubble.className = 'chip-bubble';
+  bubble.textContent = text;
+  bubble.style.left = `${seatBox.left - feltBox.left + seatBox.width / 2}px`;
+  bubble.style.top = `${seatBox.top - feltBox.top}px`;
+  felt.appendChild(bubble);
+  setTimeout(() => bubble.remove(), 4000);
+}
+
+function bubbleAtMySeat(text) {
+  bubbleAtSeat(document.querySelector('.seat.me'), text);
+}
+
+
 
 /**
  * Chips move between the vault and the table in exactly two places: a buy-in
@@ -366,6 +408,9 @@ function maxBuyIn() {
 function buyInBounds() {
   const cfg = app.config || {};
   const bal = vault.balance();
+  if (app.dialogMode === 'add' && app.addBounds) {
+    return { ...app.addBounds, bal };
+  }
   const min = Math.min(cfg.bigBlind || 10, bal);
   const max = Math.min(bal, maxBuyIn());
   return { min, max, bal };
@@ -380,7 +425,45 @@ function setBuyIn(value) {
   $('buyInLabel').textContent = fmt(v);
 }
 
+/** Reuse the buy-in dialog to bring more chips from the vault to the table. */
+function openAddChips() {
+  const me = mySeat();
+  if (!me) return;
+  app.dialogMode = 'add';
+  app.dialogSeat = me.seat;
+
+  const cfg = app.config || {};
+  const bal = vault.balance();
+  const room = Math.max(0, maxBuyIn() - me.chips);
+  const max = Math.min(bal, room);
+
+  $('modalTitle').textContent = 'Add chips';
+  $('modalSub').innerHTML =
+    `At the table <strong>${fmt(me.chips)}</strong> · Vault <strong>${fmt(bal)}</strong>`;
+  modalError('');
+  show($('botSection'), false);
+  show($('emptyVault'), bal <= 0);
+  show($('buyInBlock'), bal > 0 && room > 0);
+
+  if (bal > 0 && room > 0) {
+    const min = Math.min(cfg.bigBlind || 10, max);
+    $('buyInRange').min = String(min);
+    $('buyInRange').max = String(max);
+    $('buyInAmount').min = String(min);
+    $('buyInAmount').max = String(max);
+    app.addBounds = { min, max };
+    setBuyIn(Math.min(cfg.startingStack || 1000, max));
+  } else if (room <= 0) {
+    modalError('You are already at the table maximum.');
+  }
+
+  $('sitConfirm').textContent = 'Add chips';
+  show($('modal'), true);
+}
+
 function openSeatDialog(seat) {
+  app.dialogMode = 'sit';
+  $('sitConfirm').textContent = 'Sit down';
   app.dialogSeat = seat;
   const cfg = app.config || {};
   const { min, max, bal } = buyInBounds();
@@ -442,6 +525,16 @@ function initVaultUi() {
   }
 
   $('sitConfirm').addEventListener('click', () => {
+    if (app.dialogMode === 'add') {
+      const taken = vault.withdraw(app.buyIn);
+      if (taken <= 0) return modalError('Not enough in your vault.');
+      app.pendingAdd = taken;
+      paintVault();
+      send({ t: 'addchips', amount: taken });
+      closeSeatDialog();
+      return;
+    }
+
     const seat = app.dialogSeat;
     if (seat < 0) return;
     // Take the chips out now; refund if the table turns us away.
@@ -859,6 +952,8 @@ function initGame() {
     if (!legal) return;
     act(legal.canBet ? 'bet' : 'raise', app.betTo);
   });
+  $('addChipsBtn').addEventListener('click', openAddChips);
+
   $('rebuyBtn').addEventListener('click', () => {
     const { min, max } = buyInBounds();
     if (max <= 0) {
@@ -1227,9 +1322,15 @@ function renderActionBar(state, prev) {
     !!me && (state.stage === 'idle' || state.stage === 'handover') &&
     state.seats.filter((s) => s && s.chips > 0 && !s.sitOut).length >= 2;
   const canRebuy = !!(me && me.chips === 0 && !me.inHand);
+  const betweenHands = !['preflop', 'flop', 'turn', 'river'].includes(state.stage) || !me?.inHand;
+  const canAdd = !!(
+    me && me.chips > 0 && betweenHands &&
+    vault.balance() > 0 && me.chips < maxBuyIn()
+  );
+  show($('addChipsBtn'), canAdd);
   show($('startBtn'), canStart);
   show($('rebuyBtn'), canRebuy);
-  show(idle, canStart || canRebuy);
+  show(idle, canStart || canRebuy || canAdd);
 
   if (legal) {
     show(controls, true);
@@ -1355,6 +1456,9 @@ function fmt(n) {
 setInterval(() => {
   if (app.state?.actingSeat >= 0 && app.state.actionDeadline) renderSeats(app.state);
 }, 500);
+
+$('buildNo').textContent = String(BUILD);
+$('lobbyBuild').textContent = String(BUILD);
 
 show($('game'), false);
 show($('modal'), false);

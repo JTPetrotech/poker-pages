@@ -696,6 +696,41 @@ test('a brand new account starts with a full vault', () => {
   vault.detach();
 });
 
+test('chips can be added between hands, within the table maximum', () => {
+  const t = new Table({ id: 'A', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 2000, maxSeats: 4 });
+  t.sit('a', 'A', 0, { buyIn: 500 });
+  const added = t.addChips('a', 400);
+  eq(added, 400);
+  eq(t.seats[0].chips, 900);
+  // Capped at the table maximum rather than refused outright.
+  eq(t.addChips('a', 5000), 1100, 'tops up to the maximum, no further');
+  eq(t.seats[0].chips, 2000);
+});
+
+test('adding chips is refused once at the maximum', () => {
+  const t = new Table({ id: 'A', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 1000, maxSeats: 4 });
+  t.sit('a', 'A', 0, { buyIn: 1000 });
+  let threw = false;
+  try { t.addChips('a', 100); } catch { threw = true; }
+  assert(threw, 'no room left');
+});
+
+test('chips cannot be added in the middle of a hand', () => {
+  const t = seatPlayers(3, { chips: 1000 });
+  t.startHand();
+  let threw = false;
+  try { t.addChips(t.players()[0].id, 500); } catch { threw = true; }
+  assert(threw, 'table stakes: no reloading once the cards are out');
+});
+
+test('added chips count against your result, not as winnings', () => {
+  const t = new Table({ id: 'A', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 5000, maxSeats: 4 });
+  t.sit('a', 'A', 0, { buyIn: 1000 });
+  const before = t.seats[0].netResult;
+  t.addChips('a', 600);
+  eq(t.seats[0].netResult, before - 600, 'money brought to the table is not profit');
+});
+
 // ------------------------------------------------------------------ report
 
 console.log('\n');

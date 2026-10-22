@@ -1,5 +1,5 @@
-import { Table } from './engine/game.js?v=mvk5wo85';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvk5wo85';
+import { Table } from './engine/game.js?v=mvk67v9m';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvk67v9m';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;
@@ -140,6 +140,11 @@ export class TableHost {
         table.rebuy(token, Number(msg.amount) || table.startingStack);
         this.#scheduleStart(IDLE_START_DELAY_MS);
         break;
+      case 'addchips': {
+        const added = table.addChips(token, msg.amount);
+        this.deliver(token, { t: 'added', amount: added });
+        break;
+      }
       case 'sitout':
         table.setSitOut(token, !!msg.value);
         break;

@@ -1,5 +1,5 @@
-import { makeDeck, shuffle } from './cards.js?v=mvk5wo85';
-import { bestHand, compareScores } from './hand.js?v=mvk5wo85';
+import { makeDeck, shuffle } from './cards.js?v=mvk67v9m';
+import { bestHand, compareScores } from './hand.js?v=mvk67v9m';
 
 export const STAGES = ['idle', 'preflop', 'flop', 'turn', 'river', 'showdown', 'handover'];
 
@@ -132,6 +132,28 @@ export class Table {
     p.netResult -= topUp;
     p.sitOut = false;
     this.pushLog(`${p.name} topped up with ${topUp}.`);
+  }
+
+  /**
+   * Bring more chips from the vault to the table. Only between hands: adding
+   * to a live stack is against table stakes, and would let someone reload
+   * after seeing their cards.
+   */
+  addChips(id, amount) {
+    const p = this.playerById(id);
+    if (!p) throw new Error('You are not seated.');
+    if (p.inHand && this.inHandStage()) {
+      throw new Error('You can add chips between hands, not during one.');
+    }
+    const room = this.maxBuyIn - p.chips;
+    if (room <= 0) throw new Error('You are already at the table maximum.');
+    const added = Math.min(Math.floor(Number(amount) || 0), room);
+    if (added <= 0) throw new Error('Nothing to add.');
+    p.chips += added;
+    p.netResult -= added;
+    p.sitOut = false;
+    this.pushLog(`${p.name} adds ${added} chips.`);
+    return added;
   }
 
   setSitOut(id, value) {
