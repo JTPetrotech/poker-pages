@@ -1,5 +1,5 @@
-import { Table } from './engine/game.js?v=mvlhpaeb';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvlhpaeb';
+import { Table } from './engine/game.js?v=mvli31g4';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvli31g4';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;
@@ -33,16 +33,18 @@ export class TableHost {
     this.botActAt = 0;   // bots pause before acting so hands stay readable
     this.botSeq = 0;
 
-    const smallBlind = clampInt(options.smallBlind, 1, 10_000, 5);
-    let bigBlind = clampInt(options.bigBlind, 2, 20_000, 10);
+    const smallBlind = clampInt(options.smallBlind, 1, 1_000_000, 5);
+    let bigBlind = clampInt(options.bigBlind, 2, 2_000_000, 10);
     if (bigBlind <= smallBlind) bigBlind = smallBlind * 2;
 
     this.table = new Table({
       id: code,
       smallBlind,
       bigBlind,
-      startingStack: clampInt(options.startingStack, 20, 1_000_000, 1000),
-      maxBuyIn: clampInt(options.maxBuyIn, 20, 50_000_000, 10_000_000),
+      startingStack: clampInt(options.startingStack, 20, 1_000_000_000, 1000),
+      // Deliberately far beyond anything a play-money game reaches, so the
+      // cap is never what stops you moving your own chips about.
+      maxBuyIn: clampInt(options.maxBuyIn, 20, 1_000_000_000_000, 1_000_000_000),
       maxSeats: clampInt(options.maxSeats, 2, 9, 6),
     });
     this.table.minRaise = bigBlind;

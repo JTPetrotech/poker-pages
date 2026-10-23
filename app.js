@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvlhpaeb';
-import { TableHost } from './host.js?v=mvlhpaeb';
-import * as vault from './vault.js?v=mvlhpaeb';
-import * as cloud from './cloud.js?v=mvlhpaeb';
-import { bestHand } from './engine/hand.js?v=mvlhpaeb';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvlhpaeb';
+import { HostNet, GuestNet } from './net.js?v=mvli31g4';
+import { TableHost } from './host.js?v=mvli31g4';
+import * as vault from './vault.js?v=mvli31g4';
+import * as cloud from './cloud.js?v=mvli31g4';
+import { bestHand } from './engine/hand.js?v=mvli31g4';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvli31g4';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 25;
+const BUILD = 26;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -693,7 +693,8 @@ function bubbleAtMySeat(text) {
 
 function maxBuyIn() {
   const cfg = app.config || {};
-  return cfg.maxBuyIn || (cfg.startingStack || 1000) * 10;
+  // Only a fallback: the table sends its real figure on join.
+  return cfg.maxBuyIn || 1_000_000_000;
 }
 
 function buyInBounds() {

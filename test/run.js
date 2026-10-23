@@ -492,11 +492,16 @@ test('equity: aces beat a random hand far more often than not', () => {
 });
 
 test('equity: a tighter opponent range lowers our equity', () => {
-  // Same hand, same board — but an opponent who only plays premium hands is
-  // a far worse opponent to be up against.
-  const vsAny = equity(C('Kh Qd'), C('Kc 7s 2d'), [1], 600);
-  const vsTight = equity(C('Kh Qd'), C('Kc 7s 2d'), [0.05], 600);
-  assert(vsAny > vsTight, `random ${vsAny.toFixed(2)} should beat tight ${vsTight.toFixed(2)}`);
+  // A middle pair on an ace-king board. Against random cards it is often
+  // good; against someone who only plays premium hands it is nearly dead.
+  // Chosen because the gap is large enough that sampling noise cannot flip
+  // it — an earlier version compared two values a point apart and was flaky.
+  const vsAny = equity(C('8h 8d'), C('Ac Kd 2s'), [1], 1200);
+  const vsTight = equity(C('8h 8d'), C('Ac Kd 2s'), [0.05], 1200);
+  assert(
+    vsAny > vsTight + 0.15,
+    `random ${vsAny.toFixed(2)} should clearly beat tight ${vsTight.toFixed(2)}`,
+  );
 });
 
 test('chen ranks starting hands sensibly', () => {
@@ -892,6 +897,18 @@ test('chips round-trip without changing the total', () => {
   t.addChips('a', 1500);
   eq(p.chips, 2000, 'back where it started');
   eq(p.netResult, startResult, 'and the running result is unchanged');
+});
+
+test('very large stacks still add up exactly', () => {
+  const t = new Table({ id: 'B', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 1_000_000_000, maxSeats: 4 });
+  t.sit('a', 'A', 0, { buyIn: 500_000_000 });
+  t.sit('b', 'B', 1, { buyIn: 500_000_000 });
+  eq(t.addChips('a', 400_000_000).added, 400_000_000);
+  eq(t.seats[0].chips, 900_000_000);
+  // Well inside the range JavaScript counts exactly, so no rounding creeps in.
+  assert(Number.isSafeInteger(t.seats[0].chips), 'still an exact integer');
+  eq(t.transferChips('a', 1, 100_000_000).sent, 100_000_000);
+  eq(t.seats[0].chips + t.seats[1].chips, 1_400_000_000, 'totals hold at scale');
 });
 
 // ------------------------------------------------------------------ report

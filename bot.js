@@ -1,5 +1,5 @@
-import { makeDeck, cardValue, cardSuit } from './engine/cards.js?v=mvlhpaeb';
-import { bestHand, compareScores } from './engine/hand.js?v=mvlhpaeb';
+import { makeDeck, cardValue, cardSuit } from './engine/cards.js?v=mvli31g4';
+import { bestHand, compareScores } from './engine/hand.js?v=mvli31g4';
 
 /**
  * Computer opponents.
@@ -172,9 +172,11 @@ export function equity(hole, board, opponentRanges, sims = 240) {
     for (let o = 0; o < count; o++) {
       let a = draw();
       let b = draw();
-      // Redraw until the hand fits their range, within reason — a strict
-      // range on a short deck would otherwise spin here.
-      for (let attempt = 0; attempt < 10 && chen([a, b]) < floors[o]; attempt++) {
+      // Redraw until the hand fits their range. The cap used to be 10, which
+      // sounds generous but is not: a top-5% range qualifies about one draw
+      // in twenty, so ten tries found one only 40% of the time and the rest
+      // fell through to a random hand — quietly undoing the range modelling.
+      for (let attempt = 0; attempt < 60 && chen([a, b]) < floors[o]; attempt++) {
         idx -= 2;
         a = draw();
         b = draw();
