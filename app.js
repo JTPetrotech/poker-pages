@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvkiohad';
-import { TableHost } from './host.js?v=mvkiohad';
-import * as vault from './vault.js?v=mvkiohad';
-import * as cloud from './cloud.js?v=mvkiohad';
-import { bestHand } from './engine/hand.js?v=mvkiohad';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvkiohad';
+import { HostNet, GuestNet } from './net.js?v=mvl04x9x';
+import { TableHost } from './host.js?v=mvl04x9x';
+import * as vault from './vault.js?v=mvl04x9x';
+import * as cloud from './cloud.js?v=mvl04x9x';
+import { bestHand } from './engine/hand.js?v=mvl04x9x';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvl04x9x';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 18;
+const BUILD = 19;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -1399,11 +1399,19 @@ function renderSeats(state) {
 
     const box = document.createElement('div');
     box.className = 'seat-box';
-    // Tapping someone else's seat offers to stake them.
+    // Tapping someone else's seat offers to stake them — computer players
+    // included. A hover border is invisible on a touchscreen, so the seat
+    // carries a small chip badge to say it can be tapped.
     if (!p.isMe && mySeat()) {
       box.classList.add('clickable');
       box.title = `Send chips to ${p.name}`;
       box.addEventListener('click', () => openTransfer(seat));
+
+      const give = document.createElement('span');
+      give.className = 'give-chip';
+      give.textContent = '+';
+      give.setAttribute('aria-hidden', 'true');
+      box.appendChild(give);
     }
 
     const name = document.createElement('div');
