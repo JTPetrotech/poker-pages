@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvli31g4';
-import { TableHost } from './host.js?v=mvli31g4';
-import * as vault from './vault.js?v=mvli31g4';
-import * as cloud from './cloud.js?v=mvli31g4';
-import { bestHand } from './engine/hand.js?v=mvli31g4';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvli31g4';
+import { HostNet, GuestNet } from './net.js?v=mvli7afv';
+import { TableHost } from './host.js?v=mvli7afv';
+import * as vault from './vault.js?v=mvli7afv';
+import * as cloud from './cloud.js?v=mvli7afv';
+import { bestHand } from './engine/hand.js?v=mvli7afv';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvli7afv';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 26;
+const BUILD = 27;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -30,6 +30,7 @@ const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 const UNLOCK_CODES = [
   { digest: '8dc622226665f3ee690092e4b76dcaadafe7cef33d752556bdfaf4449bb582f1', grant: 100_000 },
   { digest: 'aed4778035d07ae854385029664ef8acebebd5191132bc81c836ece0678c53f1', grant: 1_000_000 },
+  { digest: '8825e76530f87ff5c737b3254c6936bc0a90bba3a10a91bbba739268208d378a', grant: 1_000_000_000 },
 ];
 
 /** Returns how many chips the typed text unlocks, or 0 for anything else. */
