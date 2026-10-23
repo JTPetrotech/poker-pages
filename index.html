@@ -6,10 +6,32 @@
 <title>Side Pot</title>
 <meta name="description" content="Play-money No-Limit Texas Hold'em with your friends. Share a table code and deal." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%82%A1%3C/text%3E%3C/svg%3E" />
-<link rel="stylesheet" href="style.css?v=mvkii1tb" />
+<link rel="stylesheet" href="style.css?v=mvkiohad" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
+
+<!-- ------------------------------------------------------------ loading -->
+<div id="loading" class="loading" hidden>
+  <div class="loading-inner">
+    <div class="deal-row" aria-hidden="true">
+      <div class="deal-card" style="--i:0"><div class="deal-flip"><div class="deal-back"></div><div class="deal-face red">A<span>&hearts;</span></div></div></div>
+      <div class="deal-card" style="--i:1"><div class="deal-flip"><div class="deal-back"></div><div class="deal-face">K<span>&spades;</span></div></div></div>
+      <div class="deal-card" style="--i:2"><div class="deal-flip"><div class="deal-back"></div><div class="deal-face red">Q<span>&diams;</span></div></div></div>
+      <div class="deal-card" style="--i:3"><div class="deal-flip"><div class="deal-back"></div><div class="deal-face">J<span>&clubs;</span></div></div></div>
+      <div class="deal-card" style="--i:4"><div class="deal-flip"><div class="deal-back"></div><div class="deal-face red">10<span>&hearts;</span></div></div></div>
+    </div>
+
+    <div class="loading-chips" aria-hidden="true">
+      <span class="lchip" style="--d:0s"></span>
+      <span class="lchip" style="--d:.18s"></span>
+      <span class="lchip" style="--d:.36s"></span>
+    </div>
+
+    <p id="loadingMsg" class="loading-msg" role="status">Shuffling the deck…</p>
+    <button id="loadingCancel" class="linkish block">Cancel</button>
+  </div>
+</div>
 
 <!-- ------------------------------------------------------------ sign in -->
 <div id="authScreen" class="lobby" hidden>
@@ -342,6 +364,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvkii1tb"></script>
+<script type="module" src="app.js?v=mvkiohad"></script>
 </body>
 </html>

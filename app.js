@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvkii1tb';
-import { TableHost } from './host.js?v=mvkii1tb';
-import * as vault from './vault.js?v=mvkii1tb';
-import * as cloud from './cloud.js?v=mvkii1tb';
-import { bestHand } from './engine/hand.js?v=mvkii1tb';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvkii1tb';
+import { HostNet, GuestNet } from './net.js?v=mvkiohad';
+import { TableHost } from './host.js?v=mvkiohad';
+import * as vault from './vault.js?v=mvkiohad';
+import * as cloud from './cloud.js?v=mvkiohad';
+import { bestHand } from './engine/hand.js?v=mvkiohad';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvkiohad';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 17;
+const BUILD = 18;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -205,7 +205,7 @@ async function startSession(attempt) {
   if (app.connecting) return;
   app.connecting = true;
   lobbyError('');
-  $('lobbyBusy').hidden = false;
+  startLoading();
   document.querySelectorAll('.lobby-card .primary, #soloBtn').forEach((b) => { b.disabled = true; });
   try {
     await attempt();
@@ -218,9 +218,45 @@ async function startSession(attempt) {
     );
   } finally {
     app.connecting = false;
-    $('lobbyBusy').hidden = true;
+    stopLoading();
     document.querySelectorAll('.lobby-card .primary, #soloBtn').forEach((b) => { b.disabled = false; });
   }
+}
+
+
+// ---------------------------------------------------------------- loading
+
+/**
+ * Two browsers finding each other takes a few seconds, and a line of grey
+ * text made that feel like something had gone wrong. The messages rotate so
+ * the screen is visibly alive rather than frozen.
+ */
+const LOADING_LINES = [
+  'Shuffling the deck…',
+  'Cutting the cards…',
+  'Stacking the chips…',
+  'Finding your table…',
+  'Dealing you in…',
+];
+
+let loadingTimer = null;
+
+function startLoading(firstLine) {
+  const el = $('loadingMsg');
+  let i = 0;
+  el.textContent = firstLine || LOADING_LINES[0];
+  clearInterval(loadingTimer);
+  loadingTimer = setInterval(() => {
+    i = (i + 1) % LOADING_LINES.length;
+    el.textContent = LOADING_LINES[i];
+  }, 1600);
+  show($('loading'), true);
+}
+
+function stopLoading() {
+  clearInterval(loadingTimer);
+  loadingTimer = null;
+  show($('loading'), false);
 }
 
 // ---------------------------------------------------------------- transport
@@ -608,6 +644,13 @@ function modalError(msg) {
 }
 
 function initVaultUi() {
+  $('loadingCancel').addEventListener('click', () => {
+    teardown();
+    stopLoading();
+    app.connecting = false;
+    document.querySelectorAll('.lobby-card .primary, #soloBtn').forEach((b) => { b.disabled = false; });
+  });
+
   $('modalClose').addEventListener('click', closeSeatDialog);
   $('modal').addEventListener('click', (e) => {
     if (e.target === $('modal')) closeSeatDialog();
@@ -1598,6 +1641,7 @@ setInterval(() => {
 $('buildNo').textContent = String(BUILD);
 $('lobbyBuild').textContent = String(BUILD);
 
+show($('loading'), false);
 show($('game'), false);
 show($('modal'), false);
 show($('helpModal'), false);

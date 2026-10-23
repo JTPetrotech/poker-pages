@@ -1137,3 +1137,122 @@ input { font: inherit; }
   font-size: 12.5px;
 }
 .dir.active { background: #fdeaf3; border-color: var(--chip); color: var(--chip); font-weight: 650; }
+
+/* ---------------------------------------------------------------- loading
+
+   Connecting to a table takes a few seconds while two browsers find each
+   other, so it gets a table of its own: a hand dealt face down, turned over
+   one card at a time, over felt. */
+
+.loading {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background:
+    radial-gradient(70% 90% at 50% 40%, #1d9a70 0%, var(--felt) 45%, var(--felt-dark) 100%);
+}
+
+.loading-inner { display: grid; justify-items: center; gap: 22px; }
+
+.deal-row { display: flex; gap: 8px; }
+
+.deal-card {
+  width: 52px;
+  height: 74px;
+  perspective: 700px;
+  /* Each card drops in, then turns, one after another. */
+  animation: deal-drop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3) backwards;
+  animation-delay: calc(var(--i) * 0.11s);
+}
+
+.deal-flip {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: deal-turn 4.2s infinite ease-in-out;
+  animation-delay: calc(0.6s + var(--i) * 0.16s);
+}
+
+.deal-back, .deal-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 7px;
+  backface-visibility: hidden;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 21px;
+  line-height: 1;
+}
+
+.deal-back {
+  background: repeating-linear-gradient(45deg, #3f6ea8 0 7px, #335c90 7px 14px);
+  border: 2px solid #fff;
+}
+
+.deal-face {
+  background: #fff;
+  color: #15202b;
+  border: 1px solid #c9d3db;
+  transform: rotateY(180deg);
+  flex-direction: column;
+}
+.deal-face.red { color: var(--red); }
+.deal-face span { display: block; font-size: 17px; margin-top: 1px; }
+
+@keyframes deal-drop {
+  from { opacity: 0; transform: translate(-70px, -34px) rotate(-18deg) scale(0.85); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes deal-turn {
+  0%, 12% { transform: rotateY(0deg); }
+  38%, 76% { transform: rotateY(180deg); }
+  96%, 100% { transform: rotateY(0deg); }
+}
+
+.loading-chips { display: flex; gap: 7px; }
+
+.lchip {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #ef7fae;
+  border: 2.5px dashed #fff8;
+  animation: chip-bob 1.15s infinite ease-in-out;
+  animation-delay: var(--d);
+}
+
+@keyframes chip-bob {
+  0%, 100% { transform: translateY(0); opacity: 0.55; }
+  50% { transform: translateY(-9px); opacity: 1; }
+}
+
+.loading-msg {
+  margin: 0;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  min-height: 20px;
+}
+
+#loadingCancel { color: #ffffffcc; }
+#loadingCancel:hover { color: #fff; }
+
+@media (prefers-reduced-motion: reduce) {
+  .deal-card, .deal-flip, .lchip { animation: none; }
+  .deal-flip { transform: rotateY(180deg); }
+}
+
+@media (max-width: 420px) {
+  .deal-card { width: 42px; height: 60px; }
+  .deal-back, .deal-face { font-size: 17px; }
+  .deal-face span { font-size: 14px; }
+}
