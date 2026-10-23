@@ -1505,3 +1505,39 @@ input { font: inherit; }
   text-align: center;
 }
 .build-code:focus { width: 120px; }
+
+/* ---------------------------------------------------------------- code field
+
+   Deliberately shaped like the other fields on this screen: the first
+   version was a small pill tucked beside the version number and went
+   unnoticed. */
+
+.code-field {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.code-field .field { margin-bottom: 6px; }
+
+.code-row { display: flex; gap: 6px; }
+
+.code-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 13px;
+  background: var(--field);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  outline: none;
+}
+.code-row input:focus { border-color: var(--chip); }
+.code-row input.bad { border-color: var(--red); background: #fdecec; }
+.code-row input.ok { border-color: var(--green); background: #eaf7f0; }
+
+:root[data-theme="dark"] .code-row input.bad { background: rgba(226, 97, 107, 0.16); }
+:root[data-theme="dark"] .code-row input.ok { background: rgba(53, 179, 106, 0.16); }
+
+.code-msg { margin: 8px 0 0; font-size: 12px; }
+.code-msg.good { color: var(--green); }
+.code-msg.bad { color: var(--red); }

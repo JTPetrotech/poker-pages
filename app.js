@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvliioe6';
-import { TableHost } from './host.js?v=mvliioe6';
-import * as vault from './vault.js?v=mvliioe6';
-import * as cloud from './cloud.js?v=mvliioe6';
-import { bestHand } from './engine/hand.js?v=mvliioe6';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvliioe6';
+import { HostNet, GuestNet } from './net.js?v=mvliny4g';
+import { TableHost } from './host.js?v=mvliny4g';
+import * as vault from './vault.js?v=mvliny4g';
+import * as cloud from './cloud.js?v=mvliny4g';
+import { bestHand } from './engine/hand.js?v=mvliny4g';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvliny4g';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 30;
+const BUILD = 31;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -457,30 +457,44 @@ function initSettings() {
  * swallow an ordinary message — one of them is a real word — and a box makes
  * it obvious where they are meant to go.
  */
+async function redeem(box, note) {
+  const text = box.value.trim();
+  if (!text) return;
+
+  const grant = await matchesUnlock(text);
+  box.classList.remove('ok', 'bad');
+  void box.offsetWidth;   // restart the flash on a repeated result
+
+  if (grant) {
+    vault.deposit(grant);
+    paintVault();
+    box.value = '';
+    box.classList.add('ok');
+    const line = `+${fmt(grant)} chips. Your vault is now ${fmt(vault.balance())}.`;
+    if (note) { note.textContent = line; note.className = 'code-msg good'; note.hidden = false; }
+    else toast(line);
+  } else {
+    box.classList.add('bad');
+    if (note) { note.textContent = 'That code did not work.'; note.className = 'code-msg bad'; note.hidden = false; }
+  }
+  setTimeout(() => box.classList.remove('ok', 'bad'), 1600);
+}
+
 function initCodeBoxes() {
-  for (const id of ['codeBox', 'lobbyCodeBox']) {
-    const box = $(id);
-    if (!box) continue;
+  const lobbyBox = $('lobbyCodeBox');
+  const note = $('codeMsg');
+  if (lobbyBox) {
+    const go = () => redeem(lobbyBox, note);
+    $('lobbyCodeGo').addEventListener('click', go);
+    lobbyBox.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') go();
+    });
+  }
 
-    box.addEventListener('keydown', async (e) => {
-      if (e.key !== 'Enter') return;
-      const text = box.value.trim();
-      if (!text) return;
-
-      const grant = await matchesUnlock(text);
-      box.classList.remove('ok', 'bad');
-      void box.offsetWidth;   // restart the flash on a repeated result
-
-      if (grant) {
-        vault.deposit(grant);
-        paintVault();
-        box.value = '';
-        box.classList.add('ok');
-        toast(`+${fmt(grant)} chips. Your vault is now ${fmt(vault.balance())}.`);
-      } else {
-        box.classList.add('bad');
-      }
-      setTimeout(() => box.classList.remove('ok', 'bad'), 1200);
+  const barBox = $('codeBox');
+  if (barBox) {
+    barBox.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') redeem(barBox, null);
     });
   }
 }

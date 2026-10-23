@@ -1,4 +1,4 @@
-import { FIREBASE_CONFIG, isConfigured } from './firebase-config.js?v=mvliioe6';
+import { FIREBASE_CONFIG, isConfigured } from './firebase-config.js?v=mvliny4g';
 
 /**
  * Accounts and the shared vault, on Firebase.
