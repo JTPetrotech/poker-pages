@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvl04x9x';
-import { TableHost } from './host.js?v=mvl04x9x';
-import * as vault from './vault.js?v=mvl04x9x';
-import * as cloud from './cloud.js?v=mvl04x9x';
-import { bestHand } from './engine/hand.js?v=mvl04x9x';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvl04x9x';
+import { HostNet, GuestNet } from './net.js?v=mvlh03vr';
+import { TableHost } from './host.js?v=mvlh03vr';
+import * as vault from './vault.js?v=mvlh03vr';
+import * as cloud from './cloud.js?v=mvlh03vr';
+import { bestHand } from './engine/hand.js?v=mvlh03vr';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvlh03vr';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 19;
+const BUILD = 20;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -223,6 +223,106 @@ async function startSession(attempt) {
   }
 }
 
+
+
+// ---------------------------------------------------------------- appearance
+
+/**
+ * Theme and background, kept on this device. The felt is deliberately not
+ * configurable — that is the table, and a poker table is green.
+ */
+
+const BACKGROUNDS = [
+  { id: 'felt', name: 'Felt', css: 'radial-gradient(90% 70% at 50% 35%, #1d9a70 0%, #157f5c 48%, #0d5d43 100%)' },
+  { id: 'white', name: 'White', css: '#ffffff' },
+  { id: 'paper', name: 'Paper', css: 'radial-gradient(900px 500px at 50% 40%, #f3f5f7, #e9edf1)' },
+  { id: 'midnight', name: 'Midnight', css: 'radial-gradient(90% 70% at 50% 30%, #1d2b44 0%, #121a2b 55%, #0a0f1a 100%)' },
+  { id: 'wood', name: 'Wood', css: 'radial-gradient(90% 70% at 50% 35%, #7a5436 0%, #5d3f28 55%, #40291a 100%)' },
+  { id: 'rose', name: 'Rose', css: 'radial-gradient(90% 70% at 50% 35%, #e58cb2 0%, #c35c8c 55%, #8e3b63 100%)' },
+  { id: 'sky', name: 'Sky', css: 'radial-gradient(90% 70% at 50% 35%, #7fc4ef 0%, #4b94c9 55%, #2b5f8c 100%)' },
+  { id: 'charcoal', name: 'Charcoal', css: 'radial-gradient(90% 70% at 50% 35%, #3a4249 0%, #262c32 55%, #15191d 100%)' },
+];
+
+const LOOK_KEY = 'pn.look.v1';
+
+function readLook() {
+  try {
+    const raw = localStorage.getItem(LOOK_KEY);
+    if (raw) return { theme: 'light', bg: 'felt', custom: null, ...JSON.parse(raw) };
+  } catch { /* unreadable storage falls back to the defaults */ }
+  return { theme: 'light', bg: 'felt', custom: null };
+}
+
+function writeLook(look) {
+  try {
+    localStorage.setItem(LOOK_KEY, JSON.stringify(look));
+  } catch { /* private mode: the choice just won't stick */ }
+}
+
+function applyLook(look) {
+  document.documentElement.dataset.theme = look.theme === 'dark' ? 'dark' : 'light';
+  const preset = BACKGROUNDS.find((b) => b.id === look.bg);
+  const css = look.bg === 'custom' && look.custom ? look.custom : preset && preset.css;
+  if (css) document.documentElement.style.setProperty('--page-bg', css);
+  else document.documentElement.style.removeProperty('--page-bg');
+}
+
+function paintSettings() {
+  const look = readLook();
+  document.querySelectorAll('.theme-opt').forEach((b) => {
+    b.classList.toggle('active', b.dataset.themePick === look.theme);
+  });
+  document.querySelectorAll('.swatch').forEach((b) => {
+    b.classList.toggle('active', b.dataset.bg === look.bg);
+  });
+  if (look.custom) $('customBg').value = look.custom;
+}
+
+function updateLook(patch) {
+  const look = { ...readLook(), ...patch };
+  writeLook(look);
+  applyLook(look);
+  paintSettings();
+  // The table is sized in pixels, and nothing about the look changes that —
+  // but a background swap can change scrollbars, so re-measure to be safe.
+  scheduleSizeFelt();
+}
+
+function initSettings() {
+  const host = $('swatches');
+  for (const bg of BACKGROUNDS) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'swatch';
+    b.dataset.bg = bg.id;
+    b.style.background = bg.css;
+    b.title = bg.name;
+    b.innerHTML = `<span>${bg.name}</span>`;
+    b.addEventListener('click', () => updateLook({ bg: bg.id }));
+    host.appendChild(b);
+  }
+
+  document.querySelectorAll('.theme-opt').forEach((b) => {
+    b.addEventListener('click', () => updateLook({ theme: b.dataset.themePick }));
+  });
+
+  $('customBg').addEventListener('input', (e) => {
+    updateLook({ bg: 'custom', custom: e.target.value });
+  });
+
+  const open = () => {
+    paintSettings();
+    show($('settingsModal'), true);
+  };
+  $('settingsBtn').addEventListener('click', open);
+  $('lobbySettings').addEventListener('click', open);
+  $('settingsClose').addEventListener('click', () => show($('settingsModal'), false));
+  $('settingsModal').addEventListener('click', (e) => {
+    if (e.target === $('settingsModal')) show($('settingsModal'), false);
+  });
+
+  applyLook(readLook());
+}
 
 // ---------------------------------------------------------------- loading
 
@@ -657,7 +757,8 @@ function initVaultUi() {
   });
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
-    if (!$('helpModal').hidden) show($('helpModal'), false);
+    if (!$('settingsModal').hidden) show($('settingsModal'), false);
+    else if (!$('helpModal').hidden) show($('helpModal'), false);
     else if (!$('modal').hidden) closeSeatDialog();
   });
 
@@ -1649,6 +1750,7 @@ setInterval(() => {
 $('buildNo').textContent = String(BUILD);
 $('lobbyBuild').textContent = String(BUILD);
 
+show($('settingsModal'), false);
 show($('loading'), false);
 show($('game'), false);
 show($('modal'), false);
@@ -1661,6 +1763,7 @@ const stranded = vault.recoverStranded();
 initLobby();
 initGame();
 initVaultUi();
+initSettings();
 initAuthUi();
 watchFeltSpace();
 window.addEventListener('resize', scheduleSizeFelt);

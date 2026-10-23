@@ -6,7 +6,7 @@
 <title>Side Pot</title>
 <meta name="description" content="Play-money No-Limit Texas Hold'em with your friends. Share a table code and deal." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%82%A1%3C/text%3E%3C/svg%3E" />
-<link rel="stylesheet" href="style.css?v=mvl04x9x" />
+<link rel="stylesheet" href="style.css?v=mvlh03vr" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
@@ -174,7 +174,8 @@
     <p id="lobbyError" class="error" hidden></p>
     <p id="lobbyBusy" class="busy" hidden>Connecting…</p>
     <p class="fineprint">Play money only. Nothing here involves real stakes.</p>
-    <p class="build">Update <span class="build-no" id="lobbyBuild">0</span></p>
+    <p class="build">Update <span class="build-no" id="lobbyBuild">0</span>
+      · <button id="lobbySettings" class="linkish">Appearance</button></p>
   </div>
 </div>
 
@@ -211,6 +212,7 @@
     <div id="connDot" class="conn" title="Connection">●</div>
     <button id="sitOutBtn" class="ghost" hidden>Sit out</button>
     <button id="leaveBtn" class="ghost">Leave</button>
+    <button id="settingsBtn" class="ghost gear" aria-label="Appearance">&#9881;</button>
     <button id="panelToggle" class="ghost" aria-label="Toggle chat">Chat</button>
   </header>
 
@@ -346,6 +348,29 @@
   </div>
 </div>
 
+<!-- ------------------------------------------------------------ appearance -->
+<div id="settingsModal" class="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <button id="settingsClose" class="modal-x" aria-label="Close">&times;</button>
+    <h2 id="settingsTitle">Appearance</h2>
+    <p class="modal-sub">Saved on this device.</p>
+
+    <label class="field"><span>Theme</span></label>
+    <div class="theme-row">
+      <button class="theme-opt" data-theme-pick="light" type="button">Light</button>
+      <button class="theme-opt" data-theme-pick="dark" type="button">Dark</button>
+    </div>
+
+    <label class="field"><span>Background</span></label>
+    <div class="swatches" id="swatches"></div>
+
+    <div class="custom-row">
+      <input type="color" id="customBg" value="#1b7f5e" />
+      <label for="customBg">Or pick any colour</label>
+    </div>
+  </div>
+</div>
+
 <!-- ------------------------------------------------------------ hand rankings -->
 <div id="helpModal" class="modal" hidden>
   <div class="modal-card wide" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
@@ -364,6 +389,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvl04x9x"></script>
+<script type="module" src="app.js?v=mvlh03vr"></script>
 </body>
 </html>

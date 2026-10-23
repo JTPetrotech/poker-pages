@@ -1300,3 +1300,108 @@ input { font: inherit; }
 /* The seat box clips its overflow for the timer bar, so let the badge out. */
 .seat-box { overflow: visible; }
 .seat-box .timer { border-bottom-left-radius: 9px; border-bottom-right-radius: 9px; }
+
+/* ---------------------------------------------------------------- dark theme
+
+   Only tokens and the handful of places that needed a literal light value.
+   Playing cards and the dealer button stay white, because that is what they
+   are. */
+
+:root[data-theme="dark"] {
+  --bg: #0c1013;
+  --bg-2: #141a1f;
+  --line: #243038;
+  --text: #e8eef2;
+  --muted: #8da0ae;
+  --field: #0d1216;
+  --felt: #0f5c42;
+  --felt-dark: #083b2b;
+  --rail: #1d1310;
+  --gold: #d8b45a;
+  --chip: #ff8fbb;
+  --chip-on-felt: #ffc8e0;
+  --accent: #3ea8ff;
+  --red: #e2616b;
+  --green: #35b36a;
+  --amber: #e0a22b;
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+:root[data-theme="dark"] .tab.active,
+:root[data-theme="dark"] .atab.active { background: #1d262d; border-color: #35454f; }
+:root[data-theme="dark"] .dir.active { background: #3a1e2c; }
+:root[data-theme="dark"] .seat-box { background: rgba(14, 20, 25, 0.93); border-color: #33424d; }
+:root[data-theme="dark"] .empty-seat { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.24); color: rgba(255, 255, 255, 0.65); }
+:root[data-theme="dark"] .empty-seat:hover { background: rgba(255, 255, 255, 0.14); color: #fff; }
+:root[data-theme="dark"] .error { background: rgba(226, 97, 107, 0.14); border-color: rgba(226, 97, 107, 0.45); color: #ff9ba1; }
+:root[data-theme="dark"] .busy { background: rgba(62, 168, 255, 0.12); border-color: rgba(62, 168, 255, 0.35); color: #9fd3ff; }
+:root[data-theme="dark"] .chip.host { background: rgba(53, 179, 106, 0.16); }
+:root[data-theme="dark"] .bot-pick.hard { background: rgba(216, 180, 90, 0.14); border-color: #6a5527; }
+:root[data-theme="dark"] .solo-btn:hover,
+:root[data-theme="dark"] .chat-fab:hover { background: rgba(53, 179, 106, 0.16); }
+:root[data-theme="dark"] .your-hand,
+:root[data-theme="dark"] .rank-row.mine { background: rgba(53, 179, 106, 0.14); }
+:root[data-theme="dark"] .kick-bot { background: #43282b; border-color: #6b3a3f; color: #ffb4b9; }
+:root[data-theme="dark"] .modal { background: rgba(0, 0, 0, 0.62); }
+:root[data-theme="dark"] .card { border-color: #9aa7b2; }
+:root[data-theme="dark"] .ghost:hover { background: #1d262d; border-color: #3a4a55; }
+
+/* ---------------------------------------------------------------- backgrounds
+
+   The page behind the table. The felt itself is always green — that is the
+   table, not the room. */
+
+.lobby { background: var(--page-bg, radial-gradient(90% 70% at 50% 35%, #1d9a70 0%, var(--felt) 48%, var(--felt-dark) 100%)); }
+.felt-wrap { background: var(--page-bg, radial-gradient(900px 500px at 50% 40%, #eef3f0, var(--bg))); }
+:root[data-theme="dark"] .felt-wrap { background: var(--page-bg, radial-gradient(900px 500px at 50% 40%, #16211e, var(--bg))); }
+
+/* ---------------------------------------------------------------- settings */
+
+.swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 6px; }
+
+.swatch {
+  height: 46px;
+  border-radius: 10px;
+  border: 2px solid var(--line);
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.swatch.active { border-color: var(--chip); box-shadow: 0 0 0 2px rgba(193, 49, 111, 0.28); }
+.swatch span {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  font-size: 9px;
+  padding: 2px 0;
+  background: rgba(0, 0, 0, 0.42);
+  color: #fff;
+  letter-spacing: 0.03em;
+}
+
+.custom-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.custom-row input[type="color"] {
+  width: 48px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+}
+.custom-row label { font-size: 13px; color: var(--muted); }
+
+.theme-row { display: flex; gap: 6px; margin-bottom: 16px; }
+.theme-opt {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+}
+.theme-opt.active { background: var(--bg-2); color: var(--text); border-color: var(--chip); font-weight: 650; }
+
+.gear { font-size: 15px; line-height: 1; }
