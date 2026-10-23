@@ -1084,3 +1084,14 @@ input { font: inherit; }
 @media (max-height: 620px) {
   .chip-hero { display: none; }
 }
+
+/* The top bar wrapping onto three rows was costing the table more height
+   than any of these chips are worth. Drop the decorative ones when narrow. */
+@media (max-width: 620px) {
+  .topbar { gap: 5px; padding: 5px 8px; }
+  .brand { display: none; }
+  #blindsLabel { display: none; }
+  .chip { padding: 4px 8px; font-size: 12px; }
+  .ghost { padding: 5px 8px; font-size: 12px; }
+  .topbar .copy-hint { display: none; }
+}

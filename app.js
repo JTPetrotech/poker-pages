@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvki3atn';
-import { TableHost } from './host.js?v=mvki3atn';
-import * as vault from './vault.js?v=mvki3atn';
-import * as cloud from './cloud.js?v=mvki3atn';
-import { bestHand } from './engine/hand.js?v=mvki3atn';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvki3atn';
+import { HostNet, GuestNet } from './net.js?v=mvki57v3';
+import { TableHost } from './host.js?v=mvki57v3';
+import * as vault from './vault.js?v=mvki57v3';
+import * as cloud from './cloud.js?v=mvki57v3';
+import { bestHand } from './engine/hand.js?v=mvki57v3';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvki57v3';
 
 const $ = (id) => document.getElementById(id);
 
@@ -1134,7 +1134,9 @@ function sizeFelt() {
   // Seats straddle the table edge, so half of each box sits outside the felt.
   // Reserve that at the top and bottom or the nearest seats get clipped.
   const seat = document.querySelector('.seat');
-  const overhang = seat ? Math.min(64, seat.getBoundingClientRect().height / 2 + 4) : 42;
+  const measured = seat ? seat.getBoundingClientRect().height / 2 + 4 : 42;
+  // Never let the reservation eat the table it is protecting.
+  const overhang = Math.min(measured, 64, availH * 0.2);
   const usableH = Math.max(140, availH - overhang * 2);
 
   let w = Math.min(availW, 940);
