@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvlhlnyp';
-import { TableHost } from './host.js?v=mvlhlnyp';
-import * as vault from './vault.js?v=mvlhlnyp';
-import * as cloud from './cloud.js?v=mvlhlnyp';
-import { bestHand } from './engine/hand.js?v=mvlhlnyp';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvlhlnyp';
+import { HostNet, GuestNet } from './net.js?v=mvlhpaeb';
+import { TableHost } from './host.js?v=mvlhpaeb';
+import * as vault from './vault.js?v=mvlhpaeb';
+import * as cloud from './cloud.js?v=mvlhpaeb';
+import { bestHand } from './engine/hand.js?v=mvlhpaeb';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvlhpaeb';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 24;
+const BUILD = 25;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -240,6 +240,13 @@ const BACKGROUNDS = [
   { id: 'felt', name: 'Felt', css: 'radial-gradient(90% 70% at 50% 35%, #1d9a70 0%, #157f5c 48%, #0d5d43 100%)' },
   { id: 'white', name: 'White', css: '#ffffff' },
   { id: 'paper', name: 'Paper', css: 'radial-gradient(900px 500px at 50% 40%, #f3f5f7, #e9edf1)' },
+  {
+    id: 'textured',
+    name: 'Textured',
+    // Grain drawn by the browser rather than fetched, so it costs nothing to
+    // load and stays sharp at any size.
+    css: "url(\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='180'%20height='180'%3E%3Cfilter%20id='p'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.9'%20numOctaves='4'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='180'%20height='180'%20filter='url(%23p)'%20opacity='0.3'/%3E%3C/svg%3E\") repeat, radial-gradient(90% 75% at 50% 30%, #faf4e6 0%, #efe4cd 55%, #ddceb0 100%)",
+  },
   { id: 'midnight', name: 'Midnight', css: 'radial-gradient(90% 70% at 50% 30%, #1d2b44 0%, #121a2b 55%, #0a0f1a 100%)' },
   { id: 'wood', name: 'Wood', css: 'radial-gradient(90% 70% at 50% 35%, #7a5436 0%, #5d3f28 55%, #40291a 100%)' },
   { id: 'rose', name: 'Rose', css: 'radial-gradient(90% 70% at 50% 35%, #e58cb2 0%, #c35c8c 55%, #8e3b63 100%)' },
