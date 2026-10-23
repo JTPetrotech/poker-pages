@@ -1,5 +1,5 @@
-import { Table } from './engine/game.js?v=mvki9ee6';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvki9ee6';
+import { Table } from './engine/game.js?v=mvkibmqx';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvkibmqx';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;
@@ -63,6 +63,9 @@ export class TableHost {
       smallBlind: this.table.smallBlind,
       bigBlind: this.table.bigBlind,
       startingStack: this.table.startingStack,
+      // The client clamps buy-ins and top-ups to this; without it, it guessed
+      // ten times the starting stack and silently capped everything there.
+      maxBuyIn: this.table.maxBuyIn,
       maxSeats: this.table.maxSeats,
       actionTimeoutMs: ACTION_TIMEOUT_MS,
     };

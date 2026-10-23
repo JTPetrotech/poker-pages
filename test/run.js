@@ -840,6 +840,12 @@ test('giving chips away counts as a loss, receiving as a gain', () => {
   eq(t.seats[1].netResult, 400);
 });
 
+test('the snapshot carries the table maximum to the client', () => {
+  const t = new Table({ id: 'S', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 999000, maxSeats: 4 });
+  t.sit('a', 'A', 0, { buyIn: 1000 });
+  eq(t.snapshot('a').maxBuyIn, 999000, 'clients must not have to guess this');
+});
+
 // ------------------------------------------------------------------ report
 
 console.log('\n');
