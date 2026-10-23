@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvki03h3';
-import { TableHost } from './host.js?v=mvki03h3';
-import * as vault from './vault.js?v=mvki03h3';
-import * as cloud from './cloud.js?v=mvki03h3';
-import { bestHand } from './engine/hand.js?v=mvki03h3';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvki03h3';
+import { HostNet, GuestNet } from './net.js?v=mvki3atn';
+import { TableHost } from './host.js?v=mvki3atn';
+import * as vault from './vault.js?v=mvki3atn';
+import * as cloud from './cloud.js?v=mvki3atn';
+import { bestHand } from './engine/hand.js?v=mvki3atn';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvki3atn';
 
 const $ = (id) => document.getElementById(id);
 
@@ -1146,6 +1146,14 @@ function sizeFelt() {
 
   felt.style.width = `${Math.floor(w)}px`;
   felt.style.height = `${Math.floor(h)}px`;
+
+  // Seats are placed around the table in percentages, so on a small table
+  // fixed-size boxes collide. Scale them with it instead.
+  const seats = app.config?.maxSeats || 6;
+  const seatW = Math.round(Math.max(64, Math.min(132, (w * 0.95) / seats)));
+  felt.style.setProperty('--seat-w', `${seatW}px`);
+  felt.style.setProperty('--seat-fs', `${Math.max(9, Math.round(seatW * 0.105))}px`);
+  felt.style.setProperty('--seat-card-w', `${Math.round(seatW * 0.3)}px`);
 }
 
 let sizeTimer = null;

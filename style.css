@@ -288,7 +288,9 @@ input { font: inherit; }
 .seat {
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 132px;
+  /* sizeFelt() sets these from the table's actual size, so six seats never
+     pile on top of each other on a small table. */
+  width: var(--seat-w, 132px);
   pointer-events: auto;
   text-align: center;
 }
@@ -307,13 +309,13 @@ input { font: inherit; }
 .seat.me .seat-box { border-color: var(--green); box-shadow: 0 0 0 2px rgba(31, 138, 77, 0.2); }
 
 .seat-name {
-  font-size: 12px;
+  font-size: var(--seat-fs, 12px);
   font-weight: 650;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.seat-chips { font-size: 13px; color: var(--chip); font-variant-numeric: tabular-nums; }
+.seat-chips { font-size: calc(var(--seat-fs, 12px) + 1px); color: var(--chip); font-variant-numeric: tabular-nums; }
 .seat-tag {
   font-size: 10px;
   text-transform: uppercase;
@@ -533,7 +535,6 @@ input { font: inherit; }
   .felt-wrap { padding: 8px; }
   .felt { aspect-ratio: 1 / 1.05; max-width: 520px; }
   .felt-inner { inset: 14% 4%; }
-  .seat { width: 96px; }
   .seat-name { font-size: 11px; }
   .card { width: 34px; height: 48px; }
   .card .r { font-size: 15px; }
@@ -740,7 +741,6 @@ input { font: inherit; }
    multi-window layout. Six seats stop fitting around the oval, so shrink
    them rather than let the boxes collide. */
 @media (max-width: 340px) {
-  .seat { width: 84px; }
   .seat-name { font-size: 10px; }
   .seat-chips { font-size: 11px; }
   .seat-tag { font-size: 9px; }
@@ -833,7 +833,6 @@ input { font: inherit; }
 }
 
 @media (max-height: 500px) {
-  .seat { width: 86px; }
   .card { width: 26px; height: 37px; }
   .card .r { font-size: 12px; }
   .card .s { font-size: 9px; }
@@ -1059,4 +1058,29 @@ input { font: inherit; }
 
 @media (max-width: 860px) {
   .chip-stack { width: 15px; height: 14px; }
+}
+
+/* Cards inside a seat follow the table's size too. */
+.seat-cards .card { width: var(--seat-card-w, 32px); height: calc(var(--seat-card-w, 32px) * 1.4); }
+.seat-cards .card .r { font-size: calc(var(--seat-card-w, 32px) * 0.44); }
+.seat-cards .card .s { font-size: calc(var(--seat-card-w, 32px) * 0.34); }
+.seat-cards { min-height: calc(var(--seat-card-w, 32px) * 1.4); }
+
+/* ---------------------------------------------------------------- lobby chips */
+
+.chip-hero {
+  display: flex;
+  justify-content: center;
+  margin: 2px 0 18px;
+}
+.chip-hero svg {
+  width: 150px;
+  height: 56px;
+  max-width: 60%;
+  overflow: visible;
+  filter: drop-shadow(0 4px 8px rgba(22, 32, 42, 0.18));
+}
+
+@media (max-height: 620px) {
+  .chip-hero { display: none; }
 }
