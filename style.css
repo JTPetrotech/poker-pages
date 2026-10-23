@@ -1426,3 +1426,31 @@ input { font: inherit; }
   padding: 0;
 }
 .corner-gear:hover { background: #fff; }
+
+/* ---------------------------------------------------------------- photo background */
+
+.upload-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+
+.upload-btn {
+  flex: 1;
+  padding: 10px;
+  background: var(--bg-2);
+  border: 1px dashed var(--line);
+  border-radius: 9px;
+  color: var(--text);
+  font-size: 13px;
+}
+.upload-btn:hover { border-color: var(--chip); color: var(--chip); }
+
+.upload-note { margin: 9px 0 0; font-size: 11.5px; color: var(--muted); }
+.upload-note.warn { color: var(--red); }
+
+.swatch.photo { background-size: cover; background-position: center; }
+.swatch.photo.empty {
+  background: var(--bg-2);
+  border-style: dashed;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  color: var(--muted);
+}

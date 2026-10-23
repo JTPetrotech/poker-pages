@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvlhciz3';
-import { TableHost } from './host.js?v=mvlhciz3';
-import * as vault from './vault.js?v=mvlhciz3';
-import * as cloud from './cloud.js?v=mvlhciz3';
-import { bestHand } from './engine/hand.js?v=mvlhciz3';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvlhciz3';
+import { HostNet, GuestNet } from './net.js?v=mvlhg8yz';
+import { TableHost } from './host.js?v=mvlhg8yz';
+import * as vault from './vault.js?v=mvlhg8yz';
+import * as cloud from './cloud.js?v=mvlhg8yz';
+import { bestHand } from './engine/hand.js?v=mvlhg8yz';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvlhg8yz';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 22;
+const BUILD = 23;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -245,6 +245,80 @@ const BACKGROUNDS = [
 
 const LOOK_KEY = 'pn.look.v1';
 
+const BG_IMAGE_KEY = 'pn.bgimage.v1';
+
+function storedImage() {
+  try {
+    return localStorage.getItem(BG_IMAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Shrink a chosen photo before storing it.
+ *
+ * Browser storage is a few megabytes in total and a data URL is about a third
+ * larger than the file it encodes, so a photo straight off a phone would
+ * simply be refused. Scaled to fit a large screen and re-encoded as JPEG, a
+ * background lands comfortably inside the budget.
+ */
+function shrinkImage(file, maxW = 1920, maxH = 1200) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxW / img.width, maxH / img.height);
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+      // Step the quality down until it fits, rather than failing outright.
+      for (const q of [0.82, 0.7, 0.58, 0.45]) {
+        const data = canvas.toDataURL('image/jpeg', q);
+        if (data.length < 2_600_000) return resolve(data);
+      }
+      resolve(canvas.toDataURL('image/jpeg', 0.35));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('That file could not be read as an image.'));
+    };
+    img.src = url;
+  });
+}
+
+function bgNote(text, warn) {
+  const el = $('bgNote');
+  el.textContent = text || '';
+  el.classList.toggle('warn', !!warn);
+  el.hidden = !text;
+}
+
+async function chooseImage(file) {
+  if (!file) return;
+  bgNote('Resizing your photo…');
+  try {
+    const data = await shrinkImage(file);
+    try {
+      localStorage.setItem(BG_IMAGE_KEY, data);
+    } catch {
+      bgNote('That photo is too large to save on this device. Try a smaller one.', true);
+      return;
+    }
+    updateLook({ bg: 'image' });
+    bgNote('Saved on this device.');
+  } catch (err) {
+    bgNote(err.message, true);
+  }
+}
+
+
+
 function readLook() {
   try {
     const raw = localStorage.getItem(LOOK_KEY);
@@ -262,7 +336,15 @@ function writeLook(look) {
 function applyLook(look) {
   document.documentElement.dataset.theme = look.theme === 'dark' ? 'dark' : 'light';
   const preset = BACKGROUNDS.find((b) => b.id === look.bg);
-  const css = look.bg === 'custom' && look.custom ? look.custom : preset && preset.css;
+  let css = preset && preset.css;
+  if (look.bg === 'custom' && look.custom) css = look.custom;
+  if (look.bg === 'image') {
+    const data = storedImage();
+    // A gentle scrim keeps the table readable over a busy photo.
+    css = data
+      ? `linear-gradient(rgba(0,0,0,0.28), rgba(0,0,0,0.28)), url("${data}") center / cover no-repeat fixed`
+      : null;
+  }
   if (css) document.documentElement.style.setProperty('--page-bg', css);
   else document.documentElement.style.removeProperty('--page-bg');
 }
@@ -276,6 +358,16 @@ function paintSettings() {
     b.classList.toggle('active', b.dataset.bg === look.bg);
   });
   if (look.custom) $('customBg').value = look.custom;
+
+  const data = storedImage();
+  const photo = document.querySelector('.swatch.photo');
+  if (photo) {
+    photo.classList.toggle('empty', !data);
+    photo.style.backgroundImage = data ? `url("${data}")` : '';
+    photo.innerHTML = data ? '<span>Photo</span>' : '+';
+  }
+  show($('bgRemove'), !!data);
+  $('bgUploadBtn').textContent = data ? 'Choose another photo' : 'Upload a photo';
 }
 
 function updateLook(patch) {
@@ -301,6 +393,29 @@ function initSettings() {
     b.addEventListener('click', () => updateLook({ bg: bg.id }));
     host.appendChild(b);
   }
+
+  const photo = document.createElement('button');
+  photo.type = 'button';
+  photo.className = 'swatch photo';
+  photo.dataset.bg = 'image';
+  photo.title = 'Your photo';
+  photo.innerHTML = '<span>Photo</span>';
+  photo.addEventListener('click', () => {
+    if (storedImage()) updateLook({ bg: 'image' });
+    else $('bgUpload').click();
+  });
+  host.appendChild(photo);
+
+  $('bgUploadBtn').addEventListener('click', () => $('bgUpload').click());
+  $('bgUpload').addEventListener('change', (e) => {
+    chooseImage(e.target.files && e.target.files[0]);
+    e.target.value = '';
+  });
+  $('bgRemove').addEventListener('click', () => {
+    try { localStorage.removeItem(BG_IMAGE_KEY); } catch { /* nothing stored */ }
+    bgNote('');
+    updateLook({ bg: 'felt' });
+  });
 
   document.querySelectorAll('.theme-opt').forEach((b) => {
     b.addEventListener('click', () => updateLook({ theme: b.dataset.themePick }));

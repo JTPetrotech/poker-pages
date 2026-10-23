@@ -6,7 +6,7 @@
 <title>Side Pot</title>
 <meta name="description" content="Play-money No-Limit Texas Hold'em with your friends. Share a table code and deal." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%82%A1%3C/text%3E%3C/svg%3E" />
-<link rel="stylesheet" href="style.css?v=mvlhciz3" />
+<link rel="stylesheet" href="style.css?v=mvlhg8yz" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
@@ -368,6 +368,13 @@
       <input type="color" id="customBg" value="#1b7f5e" />
       <label for="customBg">Or pick any colour</label>
     </div>
+
+    <div class="upload-row">
+      <button id="bgUploadBtn" class="upload-btn" type="button">Upload a photo</button>
+      <button id="bgRemove" class="linkish" type="button" hidden>Remove photo</button>
+      <input type="file" id="bgUpload" accept="image/*" hidden />
+    </div>
+    <p id="bgNote" class="upload-note" hidden></p>
   </div>
 </div>
 
@@ -389,6 +396,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvlhciz3"></script>
+<script type="module" src="app.js?v=mvlhg8yz"></script>
 </body>
 </html>
