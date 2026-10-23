@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvli7afv';
-import { TableHost } from './host.js?v=mvli7afv';
-import * as vault from './vault.js?v=mvli7afv';
-import * as cloud from './cloud.js?v=mvli7afv';
-import { bestHand } from './engine/hand.js?v=mvli7afv';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvli7afv';
+import { HostNet, GuestNet } from './net.js?v=mvlic0n1';
+import { TableHost } from './host.js?v=mvlic0n1';
+import * as vault from './vault.js?v=mvlic0n1';
+import * as cloud from './cloud.js?v=mvlic0n1';
+import { bestHand } from './engine/hand.js?v=mvlic0n1';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvlic0n1';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 27;
+const BUILD = 28;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -1869,8 +1869,24 @@ function toast(message) {
   if (tabs[0] && !tabs[0].classList.contains('active')) tabs[0].click();
 }
 
+/**
+ * Chip counts for display. Millions and billions are abbreviated, because
+ * "1,250,000,000" does not fit in a seat box and is harder to read at a
+ * glance than "1.25B". Anything under a million stays exact, so ordinary
+ * play reads precisely. Inputs and sliders always carry the real number.
+ */
 function fmt(n) {
-  return Number(n || 0).toLocaleString('en-US');
+  const v = Number(n || 0);
+  const abs = Math.abs(v);
+  const short = (x) => (Math.round(x * 100) / 100).toLocaleString('en-US');
+  if (abs >= 1e9) return `${short(v / 1e9)}B`;
+  if (abs >= 1e6) {
+    const millions = Math.round((v / 1e6) * 100) / 100;
+    // 999,999,999 rounds to 1000M, which should read as 1B.
+    if (Math.abs(millions) >= 1000) return `${short(v / 1e9)}B`;
+    return `${short(millions)}M`;
+  }
+  return v.toLocaleString('en-US');
 }
 
 // Keep the action clock ticking smoothly between server pushes.
