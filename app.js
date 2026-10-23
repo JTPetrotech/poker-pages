@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvlh75s5';
-import { TableHost } from './host.js?v=mvlh75s5';
-import * as vault from './vault.js?v=mvlh75s5';
-import * as cloud from './cloud.js?v=mvlh75s5';
-import { bestHand } from './engine/hand.js?v=mvlh75s5';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvlh75s5';
+import { HostNet, GuestNet } from './net.js?v=mvlhciz3';
+import { TableHost } from './host.js?v=mvlhciz3';
+import * as vault from './vault.js?v=mvlhciz3';
+import * as cloud from './cloud.js?v=mvlhciz3';
+import { bestHand } from './engine/hand.js?v=mvlhciz3';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvlhciz3';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 21;
+const BUILD = 22;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -315,7 +315,7 @@ function initSettings() {
     show($('settingsModal'), true);
   };
   $('settingsBtn').addEventListener('click', open);
-  $('lobbySettings').addEventListener('click', open);
+  $('lobbyGear').addEventListener('click', open);
   $('settingsClose').addEventListener('click', () => show($('settingsModal'), false));
   $('settingsModal').addEventListener('click', (e) => {
     if (e.target === $('settingsModal')) show($('settingsModal'), false);
