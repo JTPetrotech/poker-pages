@@ -1,5 +1,5 @@
-import { Table } from './engine/game.js?v=mvki57v3';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvki57v3';
+import { Table } from './engine/game.js?v=mvki9ee6';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvki9ee6';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;
@@ -42,7 +42,7 @@ export class TableHost {
       smallBlind,
       bigBlind,
       startingStack: clampInt(options.startingStack, 20, 1_000_000, 1000),
-      maxBuyIn: clampInt(options.maxBuyIn, 20, 50_000_000, Math.max(bigBlind * 4000, 250_000)),
+      maxBuyIn: clampInt(options.maxBuyIn, 20, 50_000_000, 10_000_000),
       maxSeats: clampInt(options.maxSeats, 2, 9, 6),
     });
     this.table.minRaise = bigBlind;

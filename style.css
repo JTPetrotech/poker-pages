@@ -1095,3 +1095,30 @@ input { font: inherit; }
   .ghost { padding: 5px 8px; font-size: 12px; }
   .topbar .copy-hint { display: none; }
 }
+
+/* ---------------------------------------------------------------- felt logo
+
+   Printed into the felt, the way a cardroom's mark is: it sits behind the
+   cards and the pot, faint enough never to compete with them. */
+
+.felt-logo {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.felt-logo svg {
+  width: 62%;
+  max-width: 300px;
+  opacity: 0.14;
+}
+
+/* Everything that matters sits above it. */
+.pot, .board, .center-msg { position: relative; z-index: 1; }
+
+@media (max-width: 620px) {
+  .felt-logo svg { width: 76%; opacity: 0.12; }
+}

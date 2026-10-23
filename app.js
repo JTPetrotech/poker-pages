@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvki57v3';
-import { TableHost } from './host.js?v=mvki57v3';
-import * as vault from './vault.js?v=mvki57v3';
-import * as cloud from './cloud.js?v=mvki57v3';
-import { bestHand } from './engine/hand.js?v=mvki57v3';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvki57v3';
+import { HostNet, GuestNet } from './net.js?v=mvki9ee6';
+import { TableHost } from './host.js?v=mvki9ee6';
+import * as vault from './vault.js?v=mvki9ee6';
+import * as cloud from './cloud.js?v=mvki9ee6';
+import { bestHand } from './engine/hand.js?v=mvki9ee6';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvki9ee6';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 15;
+const BUILD = 16;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -478,6 +478,7 @@ function openTransfer(seat) {
 
   $('buyInWord').textContent = 'Send';
   $('sitConfirm').textContent = 'Send chips';
+  setQuickLabels('Everything');
   show($('modal'), true);
 }
 
@@ -517,11 +518,19 @@ function openAddChips() {
 
   $('buyInWord').textContent = 'Add';
   $('sitConfirm').textContent = 'Add chips';
+  setQuickLabels('All my chips');
   show($('modal'), true);
+}
+
+/** The widest option means different things in each dialog; say which. */
+function setQuickLabels(maxLabel) {
+  const max = document.querySelector('.buyin-row .quick[data-b="max"]');
+  if (max) max.textContent = maxLabel;
 }
 
 function openSeatDialog(seat) {
   app.dialogMode = 'sit';
+  setQuickLabels('Max');
   $('buyInWord').textContent = 'Buy in with';
   $('sitConfirm').textContent = 'Sit down';
   app.dialogSeat = seat;
