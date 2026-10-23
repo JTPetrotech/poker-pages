@@ -1,5 +1,5 @@
-import { makeDeck, shuffle } from './cards.js?v=mvkibmqx';
-import { bestHand, compareScores } from './hand.js?v=mvkibmqx';
+import { makeDeck, shuffle } from './cards.js?v=mvkii1tb';
+import { bestHand, compareScores } from './hand.js?v=mvkii1tb';
 
 export const STAGES = ['idle', 'preflop', 'flop', 'turn', 'river', 'showdown', 'handover'];
 
@@ -98,6 +98,7 @@ export class Table {
       // Running tally of how this player actually behaves, so opponents can
       // tell a raise from someone who raises constantly from a real one.
       queuedChips: 0,
+      queuedRemoval: 0,
       pendingTransfers: [],
       stats: { actions: 0, raises: 0, calls: 0, folds: 0 },
     };
@@ -177,6 +178,43 @@ export class Table {
   }
 
   /**
+   * Take chips off the table and back to the vault.
+   *
+   * A cardroom calls this "going south" and forbids it, because leaving with
+   * your winnings mid-session is unfair to the people you won them from. Here
+   * it is just moving your own play money about, and the same timing rule
+   * applies as everywhere else: not out of a stack that is being bet.
+   */
+  removeChips(id, amount) {
+    const p = this.playerById(id);
+    if (!p) throw new Error('You are not seated.');
+    if (p.chips <= 0) throw new Error('You have no chips at the table.');
+
+    const want = Math.min(Math.floor(Number(amount) || 0), p.chips);
+    if (want <= 0) throw new Error('Enter an amount to take back.');
+
+    if (p.inHand && !p.folded && this.inHandStage()) {
+      p.queuedRemoval = (p.queuedRemoval || 0) + want;
+      this.pushLog(`${p.name} will take ${want} off the table after this hand.`);
+      this.events.push({ type: 'queued-remove', id: p.id, amount: want });
+      return { queued: want };
+    }
+
+    return { removed: this.takeChips(p, want) };
+  }
+
+  takeChips(p, amount) {
+    const moved = Math.min(amount, p.chips);
+    if (moved <= 0) return 0;
+    p.chips -= moved;
+    // Chips taken off the table are yours again, so they count back.
+    p.netResult += moved;
+    this.pushLog(`${p.name} takes ${moved} chips off the table.`);
+    this.events.push({ type: 'removed', id: p.id, amount: moved });
+    return moved;
+  }
+
+  /**
    * Move chips from one player's stack to another's.
    *
    * Not something a real cardroom allows — it is chip dumping — but this is a
@@ -241,6 +279,12 @@ export class Table {
             // They busted out or the seat filled up; nothing to move.
           }
         }
+      }
+
+      if (p.queuedRemoval) {
+        const take = p.queuedRemoval;
+        p.queuedRemoval = 0;
+        this.takeChips(p, take);
       }
 
       if (!p.queuedChips) continue;

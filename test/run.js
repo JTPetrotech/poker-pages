@@ -846,6 +846,54 @@ test('the snapshot carries the table maximum to the client', () => {
   eq(t.snapshot('a').maxBuyIn, 999000, 'clients must not have to guess this');
 });
 
+test('chips can be taken back off the table', () => {
+  const t = new Table({ id: 'R', smallBlind: 5, bigBlind: 10, startingStack: 5000, maxBuyIn: 100000, maxSeats: 4 });
+  t.sit('a', 'A', 0, { buyIn: 5000 });
+  eq(t.removeChips('a', 2000).removed, 2000);
+  eq(t.seats[0].chips, 3000);
+});
+
+test('you cannot take back more than you have', () => {
+  const t = new Table({ id: 'R', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 100000, maxSeats: 4 });
+  t.sit('a', 'A', 0, { buyIn: 1000 });
+  eq(t.removeChips('a', 999999).removed, 1000, 'clamped to the stack');
+  eq(t.seats[0].chips, 0);
+  let threw = false;
+  try { t.removeChips('a', 100); } catch { threw = true; }
+  assert(threw, 'nothing left to take');
+});
+
+test('taking chips back mid-hand is queued until it ends', () => {
+  const t = seatPlayers(3, { chips: 1000 });
+  t.startHand();
+  const p = t.players()[0];
+  const before = p.chips;
+  eq(t.removeChips(p.id, 400).queued, 400, 'queued, not taken');
+  eq(p.chips, before, 'the live stack is untouched');
+
+  while (t.inHandStage()) {
+    const actor = t.seats[t.actingSeat];
+    const legal = t.legalActions(actor);
+    t.act(actor.id, legal.canCheck ? 'check' : 'fold');
+  }
+  eq(p.queuedRemoval, 0, 'queue cleared');
+  assert(
+    t.log.some((l) => /takes 400 chips off the table/.test(l.text)),
+    'the removal settled after the hand',
+  );
+});
+
+test('chips round-trip without changing the total', () => {
+  const t = new Table({ id: 'R', smallBlind: 5, bigBlind: 10, startingStack: 2000, maxBuyIn: 100000, maxSeats: 4 });
+  t.sit('a', 'A', 0, { buyIn: 2000 });
+  const p = t.seats[0];
+  const startResult = p.netResult;
+  t.removeChips('a', 1500);
+  t.addChips('a', 1500);
+  eq(p.chips, 2000, 'back where it started');
+  eq(p.netResult, startResult, 'and the running result is unchanged');
+});
+
 // ------------------------------------------------------------------ report
 
 console.log('\n');

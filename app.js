@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvkibmqx';
-import { TableHost } from './host.js?v=mvkibmqx';
-import * as vault from './vault.js?v=mvkibmqx';
-import * as cloud from './cloud.js?v=mvkibmqx';
-import { bestHand } from './engine/hand.js?v=mvkibmqx';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvkibmqx';
+import { HostNet, GuestNet } from './net.js?v=mvkii1tb';
+import { TableHost } from './host.js?v=mvkii1tb';
+import * as vault from './vault.js?v=mvkii1tb';
+import * as cloud from './cloud.js?v=mvkii1tb';
+import { bestHand } from './engine/hand.js?v=mvkii1tb';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvkii1tb';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 16;
+const BUILD = 17;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -343,6 +343,16 @@ function onMessage(msg) {
       bubbleAtMySeat(`+${fmt(msg.amount)} chips`);
       break;
     }
+    case 'removed': {
+      vault.deposit(msg.amount);
+      paintVault();
+      bubbleAtMySeat(`${fmt(msg.amount)} → vault`);
+      break;
+    }
+    case 'queued-remove': {
+      toast(`${fmt(msg.amount)} chips will go back to your vault after this hand.`);
+      break;
+    }
     case 'sent': {
       bubbleAtMySeat(`−${fmt(msg.amount)} to ${msg.who}`);
       break;
@@ -427,7 +437,7 @@ function maxBuyIn() {
 function buyInBounds() {
   const cfg = app.config || {};
   const bal = vault.balance();
-  if ((app.dialogMode === 'add' || app.dialogMode === 'send') && app.addBounds) {
+  if (app.dialogMode !== 'sit' && app.addBounds) {
     return { ...app.addBounds, bal };
   }
   const min = Math.min(cfg.bigBlind || 10, bal);
@@ -451,6 +461,7 @@ function openTransfer(seat) {
   if (!me || !them || them.isMe) return;
 
   app.dialogMode = 'send';
+  show($('chipDirection'), false);
   app.dialogSeat = seat;
 
   const max = Math.min(me.chips, maxBuyIn() - them.chips);
@@ -482,25 +493,50 @@ function openTransfer(seat) {
   show($('modal'), true);
 }
 
-/** Reuse the buy-in dialog to bring more chips from the vault to the table. */
-function openAddChips() {
+/** Move chips between your vault and your stack, in either direction. */
+function openAddChips(direction = 'add') {
   const me = mySeat();
   if (!me) return;
-  app.dialogMode = 'add';
+  app.dialogMode = direction;
   app.dialogSeat = me.seat;
 
   const cfg = app.config || {};
   const bal = vault.balance();
   const queued = app.state?.you?.queuedChips || 0;
-  const room = Math.max(0, maxBuyIn() - me.chips - queued);
-  const max = Math.min(bal, room);
 
-  $('modalTitle').textContent = 'Add chips';
+  $('modalTitle').textContent = 'Your chips';
   $('modalSub').innerHTML =
     `At the table <strong>${fmt(me.chips)}</strong> · Vault <strong>${fmt(bal)}</strong>`
     + (queued ? ` · <strong>${fmt(queued)}</strong> arriving after this hand` : '');
   modalError('');
   show($('botSection'), false);
+  show($('chipDirection'), true);
+  document.querySelectorAll('.dir').forEach((t) => t.classList.toggle('active', t.dataset.dir === direction));
+
+  if (direction === 'take') {
+    const max = me.chips;
+    show($('emptyVault'), false);
+    show($('buyInBlock'), max > 0);
+    if (max > 0) {
+      const min = 1;
+      $('buyInRange').min = String(min);
+      $('buyInRange').max = String(max);
+      $('buyInAmount').min = String(min);
+      $('buyInAmount').max = String(max);
+      app.addBounds = { min, max };
+      setBuyIn(Math.max(1, Math.round(max / 2)));
+    } else {
+      modalError('You have no chips at the table.');
+    }
+    $('buyInWord').textContent = 'Take back';
+    $('sitConfirm').textContent = 'Move to vault';
+    setQuickLabels('Everything');
+    show($('modal'), true);
+    return;
+  }
+
+  const room = Math.max(0, maxBuyIn() - me.chips - queued);
+  const max = Math.min(bal, room);
   show($('emptyVault'), bal <= 0);
   show($('buyInBlock'), bal > 0 && room > 0);
 
@@ -530,6 +566,7 @@ function setQuickLabels(maxLabel) {
 
 function openSeatDialog(seat) {
   app.dialogMode = 'sit';
+  show($('chipDirection'), false);
   setQuickLabels('Max');
   $('buyInWord').textContent = 'Buy in with';
   $('sitConfirm').textContent = 'Sit down';
@@ -593,7 +630,16 @@ function initVaultUi() {
     });
   }
 
+  for (const tab of document.querySelectorAll('.dir')) {
+    tab.addEventListener('click', () => openAddChips(tab.dataset.dir));
+  }
+
   $('sitConfirm').addEventListener('click', () => {
+    if (app.dialogMode === 'take') {
+      send({ t: 'removechips', amount: app.buyIn });
+      closeSeatDialog();
+      return;
+    }
     if (app.dialogMode === 'send') {
       send({ t: 'transfer', toSeat: app.dialogSeat, amount: app.buyIn });
       closeSeatDialog();

@@ -1122,3 +1122,18 @@ input { font: inherit; }
 @media (max-width: 620px) {
   .felt-logo svg { width: 76%; opacity: 0.12; }
 }
+
+/* ---------------------------------------------------------------- chip direction */
+
+.dir-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+
+.dir {
+  flex: 1;
+  padding: 8px 4px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.dir.active { background: #fdeaf3; border-color: var(--chip); color: var(--chip); font-weight: 650; }

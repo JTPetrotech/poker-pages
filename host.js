@@ -1,5 +1,5 @@
-import { Table } from './engine/game.js?v=mvkibmqx';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvkibmqx';
+import { Table } from './engine/game.js?v=mvkii1tb';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvkii1tb';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;
@@ -157,6 +157,9 @@ export class TableHost {
         break;
       case 'addchips':
         table.addChips(token, msg.amount);
+        break;
+      case 'removechips':
+        table.removeChips(token, msg.amount);
         break;
       case 'transfer':
         table.transferChips(token, clampInt(msg.toSeat, 0, table.maxSeats - 1, 0), msg.amount);
