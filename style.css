@@ -9,6 +9,10 @@
   --felt-dark: #0d5d43;
   --rail: #6b4a33;
   --gold: #9a7420;
+  /* Chips are pink: one token for chip counts on light surfaces, one for
+     the pills that sit on the green felt. */
+  --chip: #c1316f;
+  --chip-on-felt: #ffc8e0;
   --accent: #0f6fc4;
   --red: #c32d38;
   --green: #1f8a4d;
@@ -227,11 +231,11 @@ input { font: inherit; }
 .pot {
   padding: 4px 14px;
   background: rgba(0, 0, 0, 0.34);
-  border: 1px solid rgba(255, 222, 150, 0.55);
+  border: 1px solid rgba(255, 150, 196, 0.6);
   border-radius: 999px;
   font-size: 14px;
   font-weight: 650;
-  color: #ffe6a8;
+  color: var(--chip-on-felt);
 }
 .pot::before { content: "POT "; font-size: 10px; letter-spacing: 0.1em; opacity: 0.75; }
 
@@ -309,7 +313,7 @@ input { font: inherit; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.seat-chips { font-size: 13px; color: var(--gold); font-variant-numeric: tabular-nums; }
+.seat-chips { font-size: 13px; color: var(--chip); font-variant-numeric: tabular-nums; }
 .seat-tag {
   font-size: 10px;
   text-transform: uppercase;
@@ -342,10 +346,10 @@ input { font: inherit; }
   margin-top: 5px;
   padding: 2px 8px;
   background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 222, 150, 0.5);
+  border: 1px solid rgba(255, 150, 196, 0.55);
   border-radius: 999px;
   font-size: 11px;
-  color: #ffe6a8;
+  color: var(--chip-on-felt);
   font-variant-numeric: tabular-nums;
 }
 
@@ -476,7 +480,7 @@ input { font: inherit; }
 .bet-controls { width: 100%; display: none; flex-direction: column; gap: 7px; }
 .bet-controls.show { display: flex; }
 
-#betRange { width: 100%; accent-color: var(--gold); }
+#betRange { width: 100%; accent-color: var(--chip); }
 
 .bet-row { display: flex; gap: 6px; }
 .bet-row input {
@@ -584,7 +588,7 @@ input { font: inherit; }
   font-size: 13px;
   color: var(--muted);
 }
-.vault-line strong { color: var(--gold); }
+.vault-line strong { color: var(--chip); }
 
 .linkish {
   background: none;
@@ -595,7 +599,7 @@ input { font: inherit; }
   padding: 0 0 0 6px;
 }
 
-.chip.vault strong { color: var(--gold); letter-spacing: normal; }
+.chip.vault strong { color: var(--chip); letter-spacing: normal; }
 
 .modal {
   position: fixed;
@@ -621,7 +625,7 @@ input { font: inherit; }
 }
 .modal-card h2 { margin: 0 0 3px; font-size: 19px; }
 .modal-sub { margin: 0 0 18px; font-size: 12px; color: var(--muted); }
-.modal-sub strong { color: var(--gold); }
+.modal-sub strong { color: var(--chip); }
 
 .modal-x {
   position: absolute;
@@ -636,8 +640,8 @@ input { font: inherit; }
 }
 .modal-x:hover { color: var(--text); }
 
-#buyInRange { width: 100%; accent-color: var(--gold); }
-#buyInLabel { color: var(--gold); }
+#buyInRange { width: 100%; accent-color: var(--chip); }
+#buyInLabel { color: var(--chip); }
 
 .buyin-row { display: flex; gap: 6px; margin-bottom: 14px; }
 .buyin-row input {
@@ -1041,3 +1045,18 @@ input { font: inherit; }
 
 .seat-box.clickable { cursor: pointer; }
 .seat-box.clickable:hover { border-color: var(--green); box-shadow: 0 0 0 2px rgba(31, 138, 77, 0.22); }
+
+/* ---------------------------------------------------------------- chip stack icon */
+
+.chip.vault { display: inline-flex; align-items: center; gap: 7px; }
+
+.chip-stack {
+  width: 17px;
+  height: 16px;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+@media (max-width: 860px) {
+  .chip-stack { width: 15px; height: 14px; }
+}
