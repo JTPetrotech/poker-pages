@@ -1488,3 +1488,20 @@ input { font: inherit; }
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.22);
 }
 .corner-code::placeholder { color: #6d7d89; }
+
+/* The code box lives at the foot of the menu, beside the update number. */
+.build {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.build-code {
+  width: 92px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  text-align: center;
+}
+.build-code:focus { width: 120px; }
