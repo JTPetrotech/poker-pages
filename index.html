@@ -6,7 +6,7 @@
 <title>Side Pot</title>
 <meta name="description" content="Play-money No-Limit Texas Hold'em with your friends. Share a table code and deal." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%82%A1%3C/text%3E%3C/svg%3E" />
-<link rel="stylesheet" href="style.css?v=mvlic0n1" />
+<link rel="stylesheet" href="style.css?v=mvlifysi" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
@@ -70,6 +70,8 @@
 
 <!-- ------------------------------------------------------------ lobby -->
 <div id="lobby" class="lobby">
+  <input id="lobbyCodeBox" class="code-box corner-code" placeholder="Code" maxlength="24"
+         autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Enter a code" />
   <button id="lobbyGear" class="corner-gear" aria-label="Appearance" title="Appearance">&#9881;</button>
   <div class="lobby-card">
     <h1>Side Pot</h1>
@@ -183,6 +185,9 @@
 <div id="game" class="game" hidden>
 
   <header class="topbar">
+    <input id="codeBox" class="code-box" placeholder="Code" maxlength="24"
+           autocomplete="off" autocapitalize="off" spellcheck="false"
+           aria-label="Enter a code" />
     <div class="brand">Side&nbsp;Pot</div>
     <button id="codeChip" class="chip" title="Copy the invite link">
       Table <strong id="codeLabel">----</strong>
@@ -396,6 +401,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvlic0n1"></script>
+<script type="module" src="app.js?v=mvlifysi"></script>
 </body>
 </html>

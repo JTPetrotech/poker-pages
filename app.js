@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvlic0n1';
-import { TableHost } from './host.js?v=mvlic0n1';
-import * as vault from './vault.js?v=mvlic0n1';
-import * as cloud from './cloud.js?v=mvlic0n1';
-import { bestHand } from './engine/hand.js?v=mvlic0n1';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvlic0n1';
+import { HostNet, GuestNet } from './net.js?v=mvlifysi';
+import { TableHost } from './host.js?v=mvlifysi';
+import * as vault from './vault.js?v=mvlifysi';
+import * as cloud from './cloud.js?v=mvlifysi';
+import { bestHand } from './engine/hand.js?v=mvlifysi';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvlifysi';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 28;
+const BUILD = 29;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -449,6 +449,40 @@ function initSettings() {
   });
 
   applyLook(readLook());
+}
+
+
+/**
+ * Codes have their own box rather than the chat. Typed into chat they could
+ * swallow an ordinary message — one of them is a real word — and a box makes
+ * it obvious where they are meant to go.
+ */
+function initCodeBoxes() {
+  for (const id of ['codeBox', 'lobbyCodeBox']) {
+    const box = $(id);
+    if (!box) continue;
+
+    box.addEventListener('keydown', async (e) => {
+      if (e.key !== 'Enter') return;
+      const text = box.value.trim();
+      if (!text) return;
+
+      const grant = await matchesUnlock(text);
+      box.classList.remove('ok', 'bad');
+      void box.offsetWidth;   // restart the flash on a repeated result
+
+      if (grant) {
+        vault.deposit(grant);
+        paintVault();
+        box.value = '';
+        box.classList.add('ok');
+        toast(`+${fmt(grant)} chips. Your vault is now ${fmt(vault.balance())}.`);
+      } else {
+        box.classList.add('bad');
+      }
+      setTimeout(() => box.classList.remove('ok', 'bad'), 1200);
+    });
+  }
 }
 
 // ---------------------------------------------------------------- loading
@@ -1322,19 +1356,6 @@ function initGame() {
       return;
     }
 
-    // Handled here, before send(), so nothing goes over the wire and nobody
-    // else sees it. The chips land in the vault, not on the table: adding to
-    // a live stack mid-hand would break table stakes and show up in everyone
-    // else's chip counts.
-    if (!/\s/.test(text)) {
-      const grant = await matchesUnlock(text);
-      if (grant) {
-        vault.deposit(grant);
-        paintVault();
-        toast(`+${fmt(grant)} chips. Your vault is now ${fmt(vault.balance())}.`);
-        return;
-      }
-    }
     send({ t: 'chat', text });
   });
 
@@ -1910,6 +1931,7 @@ const stranded = vault.recoverStranded();
 initLobby();
 initGame();
 initVaultUi();
+initCodeBoxes();
 initSettings();
 initAuthUi();
 watchFeltSpace();
