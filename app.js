@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvliny4g';
-import { TableHost } from './host.js?v=mvliny4g';
-import * as vault from './vault.js?v=mvliny4g';
-import * as cloud from './cloud.js?v=mvliny4g';
-import { bestHand } from './engine/hand.js?v=mvliny4g';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvliny4g';
+import { HostNet, GuestNet } from './net.js?v=mvliq87z';
+import { TableHost } from './host.js?v=mvliq87z';
+import * as vault from './vault.js?v=mvliq87z';
+import * as cloud from './cloud.js?v=mvliq87z';
+import { bestHand } from './engine/hand.js?v=mvliq87z';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvliq87z';
 
 const $ = (id) => document.getElementById(id);
 
@@ -481,20 +481,11 @@ async function redeem(box, note) {
 }
 
 function initCodeBoxes() {
-  const lobbyBox = $('lobbyCodeBox');
-  const note = $('codeMsg');
-  if (lobbyBox) {
-    const go = () => redeem(lobbyBox, note);
-    $('lobbyCodeGo').addEventListener('click', go);
-    lobbyBox.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') go();
-    });
-  }
-
-  const barBox = $('codeBox');
-  if (barBox) {
-    barBox.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') redeem(barBox, null);
+  for (const id of ['codeBox', 'lobbyCodeBox']) {
+    const box = $(id);
+    if (!box) continue;
+    box.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') redeem(box, null);
     });
   }
 }

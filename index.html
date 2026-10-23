@@ -6,7 +6,7 @@
 <title>Side Pot</title>
 <meta name="description" content="Play-money No-Limit Texas Hold'em with your friends. Share a table code and deal." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%82%A1%3C/text%3E%3C/svg%3E" />
-<link rel="stylesheet" href="style.css?v=mvliny4g" />
+<link rel="stylesheet" href="style.css?v=mvliq87z" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
@@ -175,17 +175,10 @@
     <p id="lobbyError" class="error" hidden></p>
     <p id="lobbyBusy" class="busy" hidden>Connecting…</p>
     <p class="fineprint">Play money only. Nothing here involves real stakes.</p>
-    <div class="code-field">
-      <label class="field" for="lobbyCodeBox"><span>Have a code?</span></label>
-      <div class="code-row">
-        <input id="lobbyCodeBox" placeholder="Enter code" maxlength="24"
-               autocomplete="off" autocapitalize="off" spellcheck="false" />
-        <button id="lobbyCodeGo" class="primary small" type="button">Use</button>
-      </div>
-      <p id="codeMsg" class="code-msg" hidden></p>
-    </div>
-
-    <p class="build">Update <span class="build-no" id="lobbyBuild">0</span></p>
+    <p class="build">Update <span class="build-no" id="lobbyBuild">0</span>
+      <input id="lobbyCodeBox" class="code-box build-code" placeholder="Code" maxlength="24"
+             autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Enter a code" />
+    </p>
   </div>
 </div>
 
@@ -409,6 +402,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvliny4g"></script>
+<script type="module" src="app.js?v=mvliq87z"></script>
 </body>
 </html>
