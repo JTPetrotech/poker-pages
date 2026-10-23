@@ -11,6 +11,14 @@ const KEY = 'pn.profile.v1';
 
 export const STARTING_VAULT = 10_000;
 
+/**
+ * A quadrillion. Above roughly 9 quadrillion JavaScript stops counting whole
+ * numbers exactly, and chips would start appearing and vanishing in the
+ * rounding. Capping here keeps every total on every table comfortably inside
+ * the range where the arithmetic is still exact.
+ */
+export const MAX_VAULT = 1_000_000_000_000_000;
+
 const BLANK = {
   name: '',
   // Chips currently sitting on a table. Tracked continuously so that a closed
@@ -35,7 +43,7 @@ function readStored() {
     const parsed = JSON.parse(raw);
     const profile = { ...BLANK, ...parsed };
     // Storage is editable by hand; never trust what comes back out of it.
-    profile.vault = Math.max(0, Math.floor(Number(profile.vault) || 0));
+    profile.vault = Math.min(MAX_VAULT, Math.max(0, Math.floor(Number(profile.vault) || 0)));
     return profile;
   } catch {
     return { ...BLANK, created: Date.now() };
@@ -66,7 +74,7 @@ export function adopt(profile, backend) {
   storageKey = `${KEY}:${backend.uid}`;
   remote = backend;
   const merged = { ...BLANK, ...(profile || {}) };
-  merged.vault = Math.max(0, Math.floor(Number(merged.vault) || 0));
+  merged.vault = Math.min(MAX_VAULT, Math.max(0, Math.floor(Number(merged.vault) || 0)));
   if (!merged.created) merged.created = Date.now();
   return write(merged);
 }
@@ -109,7 +117,7 @@ export function withdraw(amount) {
 export function deposit(amount) {
   const p = read();
   const add = Math.max(0, Math.floor(amount));
-  p.vault += add;
+  p.vault = Math.min(MAX_VAULT, p.vault + add);
   write(p);
   return p.vault;
 }

@@ -1,5 +1,5 @@
-import { Table } from './engine/game.js?v=mvljqu1t';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvljqu1t';
+import { Table } from './engine/game.js?v=mvljuq5w';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvljuq5w';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;
@@ -44,7 +44,7 @@ export class TableHost {
       startingStack: clampInt(options.startingStack, 20, 1_000_000_000, 1000),
       // Deliberately far beyond anything a play-money game reaches, so the
       // cap is never what stops you moving your own chips about.
-      maxBuyIn: clampInt(options.maxBuyIn, 20, 1_000_000_000_000_000, 1_000_000_000_000),
+      maxBuyIn: clampInt(options.maxBuyIn, 20, 1_000_000_000_000_000, 1_000_000_000_000_000),
       maxSeats: clampInt(options.maxSeats, 2, 9, 6),
     });
     this.table.minRaise = bigBlind;

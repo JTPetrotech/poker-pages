@@ -911,6 +911,23 @@ test('very large stacks still add up exactly', () => {
   eq(t.seats[0].chips + t.seats[1].chips, 1_400_000_000, 'totals hold at scale');
 });
 
+test('the vault will not exceed the exact-arithmetic ceiling', () => {
+  freshVault();
+  vault.deposit(5e14);
+  vault.deposit(5e14);
+  eq(vault.balance(), 1e15, 'lands exactly on the cap');
+  vault.deposit(9e15);
+  eq(vault.balance(), 1e15, 'and stays there');
+  assert(Number.isSafeInteger(vault.balance()), 'still an exact integer');
+});
+
+test('a full table of maximum stacks stays inside exact arithmetic', () => {
+  // Nine seats is the most this game allows; the totals must not reach the
+  // point where whole numbers stop being counted exactly.
+  const worst = 9 * 1e15;
+  assert(worst <= Number.MAX_SAFE_INTEGER, `9 x 1Q = ${worst} must stay safe`);
+});
+
 // ------------------------------------------------------------------ report
 
 console.log('\n');

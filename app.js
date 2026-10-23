@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvljqu1t';
-import { TableHost } from './host.js?v=mvljqu1t';
-import * as vault from './vault.js?v=mvljqu1t';
-import * as cloud from './cloud.js?v=mvljqu1t';
-import { bestHand } from './engine/hand.js?v=mvljqu1t';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvljqu1t';
+import { HostNet, GuestNet } from './net.js?v=mvljuq5w';
+import { TableHost } from './host.js?v=mvljuq5w';
+import * as vault from './vault.js?v=mvljuq5w';
+import * as cloud from './cloud.js?v=mvljuq5w';
+import { bestHand } from './engine/hand.js?v=mvljuq5w';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvljuq5w';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 32;
+const BUILD = 33;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -735,7 +735,7 @@ function bubbleAtMySeat(text) {
 function maxBuyIn() {
   const cfg = app.config || {};
   // Only a fallback: the table sends its real figure on join.
-  return cfg.maxBuyIn || 1_000_000_000_000;
+  return cfg.maxBuyIn || 1_000_000_000_000_000;
 }
 
 function buyInBounds() {
@@ -1906,7 +1906,12 @@ function fmt(n) {
   const v = Number(n || 0);
   const abs = Math.abs(v);
   const short = (x) => (Math.round(x * 100) / 100).toLocaleString('en-US');
-  if (abs >= 1e12) return `${short(v / 1e12)}T`;
+  if (abs >= 1e15) return `${short(v / 1e15)}Q`;
+  if (abs >= 1e12) {
+    const trillions = Math.round((v / 1e12) * 100) / 100;
+    if (Math.abs(trillions) >= 1000) return `${short(v / 1e15)}Q`;
+    return `${short(trillions)}T`;
+  }
   if (abs >= 1e9) {
     const billions = Math.round((v / 1e9) * 100) / 100;
     if (Math.abs(billions) >= 1000) return `${short(v / 1e12)}T`;
