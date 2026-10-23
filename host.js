@@ -1,5 +1,5 @@
-import { Table } from './engine/game.js?v=mvk6uw5s';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvk6uw5s';
+import { Table } from './engine/game.js?v=mvkhtd49';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvkhtd49';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;
@@ -83,6 +83,7 @@ export class TableHost {
       const e = events.shift();
       if (e.type === 'added') this.deliver(e.id, { t: 'added', amount: e.amount });
       else if (e.type === 'queued') this.deliver(e.id, { t: 'queued', amount: e.amount });
+      else this.deliver(e.id, { t: e.type, amount: e.amount, who: e.who });
     }
   }
 
@@ -153,6 +154,9 @@ export class TableHost {
         break;
       case 'addchips':
         table.addChips(token, msg.amount);
+        break;
+      case 'transfer':
+        table.transferChips(token, clampInt(msg.toSeat, 0, table.maxSeats - 1, 0), msg.amount);
         break;
       case 'sitout':
         table.setSitOut(token, !!msg.value);

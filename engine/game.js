@@ -1,5 +1,5 @@
-import { makeDeck, shuffle } from './cards.js?v=mvk6uw5s';
-import { bestHand, compareScores } from './hand.js?v=mvk6uw5s';
+import { makeDeck, shuffle } from './cards.js?v=mvkhtd49';
+import { bestHand, compareScores } from './hand.js?v=mvkhtd49';
 
 export const STAGES = ['idle', 'preflop', 'flop', 'turn', 'river', 'showdown', 'handover'];
 
@@ -98,6 +98,7 @@ export class Table {
       // Running tally of how this player actually behaves, so opponents can
       // tell a raise from someone who raises constantly from a real one.
       queuedChips: 0,
+      pendingTransfers: [],
       stats: { actions: 0, raises: 0, calls: 0, folds: 0 },
     };
     this.pushLog(`${name} sat down in seat ${seat + 1} with ${buyIn}.`);
@@ -175,9 +176,73 @@ export class Table {
     this.events.push({ type: 'added', id: p.id, amount });
   }
 
+  /**
+   * Move chips from one player's stack to another's.
+   *
+   * Not something a real cardroom allows — it is chip dumping — but this is a
+   * friendly play-money game, and staking a friend who busted is the point.
+   * Asking mid-hand queues until the hand ends, for the same reason a top-up
+   * does: stacks must not move while they are being bet.
+   */
+  transferChips(fromId, toSeat, amount) {
+    const from = this.playerById(fromId);
+    const to = this.seats[toSeat];
+    if (!from) throw new Error('You are not seated.');
+    if (!to) throw new Error('Nobody is sitting there.');
+    if (to === from) throw new Error('That is your own seat.');
+
+    const want = Math.floor(Number(amount) || 0);
+    if (want <= 0) throw new Error('Enter an amount to send.');
+
+    if (this.inHandStage()) {
+      from.pendingTransfers = from.pendingTransfers || [];
+      from.pendingTransfers.push({ toSeat, amount: want });
+      this.pushLog(`${from.name} will send ${want} to ${to.name} after this hand.`);
+      this.events.push({ type: 'queued-send', id: from.id, amount: want, who: to.name });
+      return { queued: want };
+    }
+
+    return { sent: this.settleTransfer(from, to, want) };
+  }
+
+  /** The actual movement, clamped by what the sender has and the table cap. */
+  settleTransfer(from, to, amount) {
+    const room = Math.max(0, this.maxBuyIn - to.chips);
+    const moved = Math.min(amount, from.chips, room);
+    if (moved <= 0) {
+      if (room <= 0) throw new Error(`${to.name} is already at the table maximum.`);
+      throw new Error('You do not have that many chips.');
+    }
+    from.chips -= moved;
+    to.chips += moved;
+    // Chips given away are a loss to you and a gain to them, so the running
+    // results still add up across the table.
+    from.netResult -= moved;
+    to.netResult += moved;
+    to.sitOut = false;
+    this.pushLog(`${from.name} sends ${moved} chips to ${to.name}.`);
+    this.events.push({ type: 'sent', id: from.id, amount: moved, who: to.name });
+    this.events.push({ type: 'received', id: to.id, amount: moved, who: from.name });
+    return moved;
+  }
+
   /** Release anything that was queued while a hand was running. */
   releaseQueuedChips() {
     for (const p of this.players()) {
+      const queue = p.pendingTransfers;
+      if (queue && queue.length) {
+        p.pendingTransfers = [];
+        for (const { toSeat, amount } of queue) {
+          const to = this.seats[toSeat];
+          if (!to || to === p) continue;
+          try {
+            this.settleTransfer(p, to, amount);
+          } catch {
+            // They busted out or the seat filled up; nothing to move.
+          }
+        }
+      }
+
       if (!p.queuedChips) continue;
       const room = Math.max(0, this.maxBuyIn - p.chips);
       const amount = Math.min(p.queuedChips, room);

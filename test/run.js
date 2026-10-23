@@ -765,6 +765,81 @@ test('added chips count against your result, not as winnings', () => {
   eq(t.seats[0].netResult, before - 600, 'money brought to the table is not profit');
 });
 
+// ------------------------------------------------------------------ transfers
+
+test('chips move between players and the totals hold', () => {
+  const t = new Table({ id: 'T', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 50000, maxSeats: 4 });
+  t.sit('a', 'A', 0, { buyIn: 1000 });
+  t.sit('b', 'B', 1, { buyIn: 1000 });
+  const total = () => t.players().reduce((s, p) => s + p.chips, 0);
+  const before = total();
+
+  eq(t.transferChips('a', 1, 300).sent, 300);
+  eq(t.seats[0].chips, 700);
+  eq(t.seats[1].chips, 1300);
+  eq(total(), before, 'no chips created or destroyed');
+});
+
+test('a transfer is capped by what the sender actually has', () => {
+  const t = new Table({ id: 'T', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 50000, maxSeats: 4 });
+  t.sit('a', 'A', 0, { buyIn: 200 });
+  t.sit('b', 'B', 1, { buyIn: 1000 });
+  eq(t.transferChips('a', 1, 999999).sent, 200, 'sends everything, not more');
+  eq(t.seats[0].chips, 0);
+});
+
+test('a transfer cannot push the receiver past the table maximum', () => {
+  const t = new Table({ id: 'T', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 1200, maxSeats: 4 });
+  t.sit('a', 'A', 0, { buyIn: 1000 });
+  t.sit('b', 'B', 1, { buyIn: 1000 });
+  eq(t.transferChips('a', 1, 900).sent, 200, 'only up to the cap');
+  eq(t.seats[1].chips, 1200);
+});
+
+test('you cannot send chips to yourself or an empty seat', () => {
+  const t = new Table({ id: 'T', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 50000, maxSeats: 4 });
+  t.sit('a', 'A', 0, { buyIn: 1000 });
+  let own = false;
+  let empty = false;
+  try { t.transferChips('a', 0, 100); } catch { own = true; }
+  try { t.transferChips('a', 3, 100); } catch { empty = true; }
+  assert(own, 'refuses your own seat');
+  assert(empty, 'refuses an empty seat');
+});
+
+test('a transfer asked for mid-hand lands after it', () => {
+  const t = seatPlayers(3, { chips: 1000 });
+  t.maxBuyIn = 50000;
+  t.startHand();
+  const [a, b] = t.players();
+  eq(t.transferChips(a.id, b.seat, 250).queued, 250, 'queued, not applied');
+  const aMid = a.chips;
+  eq(a.chips, aMid, 'stack untouched while the hand runs');
+
+  while (t.inHandStage()) {
+    const actor = t.seats[t.actingSeat];
+    const legal = t.legalActions(actor);
+    t.act(actor.id, legal.canCheck ? 'check' : 'fold');
+  }
+  eq(a.pendingTransfers.length, 0, 'queue cleared');
+  // Everyone started with 1000; the pot has been paid out and the transfer
+  // only moved chips sideways, so the table still holds exactly 3000.
+  eq(t.players().reduce((s, p) => s + p.chips, 0), 3000, 'nothing created or lost');
+  assert(
+    t.log.some((l) => /sends 250 chips/.test(l.text)),
+    'the queued transfer was settled after the hand',
+  );
+});
+
+test('giving chips away counts as a loss, receiving as a gain', () => {
+  const t = new Table({ id: 'T', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 50000, maxSeats: 4 });
+  t.sit('a', 'A', 0, { buyIn: 1000 });
+  t.sit('b', 'B', 1, { buyIn: 1000 });
+  t.transferChips('a', 1, 400);
+  eq(t.seats[0].netResult, -400);
+  eq(t.seats[1].netResult, 400);
+});
+
 // ------------------------------------------------------------------ report
 
 console.log('\n');

@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvk6uw5s';
-import { TableHost } from './host.js?v=mvk6uw5s';
-import * as vault from './vault.js?v=mvk6uw5s';
-import * as cloud from './cloud.js?v=mvk6uw5s';
-import { bestHand } from './engine/hand.js?v=mvk6uw5s';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvk6uw5s';
+import { HostNet, GuestNet } from './net.js?v=mvkhtd49';
+import { TableHost } from './host.js?v=mvkhtd49';
+import * as vault from './vault.js?v=mvkhtd49';
+import * as cloud from './cloud.js?v=mvkhtd49';
+import { bestHand } from './engine/hand.js?v=mvkhtd49';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvkhtd49';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 13;
+const BUILD = 14;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -343,6 +343,19 @@ function onMessage(msg) {
       bubbleAtMySeat(`+${fmt(msg.amount)} chips`);
       break;
     }
+    case 'sent': {
+      bubbleAtMySeat(`−${fmt(msg.amount)} to ${msg.who}`);
+      break;
+    }
+    case 'received': {
+      bubbleAtMySeat(`+${fmt(msg.amount)} from ${msg.who}`);
+      toast(`${msg.who} sent you ${fmt(msg.amount)} chips.`);
+      break;
+    }
+    case 'queued-send': {
+      toast(`${fmt(msg.amount)} chips will go to ${msg.who} when this hand ends.`);
+      break;
+    }
     case 'queued': {
       app.pendingAdd = 0;
       bubbleAtMySeat(`+${fmt(msg.amount)} after this hand`);
@@ -414,7 +427,7 @@ function maxBuyIn() {
 function buyInBounds() {
   const cfg = app.config || {};
   const bal = vault.balance();
-  if (app.dialogMode === 'add' && app.addBounds) {
+  if ((app.dialogMode === 'add' || app.dialogMode === 'send') && app.addBounds) {
     return { ...app.addBounds, bal };
   }
   const min = Math.min(cfg.bigBlind || 10, bal);
@@ -429,6 +442,42 @@ function setBuyIn(value) {
   $('buyInRange').value = String(v);
   $('buyInAmount').value = String(v);
   $('buyInLabel').textContent = fmt(v);
+}
+
+/** Send chips from your stack to another player at the table. */
+function openTransfer(seat) {
+  const me = mySeat();
+  const them = app.state?.seats?.[seat];
+  if (!me || !them || them.isMe) return;
+
+  app.dialogMode = 'send';
+  app.dialogSeat = seat;
+
+  const max = Math.min(me.chips, maxBuyIn() - them.chips);
+  $('modalTitle').textContent = `Send chips to ${them.name}`;
+  $('modalSub').innerHTML =
+    `You have <strong>${fmt(me.chips)}</strong> · ${them.name} has <strong>${fmt(them.chips)}</strong>`;
+  modalError('');
+  show($('botSection'), false);
+  show($('emptyVault'), false);
+  show($('buyInBlock'), max > 0);
+
+  if (max > 0) {
+    const min = Math.min(1, max);
+    $('buyInRange').min = String(min);
+    $('buyInRange').max = String(max);
+    $('buyInAmount').min = String(min);
+    $('buyInAmount').max = String(max);
+    app.addBounds = { min, max };
+    setBuyIn(Math.min(Math.max(1, Math.round(me.chips / 4)), max));
+  } else {
+    modalError(
+      me.chips <= 0 ? 'You have no chips to send.' : `${them.name} is at the table maximum.`,
+    );
+  }
+
+  $('sitConfirm').textContent = 'Send chips';
+  show($('modal'), true);
 }
 
 /** Reuse the buy-in dialog to bring more chips from the vault to the table. */
@@ -533,6 +582,11 @@ function initVaultUi() {
   }
 
   $('sitConfirm').addEventListener('click', () => {
+    if (app.dialogMode === 'send') {
+      send({ t: 'transfer', toSeat: app.dialogSeat, amount: app.buyIn });
+      closeSeatDialog();
+      return;
+    }
     if (app.dialogMode === 'add') {
       const taken = vault.withdraw(app.buyIn);
       if (taken <= 0) return modalError('Not enough in your vault.');
@@ -1234,6 +1288,12 @@ function renderSeats(state) {
 
     const box = document.createElement('div');
     box.className = 'seat-box';
+    // Tapping someone else's seat offers to stake them.
+    if (!p.isMe && mySeat()) {
+      box.classList.add('clickable');
+      box.title = `Send chips to ${p.name}`;
+      box.addEventListener('click', () => openTransfer(seat));
+    }
 
     const name = document.createElement('div');
     name.className = 'seat-name';
