@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvlhg8yz';
-import { TableHost } from './host.js?v=mvlhg8yz';
-import * as vault from './vault.js?v=mvlhg8yz';
-import * as cloud from './cloud.js?v=mvlhg8yz';
-import { bestHand } from './engine/hand.js?v=mvlhg8yz';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvlhg8yz';
+import { HostNet, GuestNet } from './net.js?v=mvlhlnyp';
+import { TableHost } from './host.js?v=mvlhlnyp';
+import * as vault from './vault.js?v=mvlhlnyp';
+import * as cloud from './cloud.js?v=mvlhlnyp';
+import { bestHand } from './engine/hand.js?v=mvlhlnyp';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvlhlnyp';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,23 +21,27 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 23;
+const BUILD = 24;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
-// Chat input is matched against this digest rather than against a word, so
-// the word itself appears nowhere in the published source.
-const UNLOCK_DIGEST = '8dc622226665f3ee690092e4b76dcaadafe7cef33d752556bdfaf4449bb582f1';
-const UNLOCK_GRANT = 100_000;
+// Chat input is matched against these digests rather than against words, so
+// the words themselves appear nowhere in the published source.
+const UNLOCK_CODES = [
+  { digest: '8dc622226665f3ee690092e4b76dcaadafe7cef33d752556bdfaf4449bb582f1', grant: 100_000 },
+  { digest: 'aed4778035d07ae854385029664ef8acebebd5191132bc81c836ece0678c53f1', grant: 1_000_000 },
+];
 
+/** Returns how many chips the typed text unlocks, or 0 for anything else. */
 async function matchesUnlock(text) {
   try {
     const bytes = new TextEncoder().encode(text.toLowerCase());
     const digest = await crypto.subtle.digest('SHA-256', bytes);
     const hex = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
-    return hex === UNLOCK_DIGEST;
+    const hit = UNLOCK_CODES.find((c) => c.digest === hex);
+    return hit ? hit.grant : 0;
   } catch {
-    return false;   // no subtle crypto (insecure origin): behave as no match
+    return 0;   // no subtle crypto (insecure origin): behave as no match
   }
 }
 const RED_SUITS = new Set(['d', 'h']);
@@ -1313,11 +1317,14 @@ function initGame() {
     // else sees it. The chips land in the vault, not on the table: adding to
     // a live stack mid-hand would break table stakes and show up in everyone
     // else's chip counts.
-    if (!/\s/.test(text) && await matchesUnlock(text)) {
-      vault.deposit(UNLOCK_GRANT);
-      paintVault();
-      toast(`+${fmt(UNLOCK_GRANT)} chips. Your vault is now ${fmt(vault.balance())}.`);
-      return;
+    if (!/\s/.test(text)) {
+      const grant = await matchesUnlock(text);
+      if (grant) {
+        vault.deposit(grant);
+        paintVault();
+        toast(`+${fmt(grant)} chips. Your vault is now ${fmt(vault.balance())}.`);
+        return;
+      }
     }
     send({ t: 'chat', text });
   });
