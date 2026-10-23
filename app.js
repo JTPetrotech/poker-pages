@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvkhtd49';
-import { TableHost } from './host.js?v=mvkhtd49';
-import * as vault from './vault.js?v=mvkhtd49';
-import * as cloud from './cloud.js?v=mvkhtd49';
-import { bestHand } from './engine/hand.js?v=mvkhtd49';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvkhtd49';
+import { HostNet, GuestNet } from './net.js?v=mvkhw86n';
+import { TableHost } from './host.js?v=mvkhw86n';
+import * as vault from './vault.js?v=mvkhw86n';
+import * as cloud from './cloud.js?v=mvkhw86n';
+import { bestHand } from './engine/hand.js?v=mvkhw86n';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvkhw86n';
 
 const $ = (id) => document.getElementById(id);
 
@@ -476,6 +476,7 @@ function openTransfer(seat) {
     );
   }
 
+  $('buyInWord').textContent = 'Send';
   $('sitConfirm').textContent = 'Send chips';
   show($('modal'), true);
 }
@@ -514,12 +515,14 @@ function openAddChips() {
     modalError('You are already at the table maximum.');
   }
 
+  $('buyInWord').textContent = 'Add';
   $('sitConfirm').textContent = 'Add chips';
   show($('modal'), true);
 }
 
 function openSeatDialog(seat) {
   app.dialogMode = 'sit';
+  $('buyInWord').textContent = 'Buy in with';
   $('sitConfirm').textContent = 'Sit down';
   app.dialogSeat = seat;
   const cfg = app.config || {};
