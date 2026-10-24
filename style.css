@@ -1527,3 +1527,26 @@ input { font: inherit; }
 :root[data-theme="dark"] .build-code { background: rgba(255, 143, 187, 0.14); }
 :root[data-theme="dark"] .build-code.ok { background: rgba(53, 179, 106, 0.18); }
 :root[data-theme="dark"] .build-code.bad { background: rgba(226, 97, 107, 0.18); }
+
+/* ---------------------------------------------------------------- backup */
+
+.backup { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+.backup .field { margin-bottom: 6px; }
+.backup-note { margin: 0 0 10px; font-size: 11.5px; line-height: 1.5; color: var(--muted); }
+.backup-msg { margin: 8px 0 0; font-size: 12px; }
+.backup-msg.good { color: var(--green); }
+.backup-msg.bad { color: var(--red); }
+
+.code-row { display: flex; gap: 6px; }
+.code-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  background: var(--field);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--text);
+  font-size: 12px;
+  outline: none;
+}
+.code-row input:focus { border-color: var(--chip); }

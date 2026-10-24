@@ -172,3 +172,41 @@ export function reload() {
   write(p);
   return p.vault;
 }
+
+/**
+ * A short code carrying your chips, for moving to another device or keeping
+ * somewhere safe. Browsers clear stored data on their own schedule — Safari
+ * after about a week of not visiting — and this is the way back.
+ */
+export function backupCode() {
+  const p = read();
+  const payload = {
+    v: 1,
+    c: p.vault + (p.atTable ? p.atTable.amount : 0),
+    h: p.handsPlayed,
+    b: p.biggestPot,
+    n: p.name,
+  };
+  return btoa(JSON.stringify(payload)).replace(/=+$/, '');
+}
+
+/** Returns the restored balance, or null if the code is not one of ours. */
+export function restoreCode(code) {
+  try {
+    const text = String(code || '').trim();
+    if (!text) return null;
+    const json = JSON.parse(atob(text));
+    if (!json || json.v !== 1 || typeof json.c !== 'number') return null;
+
+    const p = read();
+    p.vault = Math.min(MAX_VAULT, Math.max(0, Math.floor(json.c)));
+    p.atTable = null;
+    p.handsPlayed = Math.max(0, Math.floor(json.h) || 0);
+    p.biggestPot = Math.max(0, Math.floor(json.b) || 0);
+    if (json.n) p.name = String(json.n).slice(0, 16);
+    write(p);
+    return p.vault;
+  } catch {
+    return null;
+  }
+}

@@ -928,6 +928,39 @@ test('a full table of maximum stacks stays inside exact arithmetic', () => {
   assert(worst <= Number.MAX_SAFE_INTEGER, `9 x 1Q = ${worst} must stay safe`);
 });
 
+test('a backup code carries the chips and restores them', () => {
+  freshVault();
+  vault.withdraw(3000);
+  vault.setAtTable('ABCD', 4500);   // some chips still on a table
+  vault.recordHand({ pot: 2200 });
+  const code = vault.backupCode();
+  assert(typeof code === 'string' && code.length > 10, 'produces a code');
+
+  freshVault();
+  eq(vault.balance(), 10000, 'a clean device');
+  const restored = vault.restoreCode(code);
+  // 7,000 left in the vault plus the 4,500 that was on the table.
+  eq(restored, 11500, 'chips at the table are included');
+  eq(vault.balance(), 11500);
+  eq(vault.profile().handsPlayed, 1, 'history comes too');
+  eq(vault.profile().biggestPot, 2200);
+});
+
+test('a bad backup code changes nothing', () => {
+  freshVault();
+  const before = vault.balance();
+  eq(vault.restoreCode('not-a-real-code'), null);
+  eq(vault.restoreCode(''), null);
+  eq(vault.restoreCode(btoa('{"v":99}')), null, 'wrong version refused');
+  eq(vault.balance(), before, 'balance untouched');
+});
+
+test('a restored code cannot exceed the ceiling', () => {
+  freshVault();
+  const forged = btoa(JSON.stringify({ v: 1, c: 9e18, h: 0, b: 0, n: 'X' }));
+  eq(vault.restoreCode(forged), 1e15, 'clamped to the maximum');
+});
+
 // ------------------------------------------------------------------ report
 
 console.log('\n');

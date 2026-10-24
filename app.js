@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvljuq5w';
-import { TableHost } from './host.js?v=mvljuq5w';
-import * as vault from './vault.js?v=mvljuq5w';
-import * as cloud from './cloud.js?v=mvljuq5w';
-import { bestHand } from './engine/hand.js?v=mvljuq5w';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvljuq5w';
+import { HostNet, GuestNet } from './net.js?v=mvmoxi8r';
+import { TableHost } from './host.js?v=mvmoxi8r';
+import * as vault from './vault.js?v=mvmoxi8r';
+import * as cloud from './cloud.js?v=mvmoxi8r';
+import { bestHand } from './engine/hand.js?v=mvmoxi8r';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvmoxi8r';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 33;
+const BUILD = 34;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -489,6 +489,52 @@ function initCodeBoxes() {
       if (e.key === 'Enter') redeem(box, null);
     });
   }
+}
+
+
+/**
+ * Ask the browser to keep this site's data rather than clearing it when
+ * space runs short. Chrome usually grants it to a site you use; Safari grants
+ * it to a page added to the Home Screen, which is what actually stops the
+ * weekly clear-out there.
+ */
+function requestPersistence() {
+  try {
+    navigator.storage?.persist?.().catch(() => {});
+  } catch { /* not supported; the backup code is the fallback */ }
+}
+
+function backupMsg(text, good) {
+  const el = $('backupMsg');
+  el.textContent = text || '';
+  el.className = `backup-msg ${good ? 'good' : 'bad'}`;
+  el.hidden = !text;
+}
+
+function initBackup() {
+  $('backupCopy').addEventListener('click', async () => {
+    const code = vault.backupCode();
+    $('backupCode').value = code;
+    try {
+      await navigator.clipboard.writeText(code);
+      backupMsg('Code copied. Keep it somewhere safe.', true);
+    } catch {
+      // Clipboard refused; the code is in the box to copy by hand.
+      $('backupCode').select();
+      backupMsg('Copy the code from the box above.', true);
+    }
+  });
+
+  $('backupCode').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const restored = vault.restoreCode($('backupCode').value);
+    if (restored === null) {
+      backupMsg('That is not a valid code.', false);
+      return;
+    }
+    paintVault();
+    backupMsg(`Restored. Your vault is now ${fmt(restored)}.`, true);
+  });
 }
 
 // ---------------------------------------------------------------- loading
@@ -1948,6 +1994,8 @@ initLobby();
 initGame();
 initVaultUi();
 initCodeBoxes();
+initBackup();
+requestPersistence();
 initSettings();
 initAuthUi();
 watchFeltSpace();

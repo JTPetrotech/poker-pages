@@ -1,0 +1,14 @@
+{
+  "name": "Side Pot",
+  "short_name": "Side Pot",
+  "description": "Play-money No-Limit Hold'em with your friends.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#157f5c",
+  "theme_color": "#157f5c",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
