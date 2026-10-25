@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvo3bhly';
-import { TableHost } from './host.js?v=mvo3bhly';
-import * as vault from './vault.js?v=mvo3bhly';
-import * as cloud from './cloud.js?v=mvo3bhly';
-import { bestHand } from './engine/hand.js?v=mvo3bhly';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo3bhly';
+import { HostNet, GuestNet } from './net.js?v=mvo7vewk';
+import { TableHost } from './host.js?v=mvo7vewk';
+import * as vault from './vault.js?v=mvo7vewk';
+import * as cloud from './cloud.js?v=mvo7vewk';
+import { bestHand } from './engine/hand.js?v=mvo7vewk';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo7vewk';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 38;
+const BUILD = 39;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -1860,9 +1860,11 @@ function renderSeats(state) {
 
     if (acting && state.actionDeadline > now) {
       const total = app.config?.actionTimeoutMs || 45000;
+      const left = Math.max(0, Math.min(100, ((state.actionDeadline - now) / total) * 100));
       const bar = document.createElement('div');
-      bar.className = 'timer';
-      bar.style.width = `${Math.max(0, Math.min(100, ((state.actionDeadline - now) / total) * 100))}%`;
+      // Timing out now shoves your whole stack, so the last stretch is red.
+      bar.className = left < 30 ? 'timer urgent' : 'timer';
+      bar.style.width = `${left}%`;
       box.appendChild(bar);
     }
 

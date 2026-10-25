@@ -1049,6 +1049,40 @@ test('seizing mid-hand waits for the hand to finish', () => {
   eq(them.chips, theirChips, 'their live stack is untouched');
 });
 
+test('running out of time puts you all in', () => {
+  const t = seatPlayers(3, { chips: 1000 });
+  t.startHand();
+  const p = t.seats[t.actingSeat];
+  const stack = p.chips;
+  t.timeoutAct();
+  eq(p.chips, 0, 'the whole stack goes in');
+  eq(p.allIn, true);
+  assert(p.bet >= stack, 'everything they had is committed');
+  assert(!p.folded, 'and they are still in the hand');
+});
+
+test('a disconnected player is folded, not shoved', () => {
+  const t = seatPlayers(3, { chips: 1000 });
+  t.startHand();
+  const p = t.seats[t.actingSeat];
+  p.disconnected = true;
+  t.timeoutAct();
+  eq(p.folded, true, 'folded rather than losing their stack to a lost signal');
+  assert(p.chips > 0, 'stack intact');
+});
+
+test('timing out with nothing to call still shoves', () => {
+  const t = seatPlayers(2, { chips: 1000 });
+  t.startHand();
+  // Get to a street where checking is free.
+  t.act(t.seats[t.actingSeat].id, 'call');
+  t.act(t.seats[t.actingSeat].id, 'check');
+  eq(t.stage, 'flop');
+  const p = t.seats[t.actingSeat];
+  t.timeoutAct();
+  eq(p.chips, 0, 'all in even though checking was free');
+});
+
 // ------------------------------------------------------------------ report
 
 console.log('\n');

@@ -1,5 +1,5 @@
-import { makeDeck, shuffle } from './cards.js?v=mvo3bhly';
-import { bestHand, compareScores } from './hand.js?v=mvo3bhly';
+import { makeDeck, shuffle } from './cards.js?v=mvo7vewk';
+import { bestHand, compareScores } from './hand.js?v=mvo7vewk';
 
 export const STAGES = ['idle', 'preflop', 'flop', 'turn', 'river', 'showdown', 'handover'];
 
@@ -516,13 +516,25 @@ export class Table {
     this.settleOrAdvance();
   }
 
-  /** Auto-action when a player's clock runs out: check if free, otherwise fold. */
+  /**
+   * The clock ran out. A player who is simply slow gets shoved all in — there
+   * is a penalty for leaving the table waiting. Someone whose connection has
+   * dropped is folded instead: they are not choosing to be away, and taking
+   * their stack for a lost signal would be unfair.
+   */
   timeoutAct() {
     const p = this.seats[this.actingSeat];
     if (!p) return;
-    const toCall = Math.max(0, this.currentBet - p.bet);
-    this.pushLog(`${p.name} ran out of time.`);
-    this.act(p.id, toCall === 0 ? 'check' : 'fold');
+
+    if (p.disconnected) {
+      const toCall = Math.max(0, this.currentBet - p.bet);
+      this.pushLog(`${p.name} is disconnected.`);
+      this.act(p.id, toCall === 0 ? 'check' : 'fold');
+      return;
+    }
+
+    this.pushLog(`${p.name} ran out of time — all in.`);
+    this.act(p.id, 'allin');
   }
 
   // ---------------------------------------------------------------- street transitions

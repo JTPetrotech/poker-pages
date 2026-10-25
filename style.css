@@ -1589,3 +1589,7 @@ input { font: inherit; }
 }
 .admin-row button.all { background: var(--bg-2); border-color: var(--line); color: var(--text); }
 .admin-empty { font-size: 12.5px; color: var(--muted); }
+
+/* The clock now costs you your stack, so it turns red as it runs out. */
+.timer { transition: width 0.4s linear, background 0.4s ease; }
+.timer.urgent { background: var(--red); }
