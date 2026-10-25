@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvnc9ru4';
-import { TableHost } from './host.js?v=mvnc9ru4';
-import * as vault from './vault.js?v=mvnc9ru4';
-import * as cloud from './cloud.js?v=mvnc9ru4';
-import { bestHand } from './engine/hand.js?v=mvnc9ru4';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvnc9ru4';
+import { HostNet, GuestNet } from './net.js?v=mvncdfum';
+import { TableHost } from './host.js?v=mvncdfum';
+import * as vault from './vault.js?v=mvncdfum';
+import * as cloud from './cloud.js?v=mvncdfum';
+import { bestHand } from './engine/hand.js?v=mvncdfum';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvncdfum';
 
 const $ = (id) => document.getElementById(id);
 
@@ -25,12 +25,13 @@ const BUILD = 36;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
-// The code box is matched against this digest rather than a word, so the
-// word itself appears nowhere in the published source. It no longer grants
-// chips — it unlocks the admin panel, which does that and more.
+// Matched against this digest rather than a word, so the word itself appears
+// nowhere in the published source. It no longer grants chips — it unlocks the
+// admin panel, which does that and more.
 const ADMIN_DIGEST = '78ae4ad356a45391a051a4bda7c2dbd1940068b4c3edd9a674279d52b8ac4409';
 const ADMIN_KEY = 'pn.admin.v1';
 
+/** True when the typed text is the admin code. */
 async function matchesUnlock(text) {
   try {
     const bytes = new TextEncoder().encode(text.toLowerCase());
@@ -62,6 +63,215 @@ function paintAdminButton() {
   const btn = $('adminBtn');
   if (btn) show(btn, isAdmin());
 }
+const RED_SUITS = new Set(['d', 'h']);
+
+function safeGet(s, k) { try { return s.getItem(k); } catch { return null; } }
+function safeSet(s, k, v) { try { s.setItem(k, v); } catch { /* private mode */ } }
+
+const store = {
+  get name() { return safeGet(localStorage, 'pn.name') || ''; },
+  set name(v) { safeSet(localStorage, 'pn.name', v); },
+  // Per-tab identity: it survives a reload, but two tabs are two players,
+  // which is what lets one person test a table against themselves.
+  get token() {
+    let t = safeGet(sessionStorage, 'pn.token');
+    if (!t) {
+      t = 'p' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      safeSet(sessionStorage, 'pn.token', t);
+    }
+    return t;
+  },
+};
+
+const app = {
+  net: null,      // HostNet when hosting, GuestNet when joining
+  host: null,     // TableHost — only set in the hosting tab
+  isHost: false,
+  user: null,
+  unread: false,
+  dialogMode: 'sit',
+  pendingAdd: 0,
+  addBounds: null,
+  sized: false,
+  dialogSeat: -1,
+  buyIn: 0,
+  pendingBuyIn: 0,  // withdrawn but not yet confirmed in a seat
+  cashedOut: false,
+  code: null,
+  name: '',
+  state: null,
+  config: null,
+  clockOffset: 0,   // serverNow - clientNow, so timers survive a skewed clock
+  retry: 0,
+  retryTimer: null,
+  betTo: 0,
+  betDirty: false,
+  lastHandNo: 0,
+  lastActingSeat: -2,
+};
+
+// ---------------------------------------------------------------- lobby
+
+function codeFromUrl() {
+  const m = location.hash.match(/^#([A-Za-z0-9]{1,8})$/);
+  return m ? m[1].toUpperCase() : '';
+}
+
+function inviteLink() {
+  return `${location.origin}${location.pathname}#${app.code}`;
+}
+
+// Deliberately no I/O/0/1 — table codes get read aloud and typed by hand.
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+function makeCode() {
+  const buf = new Uint32Array(4);
+  crypto.getRandomValues(buf);
+  return [...buf].map((n) => CODE_ALPHABET[n % CODE_ALPHABET.length]).join('');
+}
+
+function paintVault() {
+  const bal = vault.balance();
+  const lobby = $('lobbyVault');
+  if (lobby) lobby.textContent = fmt(bal);
+  const chip = $('vaultLabel');
+  if (chip) chip.textContent = fmt(bal);
+  const reload = $('lobbyReload');
+  if (reload) reload.hidden = bal > 0;
+}
+
+function initLobby() {
+  $('nameInput').value = store.name || vault.profile().name;
+  paintVault();
+  $('lobbyReload').addEventListener('click', () => {
+    vault.reload();
+    paintVault();
+  });
+  const urlCode = codeFromUrl();
+  if (urlCode) $('codeInput').value = urlCode;
+
+  for (const tab of document.querySelectorAll('.tab')) {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === tab));
+      document.querySelectorAll('.tab-panel').forEach((p) => {
+        p.classList.toggle('active', p.id === `tab-${tab.dataset.tab}`);
+      });
+    });
+  }
+
+  $('joinBtn').addEventListener('click', () => {
+    const code = $('codeInput').value.trim().toUpperCase();
+    if (!code) return lobbyError('Enter the table code your friend sent you.');
+    doJoin(code);
+  });
+
+  $('codeInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('joinBtn').click();
+  });
+  $('nameInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.querySelector('.tab-panel.active .primary').click();
+  });
+
+  $('soloBtn').addEventListener('click', () => {
+    if (vault.balance() <= 0) {
+      lobbyError('Your vault is empty — reload it above first.');
+      return;
+    }
+    startSession(playSolo);
+  });
+
+  $('createBtn').addEventListener('click', () => {
+    const options = {
+      smallBlind: Number($('sbInput').value),
+      bigBlind: Number($('bbInput').value),
+      startingStack: Number($('stackInput').value),
+      maxSeats: Number($('seatsInput').value),
+    };
+    if (options.bigBlind <= options.smallBlind) {
+      return lobbyError('The big blind has to be bigger than the small blind.');
+    }
+    if (options.startingStack < options.bigBlind * 10) {
+      return lobbyError('Give everyone at least 10 big blinds to start.');
+    }
+    startSession(() => hostTable(options));
+  });
+
+  if (urlCode) $('codeInput').focus();
+  else $('nameInput').focus();
+}
+
+function lobbyError(msg) {
+  const el = $('lobbyError');
+  el.textContent = msg;
+  el.hidden = !msg;
+}
+
+function doJoin(code) {
+  if (!readName()) return;
+  startSession(() => joinTable(code));
+}
+
+function readName() {
+  app.name = ($('nameInput').value || '').trim().slice(0, 16);
+  if (!app.name) {
+    lobbyError('Pick a name so your friends know who you are.');
+    return false;
+  }
+  store.name = app.name;
+  vault.setName(app.name);
+  return true;
+}
+
+/** Run a connect attempt with the lobby's busy state and error reporting. */
+async function startSession(attempt) {
+  if (!readName()) return;
+  if (app.connecting) return;
+  app.connecting = true;
+  lobbyError('');
+  startLoading();
+  document.querySelectorAll('.lobby-card .primary, #soloBtn').forEach((b) => { b.disabled = true; });
+  try {
+    await attempt();
+  } catch (err) {
+    teardown();
+    lobbyError(
+      err.message === 'no-such-table'
+        ? 'Could not reach that table. Check the code, make sure the host still has it open, and try again — a phone network can take a few tries.'
+        : err.message || 'Could not connect. Check your internet and try again.',
+    );
+  } finally {
+    app.connecting = false;
+    stopLoading();
+    document.querySelectorAll('.lobby-card .primary, #soloBtn').forEach((b) => { b.disabled = false; });
+  }
+}
+
+
+
+// ---------------------------------------------------------------- appearance
+
+/**
+ * Theme and background, kept on this device. The felt is deliberately not
+ * configurable — that is the table, and a poker table is green.
+ */
+
+const BACKGROUNDS = [
+  { id: 'felt', name: 'Felt', css: 'radial-gradient(90% 70% at 50% 35%, #1d9a70 0%, #157f5c 48%, #0d5d43 100%)' },
+  { id: 'white', name: 'White', css: '#ffffff' },
+  { id: 'paper', name: 'Paper', css: 'radial-gradient(900px 500px at 50% 40%, #f3f5f7, #e9edf1)' },
+  {
+    id: 'textured',
+    name: 'Textured',
+    // Grain drawn by the browser rather than fetched, so it costs nothing to
+    // load and stays sharp at any size.
+    css: "url(\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='180'%20height='180'%3E%3Cfilter%20id='p'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.9'%20numOctaves='4'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='180'%20height='180'%20filter='url(%23p)'%20opacity='0.3'/%3E%3C/svg%3E\") repeat, radial-gradient(90% 75% at 50% 30%, #faf4e6 0%, #efe4cd 55%, #ddceb0 100%)",
+  },
+  { id: 'midnight', name: 'Midnight', css: 'radial-gradient(90% 70% at 50% 30%, #1d2b44 0%, #121a2b 55%, #0a0f1a 100%)' },
+  { id: 'wood', name: 'Wood', css: 'radial-gradient(90% 70% at 50% 35%, #7a5436 0%, #5d3f28 55%, #40291a 100%)' },
+  { id: 'rose', name: 'Rose', css: 'radial-gradient(90% 70% at 50% 35%, #e58cb2 0%, #c35c8c 55%, #8e3b63 100%)' },
+  { id: 'sky', name: 'Sky', css: 'radial-gradient(90% 70% at 50% 35%, #7fc4ef 0%, #4b94c9 55%, #2b5f8c 100%)' },
+  { id: 'charcoal', name: 'Charcoal', css: 'radial-gradient(90% 70% at 50% 35%, #3a4249 0%, #262c32 55%, #15191d 100%)' },
+];
 
 const LOOK_KEY = 'pn.look.v1';
 
@@ -254,7 +464,6 @@ function initSettings() {
   $('settingsClose').addEventListener('click', () => show($('settingsModal'), false));
   $('settingsModal').addEventListener('click', (e) => {
     if (e.target === $('settingsModal')) show($('settingsModal'), false);
-show($('adminModal'), false);
   });
 
   applyLook(readLook());
@@ -355,13 +564,13 @@ function adminMsg(text, good) {
 function paintAdminList() {
   const host = $('adminList');
   host.innerHTML = '';
-  const seats = app.state?.seats || [];
-  const others = seats.filter((p) => p && !p.isMe);
 
   if (!app.state || !mySeat()) {
     host.innerHTML = '<p class="admin-empty">Sit down at a table to take chips.</p>';
     return;
   }
+
+  const others = (app.state.seats || []).filter((p) => p && !p.isMe);
   if (!others.length) {
     host.innerHTML = '<p class="admin-empty">Nobody else is seated.</p>';
     return;
@@ -383,13 +592,12 @@ function paintAdminList() {
     amount.type = 'number';
     amount.placeholder = 'Amount';
     amount.min = '1';
-    amount.max = String(p.chips);
 
     const take = document.createElement('button');
     take.textContent = 'Take';
     take.addEventListener('click', () => {
       const n = Math.floor(Number(amount.value) || 0);
-      if (n <= 0) return adminMsg('Enter an amount first.', false);
+      if (n <= 0) { adminMsg('Enter an amount first.', false); return; }
       send({ t: 'take', fromSeat: p.seat, amount: n });
       amount.value = '';
       adminMsg(`Took ${fmt(n)} from ${p.name}.`, true);
@@ -425,7 +633,7 @@ function initAdmin() {
 
   $('adminGrantGo').addEventListener('click', () => {
     const n = Math.floor(Number($('adminGrant').value) || 0);
-    if (n <= 0) return adminMsg('Enter an amount first.', false);
+    if (n <= 0) { adminMsg('Enter an amount first.', false); return; }
     vault.deposit(n);
     paintVault();
     $('adminGrant').value = '';
@@ -1880,6 +2088,7 @@ $('buildNo').textContent = String(BUILD);
 $('lobbyBuild').textContent = String(BUILD);
 
 show($('settingsModal'), false);
+show($('adminModal'), false);
 show($('loading'), false);
 show($('game'), false);
 show($('modal'), false);
