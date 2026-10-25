@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mvo80wez" />
+<link rel="stylesheet" href="style.css?v=mvo852ao" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
@@ -439,8 +439,13 @@
 <div id="helpModal" class="modal" hidden>
   <div class="modal-card wide" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
     <button id="helpClose" class="modal-x" aria-label="Close">&times;</button>
-    <h2 id="helpTitle">Hand rankings</h2>
-    <p class="modal-sub">Best at the top. Five cards play — your two plus the five on the table.</p>
+    <h2 id="helpTitle">Help</h2>
+
+    <div class="help-tabs">
+      <button class="htab active" data-htab="hands" type="button">Hands</button>
+      <button class="htab" data-htab="play" type="button">How to play</button>
+      <button class="htab" data-htab="table" type="button">This table</button>
+    </div>
     <div id="yourHand" class="your-hand" hidden>
       <div class="your-hand-label">You have</div>
       <div class="your-hand-name" id="yourHandName">—</div>
@@ -448,11 +453,58 @@
       <div class="your-hand-note" id="yourHandNote"></div>
     </div>
 
-    <div id="rankList" class="rank-list"></div>
+    <div id="hpane-hands" class="hpane active">
+      <p class="modal-sub">Best at the top. Five cards play — your two plus the five on the table.</p>
+      <div id="rankList" class="rank-list"></div>
+    </div>
+
+    <div id="hpane-play" class="hpane">
+      <div class="help-step">
+        <h3>The shape of a hand</h3>
+        <p>You get two cards nobody else sees. Five more are dealt face up in
+          the middle, in three goes — three, then one, then one. Your hand is
+          the best five out of those seven, and you can use both, one or
+          neither of your own.</p>
+      </div>
+      <div class="help-step">
+        <h3>Betting</h3>
+        <p>Two players post blinds to start, so there is always something to
+          play for. Then you act in turn, and again after each new card.</p>
+        <ul>
+          <li><strong>Fold</strong> — give up the hand and anything you put in.</li>
+          <li><strong>Check</strong> — stay in without paying, if nobody has bet.</li>
+          <li><strong>Call</strong> — match the current bet.</li>
+          <li><strong>Bet / Raise</strong> — put more in and make everyone else match it.</li>
+        </ul>
+      </div>
+      <div class="help-step">
+        <h3>Sizing a bet</h3>
+        <p>The slider sets the amount. <strong>Min</strong> is the smallest
+          raise allowed, <strong>Pot</strong> matches what is already in the
+          middle, and <strong>All in</strong> pushes everything you have. A
+          bigger bet makes it cost more to stay in against you.</p>
+      </div>
+      <div class="help-step">
+        <h3>Without touching the mouse</h3>
+        <p><kbd>F</kbd> fold · <kbd>C</kbd> check or call · <kbd>R</kbd> bet or raise</p>
+      </div>
+      <div class="help-step">
+        <h3>Winning</h3>
+        <p>Everyone else folding wins it there and then, and you never have to
+          show. Otherwise the best hand takes the pot, split evenly on a tie.
+          Bet more than someone has and they are all in for what they hold —
+          the rest goes into a side pot they cannot win.</p>
+      </div>
+    </div>
+
+    <div id="hpane-table" class="hpane">
+      <div id="tableFacts" class="fact-list"></div>
+    </div>
+
     <p class="rank-foot">Type <strong>help</strong> in the chat any time to see this again.</p>
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvo80wez"></script>
+<script type="module" src="app.js?v=mvo852ao"></script>
 </body>
 </html>

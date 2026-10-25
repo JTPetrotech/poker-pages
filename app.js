@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvo80wez';
-import { TableHost } from './host.js?v=mvo80wez';
-import * as vault from './vault.js?v=mvo80wez';
-import * as cloud from './cloud.js?v=mvo80wez';
-import { bestHand } from './engine/hand.js?v=mvo80wez';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo80wez';
+import { HostNet, GuestNet } from './net.js?v=mvo852ao';
+import { TableHost } from './host.js?v=mvo852ao';
+import * as vault from './vault.js?v=mvo852ao';
+import * as cloud from './cloud.js?v=mvo852ao';
+import { bestHand } from './engine/hand.js?v=mvo852ao';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo852ao';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 40;
+const BUILD = 41;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -1405,6 +1405,51 @@ function paintYourHand() {
   }
 }
 
+
+/** The rules of the table you are actually sitting at, not the general case. */
+function paintTableFacts() {
+  const host = $('tableFacts');
+  const cfg = app.config || {};
+  const me = mySeat();
+  host.innerHTML = '';
+
+  const fact = (k, v) => {
+    const row = document.createElement('div');
+    row.className = 'fact';
+    const a = document.createElement('span');
+    a.className = 'k';
+    a.textContent = k;
+    const b = document.createElement('span');
+    b.className = 'v';
+    b.textContent = v;
+    row.append(a, b);
+    host.appendChild(row);
+  };
+
+  const note = (text) => {
+    const row = document.createElement('div');
+    row.className = 'fact note';
+    row.textContent = text;
+    host.appendChild(row);
+  };
+
+  fact('Table', app.code || '—');
+  fact('Blinds', `${fmt(cfg.smallBlind || 0)} / ${fmt(cfg.bigBlind || 0)}`);
+  fact('Seats', String(cfg.maxSeats || 0));
+  fact('Most on the table', fmt(cfg.maxBuyIn || 0));
+  fact('Time to act', `${Math.round((cfg.actionTimeoutMs || 45000) / 1000)} seconds`);
+  fact('Out of time', cfg.meanie ? 'Your whole stack goes in' : 'You fold');
+  if (me) fact('Your stack', fmt(me.chips));
+  fact('Your vault', fmt(vault.balance()));
+
+  note('Tap the Vault chip to move chips between your vault and the table, '
+    + 'either way. Tap another seat to send chips to that player.');
+  if (app.isHost) {
+    note('You are hosting, so this tab is the table. Closing it ends the game '
+      + 'for everyone.');
+  }
+}
+
 function openHelp() {
   const list = $('rankList');
   if (!list.childElementCount) {
@@ -1435,6 +1480,7 @@ function openHelp() {
     });
   }
   paintYourHand();
+  paintTableFacts();
   show($('helpModal'), true);
 }
 
@@ -1524,6 +1570,15 @@ function initGame() {
 
     send({ t: 'chat', text });
   });
+
+  for (const tab of document.querySelectorAll('.htab')) {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.htab').forEach((t) => t.classList.toggle('active', t === tab));
+      document.querySelectorAll('.hpane').forEach((pane) => {
+        pane.classList.toggle('active', pane.id === `hpane-${tab.dataset.htab}`);
+      });
+    });
+  }
 
   $('helpClose').addEventListener('click', () => show($('helpModal'), false));
   $('helpModal').addEventListener('click', (e) => {
