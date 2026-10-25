@@ -1,5 +1,5 @@
-import { Table } from './engine/game.js?v=mvo8lokq';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvo8lokq';
+import { Table } from './engine/game.js?v=mvo8q3lo';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvo8q3lo';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;
@@ -148,8 +148,23 @@ export class TableHost {
         break;
       case 'removebot': {
         const seat = clampInt(msg.seat, 0, table.maxSeats - 1, 0);
-        const bot = table.seats[seat];
-        if (bot && bot.bot) table.stand(bot.id);
+        const who = table.seats[seat];
+        if (!who) break;
+        // Anyone may clear a bot they added; only the host may remove a
+        // person, since that decides who is allowed at their table.
+        if (!who.bot && token !== table.hostId) {
+          throw new Error('Only the host can remove a player.');
+        }
+        if (who === table.playerById(token)) {
+          throw new Error('Use Leave to get up yourself.');
+        }
+        if (!who.bot) {
+          // Send their chips home before the seat goes, or they would have to
+          // wait for the stranded-chips recovery to notice.
+          this.deliver(who.id, { t: 'cashout', amount: who.chips });
+          this.deliver(who.id, { t: 'error', message: 'The host removed you from the table.' });
+        }
+        table.stand(who.id);
         break;
       }
       case 'action':

@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvo8lokq';
-import { TableHost } from './host.js?v=mvo8lokq';
-import * as vault from './vault.js?v=mvo8lokq';
-import * as cloud from './cloud.js?v=mvo8lokq';
-import { bestHand } from './engine/hand.js?v=mvo8lokq';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo8lokq';
+import { HostNet, GuestNet } from './net.js?v=mvo8q3lo';
+import { TableHost } from './host.js?v=mvo8q3lo';
+import * as vault from './vault.js?v=mvo8q3lo';
+import * as cloud from './cloud.js?v=mvo8q3lo';
+import { bestHand } from './engine/hand.js?v=mvo8q3lo';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo8q3lo';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 43;
+const BUILD = 44;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -1041,7 +1041,8 @@ function openTransfer(seat) {
   setQuickLabels('Everything');
   // Tapping a seat is the obvious gesture, so removal lives here too — the
   // small cross on the seat itself is easy to miss.
-  show($('removeBot'), !!(them.bot && app.isHost));
+  $('removeBot').textContent = them.bot ? 'Remove this player' : `Remove ${them.name} from the table`;
+  show($('removeBot'), !!app.isHost);
   show($('modal'), true);
 }
 
@@ -1197,6 +1198,7 @@ function initVaultUi() {
     const seat = app.dialogSeat;
     const them = app.state?.seats?.[seat];
     if (!them) return;
+    if (!them.bot && !confirm(`Remove ${them.name} from the table? Their chips go back to their vault.`)) return;
     send({ t: 'removebot', seat });
     closeSeatDialog();
     toast(`${them.name} removed from the table.`);
@@ -2029,7 +2031,7 @@ function renderSeats(state) {
     el.append(cards, box);
 
     // Outside the box: .seat-box clips its overflow for the timer bar.
-    if (p.bot && app.isHost) {
+    if (!p.isMe && app.isHost) {
       const kick = document.createElement('button');
       kick.className = 'kick-bot';
       kick.textContent = '×';
