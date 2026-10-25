@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvo8jtxt';
-import { TableHost } from './host.js?v=mvo8jtxt';
-import * as vault from './vault.js?v=mvo8jtxt';
-import * as cloud from './cloud.js?v=mvo8jtxt';
-import { bestHand } from './engine/hand.js?v=mvo8jtxt';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo8jtxt';
+import { HostNet, GuestNet } from './net.js?v=mvo8lokq';
+import { TableHost } from './host.js?v=mvo8lokq';
+import * as vault from './vault.js?v=mvo8lokq';
+import * as cloud from './cloud.js?v=mvo8lokq';
+import { bestHand } from './engine/hand.js?v=mvo8lokq';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo8lokq';
 
 const $ = (id) => document.getElementById(id);
 
@@ -1039,6 +1039,9 @@ function openTransfer(seat) {
   $('buyInWord').textContent = 'Send';
   $('sitConfirm').textContent = 'Send chips';
   setQuickLabels('Everything');
+  // Tapping a seat is the obvious gesture, so removal lives here too — the
+  // small cross on the seat itself is easy to miss.
+  show($('removeBot'), !!(them.bot && app.isHost));
   show($('modal'), true);
 }
 
@@ -1047,6 +1050,7 @@ function openAddChips(direction = 'add') {
   const me = mySeat();
   if (!me) return;
   app.dialogMode = direction;
+  show($('removeBot'), false);
   app.dialogSeat = me.seat;
 
   const cfg = app.config || {};
@@ -1115,6 +1119,7 @@ function setQuickLabels(maxLabel) {
 
 function openSeatDialog(seat) {
   app.dialogMode = 'sit';
+  show($('removeBot'), false);
   show($('chipDirection'), false);
   setQuickLabels('Max');
   $('buyInWord').textContent = 'Buy in with';
@@ -1187,6 +1192,15 @@ function initVaultUi() {
       else setBuyIn(max);
     });
   }
+
+  $('removeBot').addEventListener('click', () => {
+    const seat = app.dialogSeat;
+    const them = app.state?.seats?.[seat];
+    if (!them) return;
+    send({ t: 'removebot', seat });
+    closeSeatDialog();
+    toast(`${them.name} removed from the table.`);
+  });
 
   for (const tab of document.querySelectorAll('.dir')) {
     tab.addEventListener('click', () => openAddChips(tab.dataset.dir));
