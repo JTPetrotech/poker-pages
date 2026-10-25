@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvmoxi8r';
-import { TableHost } from './host.js?v=mvmoxi8r';
-import * as vault from './vault.js?v=mvmoxi8r';
-import * as cloud from './cloud.js?v=mvmoxi8r';
-import { bestHand } from './engine/hand.js?v=mvmoxi8r';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvmoxi8r';
+import { HostNet, GuestNet } from './net.js?v=mvnc3279';
+import { TableHost } from './host.js?v=mvnc3279';
+import * as vault from './vault.js?v=mvnc3279';
+import * as cloud from './cloud.js?v=mvnc3279';
+import { bestHand } from './engine/hand.js?v=mvnc3279';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvnc3279';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 34;
+const BUILD = 35;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -219,7 +219,7 @@ async function startSession(attempt) {
     teardown();
     lobbyError(
       err.message === 'no-such-table'
-        ? 'No table with that code. Check the code, or ask the host whether their tab is still open.'
+        ? 'Could not reach that table. Check the code, make sure the host still has it open, and try again — a phone network can take a few tries.'
         : err.message || 'Could not connect. Check your internet and try again.',
     );
   } finally {

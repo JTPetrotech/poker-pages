@@ -12,7 +12,39 @@ const PREFIX = 'poker-night-v1-';
 
 export const peerIdFor = (code) => PREFIX + code.toUpperCase();
 
-const PEER_OPTIONS = { debug: 0 };
+/**
+ * How two browsers find a route to each other.
+ *
+ * STUN alone only works when both sides can be reached directly. Phone
+ * networks put everyone behind one shared address, so a direct route often
+ * cannot be made at all — which is why a table hosted from a phone could not
+ * be joined. TURN servers relay the traffic when that happens.
+ *
+ * These are the Open Relay Project's free servers. Port 443 over TCP is last
+ * because it is the slowest route, but it is also the one that gets through
+ * restrictive networks that block everything else.
+ */
+const ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  {
+    urls: 'turn:openrelay.metered.ca:80',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+];
+
+const PEER_OPTIONS = { debug: 0, config: { iceServers: ICE_SERVERS } };
 
 function waitForPeerJs() {
   if (typeof window.Peer === 'function') return Promise.resolve();
@@ -159,9 +191,11 @@ export class GuestNet {
     const conn = this.peer.connect(peerIdFor(this.code), { reliable: true });
     this.conn = conn;
 
+    // Relayed connections negotiate more slowly than direct ones, so give
+    // them room before calling it a failure.
     const failTimer = setTimeout(() => {
       if (!conn.open) reject(new Error('no-such-table'));
-    }, 12000);
+    }, 25000);
 
     conn.on('open', () => {
       clearTimeout(failTimer);
