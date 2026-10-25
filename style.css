@@ -1666,3 +1666,29 @@ kbd {
 .fact .k { color: var(--muted); }
 .fact .v { font-weight: 650; text-align: right; }
 .fact.note { display: block; color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+/* ---------------------------------------------------------------- qr */
+
+.qr {
+  display: flex;
+  justify-content: center;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+.qr svg { width: 190px; height: 190px; display: block; }
+.qr.small svg { width: 140px; height: 140px; }
+
+.share-code {
+  margin: 0 0 14px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  color: var(--gold);
+}
+
+.install { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+.install .field { margin-bottom: 8px; }

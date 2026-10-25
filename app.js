@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvo852ao';
-import { TableHost } from './host.js?v=mvo852ao';
-import * as vault from './vault.js?v=mvo852ao';
-import * as cloud from './cloud.js?v=mvo852ao';
-import { bestHand } from './engine/hand.js?v=mvo852ao';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo852ao';
+import { HostNet, GuestNet } from './net.js?v=mvo8e14e';
+import { TableHost } from './host.js?v=mvo8e14e';
+import * as vault from './vault.js?v=mvo8e14e';
+import * as cloud from './cloud.js?v=mvo8e14e';
+import { bestHand } from './engine/hand.js?v=mvo8e14e';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo8e14e';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 41;
+const BUILD = 42;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -458,6 +458,7 @@ function initSettings() {
 
   const open = () => {
     paintSettings();
+    drawQr($('installQr'), `${location.origin}${location.pathname}`);
     show($('settingsModal'), true);
   };
   $('settingsBtn').addEventListener('click', open);
@@ -630,6 +631,7 @@ function initAdmin() {
   $('adminClose').addEventListener('click', () => show($('adminModal'), false));
   $('adminModal').addEventListener('click', (e) => {
     if (e.target === $('adminModal')) show($('adminModal'), false);
+show($('shareModal'), false);
   });
 
   $('adminGrantGo').addEventListener('click', () => {
@@ -639,6 +641,90 @@ function initAdmin() {
     paintVault();
     $('adminGrant').value = '';
     adminMsg(`Added ${fmt(n)} to your vault, now ${fmt(vault.balance())}.`, true);
+  });
+}
+
+
+// ---------------------------------------------------------------- qr & sharing
+
+/** Draw a QR of `text` into `el`. Scanning it opens that address, nothing more. */
+function drawQr(el, text) {
+  el.innerHTML = '';
+  if (typeof window.qrcode !== 'function') {
+    el.textContent = text;
+    return;
+  }
+  try {
+    const qr = window.qrcode(0, 'M');   // 0 picks the smallest size that fits
+    qr.addData(text);
+    qr.make();
+    el.innerHTML = qr.createSvgTag({ cellSize: 6, margin: 1, scalable: true });
+  } catch {
+    el.textContent = text;
+  }
+}
+
+function openShare() {
+  if (!app.code) return;
+  const link = inviteLink();
+  $('shareCode').textContent = app.code;
+  $('shareLink').value = link;
+  $('shareMsg').hidden = true;
+  drawQr($('shareQr'), link);
+  show($('shareModal'), true);
+}
+
+function initShare() {
+  $('shareClose').addEventListener('click', () => show($('shareModal'), false));
+  $('shareModal').addEventListener('click', (e) => {
+    if (e.target === $('shareModal')) show($('shareModal'), false);
+  });
+
+  $('shareCopy').addEventListener('click', async () => {
+    const el = $('shareMsg');
+    try {
+      await navigator.clipboard.writeText($('shareLink').value);
+      el.textContent = 'Link copied.';
+    } catch {
+      $('shareLink').select();
+      el.textContent = 'Copy the link from the box above.';
+    }
+    el.className = 'backup-msg good';
+    el.hidden = false;
+  });
+}
+
+// ---------------------------------------------------------------- hosting on a phone
+
+let wakeLock = null;
+
+/**
+ * Hosting means this tab is the table, and a phone that locks its screen
+ * suspends the tab and takes the game down with it. A wake lock keeps the
+ * screen on while hosting; the browser drops it whenever the page is hidden,
+ * so it is taken again on the way back.
+ */
+async function keepAwake(on) {
+  try {
+    if (on && !wakeLock && navigator.wakeLock) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    } else if (!on && wakeLock) {
+      await wakeLock.release();
+      wakeLock = null;
+    }
+  } catch { /* unsupported or refused; hosting still works, just not asleep */ }
+}
+
+function initPhoneHosting() {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    if (app.isHost) keepAwake(true);
+    // Coming back from the background, the broker connection may have gone.
+    try {
+      const peer = app.net?.peer;
+      if (peer && peer.disconnected && !peer.destroyed) peer.reconnect();
+    } catch { /* the retry loop will pick it up */ }
   });
 }
 
@@ -720,6 +806,7 @@ async function hostTable(options) {
     });
     app.host.start();
     setConn(true);
+    keepAwake(true);   // this tab is the table now
     app.host.handle(store.token, { t: 'hello', token: store.token, name: app.name });
     return;
   }
@@ -774,6 +861,7 @@ function send(msg) {
 }
 
 function teardown() {
+  keepAwake(false);
   try { app.host?.stop(); } catch { /* already stopped */ }
   try { app.net?.destroy(); } catch { /* already gone */ }
   app.host = null;
@@ -1502,15 +1590,7 @@ function enterGame() {
 }
 
 function initGame() {
-  $('codeChip').addEventListener('click', async () => {
-    const link = inviteLink();
-    try {
-      await navigator.clipboard.writeText(link);
-      toast('Invite link copied — send it to your friends.');
-    } catch {
-      toast(link);
-    }
-  });
+  $('codeChip').addEventListener('click', openShare);
 
   $('leaveBtn').addEventListener('click', () => {
     const warning = app.isHost
@@ -2169,6 +2249,8 @@ initGame();
 initVaultUi();
 initCodeBoxes();
 initBackup();
+initShare();
+initPhoneHosting();
 initAdmin();
 requestPersistence();
 initSettings();

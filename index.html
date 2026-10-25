@@ -14,8 +14,9 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mvo852ao" />
+<link rel="stylesheet" href="style.css?v=mvo8e14e" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
 <body>
 
@@ -372,6 +373,24 @@
   </div>
 </div>
 
+<!-- ------------------------------------------------------------ share -->
+<div id="shareModal" class="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+    <button id="shareClose" class="modal-x" aria-label="Close">&times;</button>
+    <h2 id="shareTitle">Share this table</h2>
+    <p class="modal-sub">Scan it, or send the link.</p>
+
+    <div id="shareQr" class="qr"></div>
+    <p class="share-code" id="shareCode">----</p>
+
+    <div class="code-row">
+      <input id="shareLink" readonly />
+      <button id="shareCopy" class="primary small" type="button">Copy</button>
+    </div>
+    <p id="shareMsg" class="backup-msg" hidden></p>
+  </div>
+</div>
+
 <!-- ------------------------------------------------------------ appearance -->
 <div id="settingsModal" class="modal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
@@ -391,6 +410,13 @@
     <div class="custom-row">
       <input type="color" id="customBg" value="#1b7f5e" />
       <label for="customBg">Or pick any colour</label>
+    </div>
+
+    <div class="install">
+      <label class="field"><span>Open on your phone</span></label>
+      <div id="installQr" class="qr small"></div>
+      <p class="backup-note">Scan to open this page there. Then Share &rarr; Add to
+        Home Screen to keep it as an app.</p>
     </div>
 
     <div class="upload-row">
@@ -505,6 +531,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvo852ao"></script>
+<script type="module" src="app.js?v=mvo8e14e"></script>
 </body>
 </html>
