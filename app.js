@@ -1,10 +1,10 @@
-import { HostNet, GuestNet } from './net.js?v=mvo9065l';
-import { TableHost } from './host.js?v=mvo9065l';
-import * as vault from './vault.js?v=mvo9065l';
-import * as friends from './friends.js?v=mvo9065l';
-import * as cloud from './cloud.js?v=mvo9065l';
-import { bestHand } from './engine/hand.js?v=mvo9065l';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo9065l';
+import { HostNet, GuestNet } from './net.js?v=mvo978pk';
+import { TableHost } from './host.js?v=mvo978pk';
+import * as vault from './vault.js?v=mvo978pk';
+import * as friends from './friends.js?v=mvo978pk';
+import * as cloud from './cloud.js?v=mvo978pk';
+import { bestHand } from './engine/hand.js?v=mvo978pk';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo978pk';
 
 const $ = (id) => document.getElementById(id);
 
@@ -798,10 +798,30 @@ function paintFriends() {
     const nick = document.createElement('button');
     nick.textContent = 'Rename';
     nick.addEventListener('click', () => {
-      const next = prompt(`What do you want to call ${f.name}?`, f.nick || f.name);
-      if (next === null) return;
-      friends.rename(f.key, next === f.name ? '' : next);
-      paintFriends();
+      // An inline field rather than a browser prompt box: once the game is
+      // installed to a Home Screen, iOS refuses to show prompts at all.
+      const field = document.createElement('input');
+      field.className = 'friend-rename';
+      field.value = friends.displayName(f);
+      field.maxLength = 16;
+      let settled = false;
+      const finish = (keep) => {
+        if (settled) return;
+        settled = true;
+        if (keep) {
+          const next = field.value.trim();
+          friends.rename(f.key, next === f.name ? '' : next);
+        }
+        paintFriends();
+      };
+      field.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') finish(true);
+        if (e.key === 'Escape') { e.stopPropagation(); finish(false); }
+      });
+      field.addEventListener('blur', () => finish(true));
+      name.replaceWith(field);
+      field.focus();
+      field.select();
     });
 
     const drop = document.createElement('button');
