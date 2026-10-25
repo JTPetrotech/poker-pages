@@ -928,12 +928,13 @@ test('a full table of maximum stacks stays inside exact arithmetic', () => {
   assert(worst <= Number.MAX_SAFE_INTEGER, `9 x 1Q = ${worst} must stay safe`);
 });
 
-test('a backup code is short and restores the chips', () => {
+test('a backup code is short and carries chips and hands', () => {
   freshVault();
   vault.withdraw(3000);
   vault.setAtTable('ABCD', 4500);   // some chips still on a table
+  for (let i = 0; i < 42; i++) vault.recordHand({ pot: 100 });
   const code = vault.backupCode();
-  assert(code.length <= 16, `code should be typable, got ${code.length}: ${code}`);
+  assert(code.length <= 20, `code should be typable, got ${code.length}: ${code}`);
   assert(/^[0-9A-Z-]+$/.test(code), 'uppercase and dashes only');
 
   freshVault();
@@ -941,6 +942,27 @@ test('a backup code is short and restores the chips', () => {
   // 7,000 left in the vault plus the 4,500 that was on the table.
   eq(vault.restoreCode(code), 11500, 'chips at the table are included');
   eq(vault.balance(), 11500);
+  eq(vault.profile().handsPlayed, 42, 'hands played travel too');
+});
+
+test('an older chips-only code still works', () => {
+  // Built the way codes were before hands were added: no leading B.
+  freshVault();
+  const C32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+  const enc = (n) => { let o = ''; let v = n; do { o = C32[v % 32] + o; v = Math.floor(v / 32); } while (v > 0); return o; };
+  const chk = (b) => { let s = 7; for (const c of b) s = (s * 31 + C32.indexOf(c)) % 1024; return C32[Math.floor(s / 32)] + C32[s % 32]; };
+  const body = enc(777000);
+  eq(vault.restoreCode(body + chk(body)), 777000, 'reads back without a version marker');
+});
+
+test('a huge hand count is carried as the most a code can hold', () => {
+  freshVault();
+  const p = vault.profile();
+  for (let i = 0; i < 5; i++) vault.recordHand({});
+  const code = vault.backupCode();
+  freshVault();
+  vault.restoreCode(code);
+  eq(vault.profile().handsPlayed, 5);
 });
 
 test('a code reads back however it is typed', () => {

@@ -181,9 +181,10 @@ export function reload() {
  * dashes are ignored when reading one back, and two check characters catch a
  * mistyped code rather than silently setting the wrong balance.
  *
- * Only the chips travel. Hands played and biggest pot stay on the device
- * that earned them — carrying them would make the code longer for no real
- * gain.
+ * Carries your chips and your hands played. Hands are held in three fixed
+ * characters at the end, which is what lets the two numbers be told apart
+ * without a separator; a leading B marks this format, so codes made before
+ * it still read back.
  */
 const C32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
@@ -223,10 +224,14 @@ function tidy(text) {
     .replace(/U/g, 'V');
 }
 
+// Three base32 characters, so the most hands a code can carry.
+const MAX_CODED_HANDS = 32 ** 3 - 1;
+
 export function backupCode() {
   const p = read();
   const chips = p.vault + (p.atTable ? p.atTable.amount : 0);
-  const body = encode32(chips);
+  const hands = encode32(Math.min(p.handsPlayed, MAX_CODED_HANDS)).padStart(3, '0');
+  const body = `B${encode32(chips)}${hands}`;
   const full = body + checkChars(body);
   // Grouped in fours, which is easier to read aloud and to type.
   return full.match(/.{1,4}/g).join('-');
@@ -240,12 +245,22 @@ export function restoreCode(code) {
   const body = clean.slice(0, -2);
   if (checkChars(body) !== clean.slice(-2)) return null;
 
-  const chips = decode32(body);
+  // A leading B means chips and hands; anything else is an older chips-only
+  // code, which still reads back.
+  let chips;
+  let hands = null;
+  if (body[0] === 'B' && body.length >= 5) {
+    chips = decode32(body.slice(1, -3));
+    hands = decode32(body.slice(-3));
+  } else {
+    chips = decode32(body);
+  }
   if (chips === null || !Number.isFinite(chips)) return null;
 
   const p = read();
   p.vault = Math.min(MAX_VAULT, Math.max(0, Math.floor(chips)));
   p.atTable = null;
+  if (hands !== null && Number.isFinite(hands)) p.handsPlayed = Math.max(0, hands);
   write(p);
   return p.vault;
 }
