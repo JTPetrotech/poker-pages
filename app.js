@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvnc3279';
-import { TableHost } from './host.js?v=mvnc3279';
-import * as vault from './vault.js?v=mvnc3279';
-import * as cloud from './cloud.js?v=mvnc3279';
-import { bestHand } from './engine/hand.js?v=mvnc3279';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvnc3279';
+import { HostNet, GuestNet } from './net.js?v=mvnc9ru4';
+import { TableHost } from './host.js?v=mvnc9ru4';
+import * as vault from './vault.js?v=mvnc9ru4';
+import * as cloud from './cloud.js?v=mvnc9ru4';
+import { bestHand } from './engine/hand.js?v=mvnc9ru4';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvnc9ru4';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,240 +21,47 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 35;
+const BUILD = 36;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
-// Chat input is matched against these digests rather than against words, so
-// the words themselves appear nowhere in the published source.
-const UNLOCK_CODES = [
-  { digest: '8dc622226665f3ee690092e4b76dcaadafe7cef33d752556bdfaf4449bb582f1', grant: 100_000 },
-  { digest: 'aed4778035d07ae854385029664ef8acebebd5191132bc81c836ece0678c53f1', grant: 1_000_000 },
-  { digest: '8825e76530f87ff5c737b3254c6936bc0a90bba3a10a91bbba739268208d378a', grant: 1_000_000_000 },
-  { digest: '00aac126767f8aa9508ffdb622ad8868930ad7e7b9cffec4b01e01eb41b5703d', grant: 1_000_000_000_000 },
-];
+// The code box is matched against this digest rather than a word, so the
+// word itself appears nowhere in the published source. It no longer grants
+// chips — it unlocks the admin panel, which does that and more.
+const ADMIN_DIGEST = '78ae4ad356a45391a051a4bda7c2dbd1940068b4c3edd9a674279d52b8ac4409';
+const ADMIN_KEY = 'pn.admin.v1';
 
-/** Returns how many chips the typed text unlocks, or 0 for anything else. */
 async function matchesUnlock(text) {
   try {
     const bytes = new TextEncoder().encode(text.toLowerCase());
     const digest = await crypto.subtle.digest('SHA-256', bytes);
     const hex = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
-    const hit = UNLOCK_CODES.find((c) => c.digest === hex);
-    return hit ? hit.grant : 0;
+    return hex === ADMIN_DIGEST;
   } catch {
-    return 0;   // no subtle crypto (insecure origin): behave as no match
+    return false;   // no subtle crypto (insecure origin): behave as no match
   }
 }
-const RED_SUITS = new Set(['d', 'h']);
 
-function safeGet(s, k) { try { return s.getItem(k); } catch { return null; } }
-function safeSet(s, k, v) { try { s.setItem(k, v); } catch { /* private mode */ } }
-
-const store = {
-  get name() { return safeGet(localStorage, 'pn.name') || ''; },
-  set name(v) { safeSet(localStorage, 'pn.name', v); },
-  // Per-tab identity: it survives a reload, but two tabs are two players,
-  // which is what lets one person test a table against themselves.
-  get token() {
-    let t = safeGet(sessionStorage, 'pn.token');
-    if (!t) {
-      t = 'p' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-      safeSet(sessionStorage, 'pn.token', t);
-    }
-    return t;
-  },
-};
-
-const app = {
-  net: null,      // HostNet when hosting, GuestNet when joining
-  host: null,     // TableHost — only set in the hosting tab
-  isHost: false,
-  user: null,
-  unread: false,
-  dialogMode: 'sit',
-  pendingAdd: 0,
-  addBounds: null,
-  sized: false,
-  dialogSeat: -1,
-  buyIn: 0,
-  pendingBuyIn: 0,  // withdrawn but not yet confirmed in a seat
-  cashedOut: false,
-  code: null,
-  name: '',
-  state: null,
-  config: null,
-  clockOffset: 0,   // serverNow - clientNow, so timers survive a skewed clock
-  retry: 0,
-  retryTimer: null,
-  betTo: 0,
-  betDirty: false,
-  lastHandNo: 0,
-  lastActingSeat: -2,
-};
-
-// ---------------------------------------------------------------- lobby
-
-function codeFromUrl() {
-  const m = location.hash.match(/^#([A-Za-z0-9]{1,8})$/);
-  return m ? m[1].toUpperCase() : '';
-}
-
-function inviteLink() {
-  return `${location.origin}${location.pathname}#${app.code}`;
-}
-
-// Deliberately no I/O/0/1 — table codes get read aloud and typed by hand.
-const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-function makeCode() {
-  const buf = new Uint32Array(4);
-  crypto.getRandomValues(buf);
-  return [...buf].map((n) => CODE_ALPHABET[n % CODE_ALPHABET.length]).join('');
-}
-
-function paintVault() {
-  const bal = vault.balance();
-  const lobby = $('lobbyVault');
-  if (lobby) lobby.textContent = fmt(bal);
-  const chip = $('vaultLabel');
-  if (chip) chip.textContent = fmt(bal);
-  const reload = $('lobbyReload');
-  if (reload) reload.hidden = bal > 0;
-}
-
-function initLobby() {
-  $('nameInput').value = store.name || vault.profile().name;
-  paintVault();
-  $('lobbyReload').addEventListener('click', () => {
-    vault.reload();
-    paintVault();
-  });
-  const urlCode = codeFromUrl();
-  if (urlCode) $('codeInput').value = urlCode;
-
-  for (const tab of document.querySelectorAll('.tab')) {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === tab));
-      document.querySelectorAll('.tab-panel').forEach((p) => {
-        p.classList.toggle('active', p.id === `tab-${tab.dataset.tab}`);
-      });
-    });
-  }
-
-  $('joinBtn').addEventListener('click', () => {
-    const code = $('codeInput').value.trim().toUpperCase();
-    if (!code) return lobbyError('Enter the table code your friend sent you.');
-    doJoin(code);
-  });
-
-  $('codeInput').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') $('joinBtn').click();
-  });
-  $('nameInput').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') document.querySelector('.tab-panel.active .primary').click();
-  });
-
-  $('soloBtn').addEventListener('click', () => {
-    if (vault.balance() <= 0) {
-      lobbyError('Your vault is empty — reload it above first.');
-      return;
-    }
-    startSession(playSolo);
-  });
-
-  $('createBtn').addEventListener('click', () => {
-    const options = {
-      smallBlind: Number($('sbInput').value),
-      bigBlind: Number($('bbInput').value),
-      startingStack: Number($('stackInput').value),
-      maxSeats: Number($('seatsInput').value),
-    };
-    if (options.bigBlind <= options.smallBlind) {
-      return lobbyError('The big blind has to be bigger than the small blind.');
-    }
-    if (options.startingStack < options.bigBlind * 10) {
-      return lobbyError('Give everyone at least 10 big blinds to start.');
-    }
-    startSession(() => hostTable(options));
-  });
-
-  if (urlCode) $('codeInput').focus();
-  else $('nameInput').focus();
-}
-
-function lobbyError(msg) {
-  const el = $('lobbyError');
-  el.textContent = msg;
-  el.hidden = !msg;
-}
-
-function doJoin(code) {
-  if (!readName()) return;
-  startSession(() => joinTable(code));
-}
-
-function readName() {
-  app.name = ($('nameInput').value || '').trim().slice(0, 16);
-  if (!app.name) {
-    lobbyError('Pick a name so your friends know who you are.');
+function isAdmin() {
+  try {
+    return localStorage.getItem(ADMIN_KEY) === '1';
+  } catch {
     return false;
   }
-  store.name = app.name;
-  vault.setName(app.name);
-  return true;
 }
 
-/** Run a connect attempt with the lobby's busy state and error reporting. */
-async function startSession(attempt) {
-  if (!readName()) return;
-  if (app.connecting) return;
-  app.connecting = true;
-  lobbyError('');
-  startLoading();
-  document.querySelectorAll('.lobby-card .primary, #soloBtn').forEach((b) => { b.disabled = true; });
+function setAdmin(on) {
   try {
-    await attempt();
-  } catch (err) {
-    teardown();
-    lobbyError(
-      err.message === 'no-such-table'
-        ? 'Could not reach that table. Check the code, make sure the host still has it open, and try again — a phone network can take a few tries.'
-        : err.message || 'Could not connect. Check your internet and try again.',
-    );
-  } finally {
-    app.connecting = false;
-    stopLoading();
-    document.querySelectorAll('.lobby-card .primary, #soloBtn').forEach((b) => { b.disabled = false; });
-  }
+    if (on) localStorage.setItem(ADMIN_KEY, '1');
+    else localStorage.removeItem(ADMIN_KEY);
+  } catch { /* unlocked for this session only */ }
+  paintAdminButton();
 }
 
-
-
-// ---------------------------------------------------------------- appearance
-
-/**
- * Theme and background, kept on this device. The felt is deliberately not
- * configurable — that is the table, and a poker table is green.
- */
-
-const BACKGROUNDS = [
-  { id: 'felt', name: 'Felt', css: 'radial-gradient(90% 70% at 50% 35%, #1d9a70 0%, #157f5c 48%, #0d5d43 100%)' },
-  { id: 'white', name: 'White', css: '#ffffff' },
-  { id: 'paper', name: 'Paper', css: 'radial-gradient(900px 500px at 50% 40%, #f3f5f7, #e9edf1)' },
-  {
-    id: 'textured',
-    name: 'Textured',
-    // Grain drawn by the browser rather than fetched, so it costs nothing to
-    // load and stays sharp at any size.
-    css: "url(\"data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='180'%20height='180'%3E%3Cfilter%20id='p'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.9'%20numOctaves='4'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20type='saturate'%20values='0'/%3E%3C/filter%3E%3Crect%20width='180'%20height='180'%20filter='url(%23p)'%20opacity='0.3'/%3E%3C/svg%3E\") repeat, radial-gradient(90% 75% at 50% 30%, #faf4e6 0%, #efe4cd 55%, #ddceb0 100%)",
-  },
-  { id: 'midnight', name: 'Midnight', css: 'radial-gradient(90% 70% at 50% 30%, #1d2b44 0%, #121a2b 55%, #0a0f1a 100%)' },
-  { id: 'wood', name: 'Wood', css: 'radial-gradient(90% 70% at 50% 35%, #7a5436 0%, #5d3f28 55%, #40291a 100%)' },
-  { id: 'rose', name: 'Rose', css: 'radial-gradient(90% 70% at 50% 35%, #e58cb2 0%, #c35c8c 55%, #8e3b63 100%)' },
-  { id: 'sky', name: 'Sky', css: 'radial-gradient(90% 70% at 50% 35%, #7fc4ef 0%, #4b94c9 55%, #2b5f8c 100%)' },
-  { id: 'charcoal', name: 'Charcoal', css: 'radial-gradient(90% 70% at 50% 35%, #3a4249 0%, #262c32 55%, #15191d 100%)' },
-];
+function paintAdminButton() {
+  const btn = $('adminBtn');
+  if (btn) show(btn, isAdmin());
+}
 
 const LOOK_KEY = 'pn.look.v1';
 
@@ -447,6 +254,7 @@ function initSettings() {
   $('settingsClose').addEventListener('click', () => show($('settingsModal'), false));
   $('settingsModal').addEventListener('click', (e) => {
     if (e.target === $('settingsModal')) show($('settingsModal'), false);
+show($('adminModal'), false);
   });
 
   applyLook(readLook());
@@ -458,25 +266,22 @@ function initSettings() {
  * swallow an ordinary message — one of them is a real word — and a box makes
  * it obvious where they are meant to go.
  */
-async function redeem(box, note) {
+async function redeem(box) {
   const text = box.value.trim();
   if (!text) return;
 
-  const grant = await matchesUnlock(text);
+  const ok = await matchesUnlock(text);
   box.classList.remove('ok', 'bad');
   void box.offsetWidth;   // restart the flash on a repeated result
 
-  if (grant) {
-    vault.deposit(grant);
-    paintVault();
+  if (ok) {
+    setAdmin(true);
     box.value = '';
     box.classList.add('ok');
-    const line = `+${fmt(grant)} chips. Your vault is now ${fmt(vault.balance())}.`;
-    if (note) { note.textContent = line; note.className = 'code-msg good'; note.hidden = false; }
-    else toast(line);
+    toast('Admin unlocked.');
+    openAdmin();
   } else {
     box.classList.add('bad');
-    if (note) { note.textContent = 'That code did not work.'; note.className = 'code-msg bad'; note.hidden = false; }
   }
   setTimeout(() => box.classList.remove('ok', 'bad'), 1600);
 }
@@ -486,7 +291,7 @@ function initCodeBoxes() {
     const box = $(id);
     if (!box) continue;
     box.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') redeem(box, null);
+      if (e.key === 'Enter') redeem(box);
     });
   }
 }
@@ -534,6 +339,97 @@ function initBackup() {
     }
     paintVault();
     backupMsg(`Restored. Your vault is now ${fmt(restored)}.`, true);
+  });
+}
+
+
+// ---------------------------------------------------------------- admin panel
+
+function adminMsg(text, good) {
+  const el = $('adminMsg');
+  el.textContent = text || '';
+  el.className = `backup-msg ${good ? 'good' : 'bad'}`;
+  el.hidden = !text;
+}
+
+function paintAdminList() {
+  const host = $('adminList');
+  host.innerHTML = '';
+  const seats = app.state?.seats || [];
+  const others = seats.filter((p) => p && !p.isMe);
+
+  if (!app.state || !mySeat()) {
+    host.innerHTML = '<p class="admin-empty">Sit down at a table to take chips.</p>';
+    return;
+  }
+  if (!others.length) {
+    host.innerHTML = '<p class="admin-empty">Nobody else is seated.</p>';
+    return;
+  }
+
+  for (const p of others) {
+    const row = document.createElement('div');
+    row.className = 'admin-row';
+
+    const who = document.createElement('div');
+    who.className = 'who';
+    who.textContent = p.name;
+
+    const has = document.createElement('div');
+    has.className = 'has';
+    has.textContent = fmt(p.chips);
+
+    const amount = document.createElement('input');
+    amount.type = 'number';
+    amount.placeholder = 'Amount';
+    amount.min = '1';
+    amount.max = String(p.chips);
+
+    const take = document.createElement('button');
+    take.textContent = 'Take';
+    take.addEventListener('click', () => {
+      const n = Math.floor(Number(amount.value) || 0);
+      if (n <= 0) return adminMsg('Enter an amount first.', false);
+      send({ t: 'take', fromSeat: p.seat, amount: n });
+      amount.value = '';
+      adminMsg(`Took ${fmt(n)} from ${p.name}.`, true);
+    });
+
+    const all = document.createElement('button');
+    all.className = 'all';
+    all.textContent = 'All';
+    all.addEventListener('click', () => {
+      send({ t: 'take', fromSeat: p.seat, amount: 'all' });
+      adminMsg(`Took everything from ${p.name}.`, true);
+    });
+
+    row.append(who, has, amount, take, all);
+    host.appendChild(row);
+  }
+}
+
+function openAdmin() {
+  if (!isAdmin()) return;
+  adminMsg('');
+  paintAdminList();
+  show($('adminModal'), true);
+}
+
+function initAdmin() {
+  paintAdminButton();
+  $('adminBtn').addEventListener('click', openAdmin);
+  $('adminClose').addEventListener('click', () => show($('adminModal'), false));
+  $('adminModal').addEventListener('click', (e) => {
+    if (e.target === $('adminModal')) show($('adminModal'), false);
+  });
+
+  $('adminGrantGo').addEventListener('click', () => {
+    const n = Math.floor(Number($('adminGrant').value) || 0);
+    if (n <= 0) return adminMsg('Enter an amount first.', false);
+    vault.deposit(n);
+    paintVault();
+    $('adminGrant').value = '';
+    adminMsg(`Added ${fmt(n)} to your vault, now ${fmt(vault.balance())}.`, true);
   });
 }
 
@@ -971,7 +867,8 @@ function initVaultUi() {
   });
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
-    if (!$('settingsModal').hidden) show($('settingsModal'), false);
+    if (!$('adminModal').hidden) show($('adminModal'), false);
+    else if (!$('settingsModal').hidden) show($('settingsModal'), false);
     else if (!$('helpModal').hidden) show($('helpModal'), false);
     else if (!$('modal').hidden) closeSeatDialog();
   });
@@ -1604,6 +1501,8 @@ function render(state) {
     sizeFelt();
   }
 
+  if (!$('adminModal').hidden) paintAdminList();
+
   renderBoard(state);
   renderSeats(state);
   renderActionBar(state, prev);
@@ -1995,6 +1894,7 @@ initGame();
 initVaultUi();
 initCodeBoxes();
 initBackup();
+initAdmin();
 requestPersistence();
 initSettings();
 initAuthUi();

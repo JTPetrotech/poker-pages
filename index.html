@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mvnc3279" />
+<link rel="stylesheet" href="style.css?v=mvnc9ru4" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
@@ -227,6 +227,7 @@
     <button id="sitOutBtn" class="ghost" hidden>Sit out</button>
     <button id="leaveBtn" class="ghost">Leave</button>
     <button id="panelToggle" class="ghost" aria-label="Toggle chat">Chat</button>
+    <button id="adminBtn" class="ghost admin-btn" hidden>Admin</button>
     <button id="settingsBtn" class="ghost gear" aria-label="Appearance">&#9881;</button>
   </header>
 
@@ -406,6 +407,25 @@
   </div>
 </div>
 
+<!-- ------------------------------------------------------------ admin -->
+<div id="adminModal" class="modal" hidden>
+  <div class="modal-card wide" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
+    <button id="adminClose" class="modal-x" aria-label="Close">&times;</button>
+    <h2 id="adminTitle">Admin</h2>
+    <p class="modal-sub">Unlocked on this device.</p>
+
+    <label class="field"><span>Give yourself chips</span></label>
+    <div class="code-row">
+      <input id="adminGrant" type="number" inputmode="numeric" placeholder="Amount" />
+      <button id="adminGrantGo" class="primary small" type="button">To vault</button>
+    </div>
+
+    <label class="field admin-gap"><span>Take from a player</span></label>
+    <div id="adminList" class="admin-list"></div>
+    <p id="adminMsg" class="backup-msg" hidden></p>
+  </div>
+</div>
+
 <!-- ------------------------------------------------------------ hand rankings -->
 <div id="helpModal" class="modal" hidden>
   <div class="modal-card wide" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
@@ -424,6 +444,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvnc3279"></script>
+<script type="module" src="app.js?v=mvnc9ru4"></script>
 </body>
 </html>

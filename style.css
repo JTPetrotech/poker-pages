@@ -1550,3 +1550,42 @@ input { font: inherit; }
   outline: none;
 }
 .code-row input:focus { border-color: var(--chip); }
+
+/* ---------------------------------------------------------------- admin */
+
+.admin-btn { color: var(--chip); border-color: var(--chip); }
+.admin-gap { margin-top: 18px; }
+
+.admin-list { display: flex; flex-direction: column; gap: 7px; }
+
+.admin-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+}
+.admin-row .who { flex: 1; min-width: 0; font-size: 13px; font-weight: 650; }
+.admin-row .has { font-size: 12px; color: var(--chip); font-variant-numeric: tabular-nums; }
+.admin-row input {
+  width: 84px;
+  padding: 7px 9px;
+  background: var(--field);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12px;
+  outline: none;
+}
+.admin-row button {
+  padding: 7px 10px;
+  background: #b8434c;
+  border: 1px solid #9c333c;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+}
+.admin-row button.all { background: var(--bg-2); border-color: var(--line); color: var(--text); }
+.admin-empty { font-size: 12.5px; color: var(--muted); }

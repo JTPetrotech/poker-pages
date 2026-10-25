@@ -961,6 +961,48 @@ test('a restored code cannot exceed the ceiling', () => {
   eq(vault.restoreCode(forged), 1e15, 'clamped to the maximum');
 });
 
+test('chips can be seized from another seat', () => {
+  const t = new Table({ id: 'S', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 1e9, maxSeats: 4 });
+  t.sit('me', 'Me', 0, { buyIn: 1000 });
+  t.sit('them', 'Them', 1, { buyIn: 4000 });
+  const total = () => t.players().reduce((s, p) => s + p.chips, 0);
+  const before = total();
+
+  eq(t.seizeChips('me', 1, 1500).sent, 1500);
+  eq(t.seats[0].chips, 2500);
+  eq(t.seats[1].chips, 2500);
+  eq(total(), before, 'chips move, none appear');
+});
+
+test('seizing everything empties the seat', () => {
+  const t = new Table({ id: 'S', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 1e9, maxSeats: 4 });
+  t.sit('me', 'Me', 0, { buyIn: 100 });
+  t.sit('them', 'Them', 1, { buyIn: 7000 });
+  eq(t.seizeChips('me', 1, 'all').sent, 7000);
+  eq(t.seats[1].chips, 0);
+  eq(t.seats[0].chips, 7100);
+});
+
+test('seizing refuses your own seat and empty ones', () => {
+  const t = new Table({ id: 'S', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxBuyIn: 1e9, maxSeats: 4 });
+  t.sit('me', 'Me', 0, { buyIn: 1000 });
+  let own = false;
+  let empty = false;
+  try { t.seizeChips('me', 0, 10); } catch { own = true; }
+  try { t.seizeChips('me', 2, 10); } catch { empty = true; }
+  assert(own && empty, 'both refused');
+});
+
+test('seizing mid-hand waits for the hand to finish', () => {
+  const t = seatPlayers(3, { chips: 1000 });
+  t.maxBuyIn = 1e9;
+  t.startHand();
+  const [me, them] = t.players();
+  const theirChips = them.chips;
+  eq(t.seizeChips(me.id, them.seat, 200).queued, 200, 'queued, not taken');
+  eq(them.chips, theirChips, 'their live stack is untouched');
+});
+
 // ------------------------------------------------------------------ report
 
 console.log('\n');

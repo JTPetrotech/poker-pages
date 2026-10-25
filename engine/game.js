@@ -1,5 +1,5 @@
-import { makeDeck, shuffle } from './cards.js?v=mvnc3279';
-import { bestHand, compareScores } from './hand.js?v=mvnc3279';
+import { makeDeck, shuffle } from './cards.js?v=mvnc9ru4';
+import { bestHand, compareScores } from './hand.js?v=mvnc9ru4';
 
 export const STAGES = ['idle', 'preflop', 'flop', 'turn', 'river', 'showdown', 'handover'];
 
@@ -262,6 +262,21 @@ export class Table {
     this.events.push({ type: 'sent', id: from.id, amount: moved, who: to.name });
     this.events.push({ type: 'received', id: to.id, amount: moved, who: from.name });
     return moved;
+  }
+
+  /**
+   * Move another player's chips to yourself. Everything the ordinary transfer
+   * does — clamping, the mid-hand queue, the log line, the running results —
+   * applies here too; only the direction is unusual.
+   */
+  seizeChips(byId, fromSeat, amount) {
+    const to = this.playerById(byId);
+    if (!to) throw new Error('You are not seated.');
+    const from = this.seats[fromSeat];
+    if (!from) throw new Error('Nobody is sitting there.');
+    if (from === to) throw new Error('That is your own seat.');
+    const want = amount === 'all' ? from.chips : amount;
+    return this.transferChips(from.id, to.seat, want);
   }
 
   /** Release anything that was queued while a hand was running. */
