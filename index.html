@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mvo7vewk" />
+<link rel="stylesheet" href="style.css?v=mvo80wez" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
@@ -167,6 +167,14 @@
           <input id="seatsInput" type="number" value="6" min="2" max="9" />
         </label>
       </div>
+      <label class="toggle">
+        <input type="checkbox" id="meanieInput" checked />
+        <span>
+          <strong>Meanie</strong>
+          Run out of time and your whole stack goes in, instead of folding.
+        </span>
+      </label>
+
       <button id="createBtn" class="primary">Create table</button>
       <p class="host-note">You'll be the host. Keep this tab open while you play — your
         browser deals the cards, so closing it ends the table.</p>
@@ -222,6 +230,7 @@
       Vault <strong id="vaultLabel">0</strong>
     </button>
     <div id="hostBadge" class="chip host" hidden title="Your browser is running this table">Hosting</div>
+    <div id="meanieBadge" class="chip meanie" hidden title="Run out of time and your whole stack goes in">Meanie</div>
     <div class="spacer"></div>
     <div id="connDot" class="conn" title="Connection">●</div>
     <button id="sitOutBtn" class="ghost" hidden>Sit out</button>
@@ -444,6 +453,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvo7vewk"></script>
+<script type="module" src="app.js?v=mvo80wez"></script>
 </body>
 </html>

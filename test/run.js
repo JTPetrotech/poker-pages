@@ -1071,6 +1071,24 @@ test('a disconnected player is folded, not shoved', () => {
   assert(p.chips > 0, 'stack intact');
 });
 
+test('with meanie off, timing out folds as it used to', () => {
+  const t = new Table({ id: 'M', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxSeats: 3, meanie: false });
+  for (let i = 0; i < 3; i++) t.sit(`p${i}`, `P${i}`, i);
+  t.startHand();
+  const p = t.seats[t.actingSeat];
+  t.timeoutAct();
+  eq(p.folded, true, 'folded rather than shoved');
+  assert(p.chips > 0, 'stack intact');
+});
+
+test('meanie is on unless a table turns it off', () => {
+  const on = new Table({ id: 'A', maxSeats: 2 });
+  const off = new Table({ id: 'B', maxSeats: 2, meanie: false });
+  eq(on.meanie, true);
+  eq(off.meanie, false);
+  eq(on.snapshot('nobody').meanie, true, 'and it reaches the players');
+});
+
 test('timing out with nothing to call still shoves', () => {
   const t = seatPlayers(2, { chips: 1000 });
   t.startHand();

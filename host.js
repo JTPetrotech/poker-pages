@@ -1,5 +1,5 @@
-import { Table } from './engine/game.js?v=mvo7vewk';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvo7vewk';
+import { Table } from './engine/game.js?v=mvo80wez';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvo80wez';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;
@@ -46,6 +46,7 @@ export class TableHost {
       // cap is never what stops you moving your own chips about.
       maxBuyIn: clampInt(options.maxBuyIn, 20, 1_000_000_000_000_000, 1_000_000_000_000_000),
       maxSeats: clampInt(options.maxSeats, 2, 9, 6),
+      meanie: options.meanie !== false,
     });
     this.table.minRaise = bigBlind;
   }
@@ -69,6 +70,7 @@ export class TableHost {
       // ten times the starting stack and silently capped everything there.
       maxBuyIn: this.table.maxBuyIn,
       maxSeats: this.table.maxSeats,
+      meanie: this.table.meanie,
       actionTimeoutMs: ACTION_TIMEOUT_MS,
     };
   }

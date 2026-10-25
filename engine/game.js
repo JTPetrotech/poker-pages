@@ -1,5 +1,5 @@
-import { makeDeck, shuffle } from './cards.js?v=mvo7vewk';
-import { bestHand, compareScores } from './hand.js?v=mvo7vewk';
+import { makeDeck, shuffle } from './cards.js?v=mvo80wez';
+import { bestHand, compareScores } from './hand.js?v=mvo80wez';
 
 export const STAGES = ['idle', 'preflop', 'flop', 'turn', 'river', 'showdown', 'handover'];
 
@@ -20,6 +20,8 @@ export class Table {
     this.maxBuyIn = opts.maxBuyIn ?? this.startingStack * 10;
     this.maxSeats = opts.maxSeats ?? 9;
     this.hostId = opts.hostId || null;
+    // Meanie: running out of time shoves your stack instead of folding it.
+    this.meanie = opts.meanie !== false;
 
     this.seats = new Array(this.maxSeats).fill(null);
     this.handNo = 0;
@@ -517,19 +519,30 @@ export class Table {
   }
 
   /**
-   * The clock ran out. A player who is simply slow gets shoved all in — there
-   * is a penalty for leaving the table waiting. Someone whose connection has
-   * dropped is folded instead: they are not choosing to be away, and taking
-   * their stack for a lost signal would be unfair.
+   * The clock ran out.
+   *
+   * With meanie on, a player who is simply slow gets shoved all in. Someone
+   * whose connection has dropped is folded either way: they are not choosing
+   * to be away, and taking their stack for a lost signal would be unfair.
    */
   timeoutAct() {
     const p = this.seats[this.actingSeat];
     if (!p) return;
 
-    if (p.disconnected) {
+    const foldOrCheck = () => {
       const toCall = Math.max(0, this.currentBet - p.bet);
-      this.pushLog(`${p.name} is disconnected.`);
       this.act(p.id, toCall === 0 ? 'check' : 'fold');
+    };
+
+    if (p.disconnected) {
+      this.pushLog(`${p.name} is disconnected.`);
+      foldOrCheck();
+      return;
+    }
+
+    if (!this.meanie) {
+      this.pushLog(`${p.name} ran out of time.`);
+      foldOrCheck();
       return;
     }
 
@@ -810,6 +823,7 @@ export class Table {
       bigBlind: this.bigBlind,
       startingStack: this.startingStack,
       maxBuyIn: this.maxBuyIn,
+      meanie: this.meanie,
       community: this.community,
       pot: this.displayPot(),
       potTotal: this.potTotal,

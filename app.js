@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvo7vewk';
-import { TableHost } from './host.js?v=mvo7vewk';
-import * as vault from './vault.js?v=mvo7vewk';
-import * as cloud from './cloud.js?v=mvo7vewk';
-import { bestHand } from './engine/hand.js?v=mvo7vewk';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo7vewk';
+import { HostNet, GuestNet } from './net.js?v=mvo80wez';
+import { TableHost } from './host.js?v=mvo80wez';
+import * as vault from './vault.js?v=mvo80wez';
+import * as cloud from './cloud.js?v=mvo80wez';
+import { bestHand } from './engine/hand.js?v=mvo80wez';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo80wez';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 39;
+const BUILD = 40;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -186,6 +186,7 @@ function initLobby() {
       bigBlind: Number($('bbInput').value),
       startingStack: Number($('stackInput').value),
       maxSeats: Number($('seatsInput').value),
+      meanie: $('meanieInput').checked,
     };
     if (options.bigBlind <= options.smallBlind) {
       return lobbyError('The big blind has to be bigger than the small blind.');
@@ -735,7 +736,13 @@ async function hostTable(options) {
 const SOLO_OPPONENTS = ['expert', 'shark', 'maniac', 'expert'];
 
 async function playSolo() {
-  const cfg = { smallBlind: 5, bigBlind: 10, startingStack: 1000, maxSeats: 6 };
+  const cfg = {
+    smallBlind: 5,
+    bigBlind: 10,
+    startingStack: 1000,
+    maxSeats: 6,
+    meanie: $('meanieInput').checked,
+  };
   await hostTable(cfg);
 
   const buyIn = vault.withdraw(Math.min(cfg.startingStack, vault.balance()));
@@ -1438,6 +1445,8 @@ function enterGame() {
   show($('game'), true);
   $('codeLabel').textContent = app.code;
   show($('hostBadge'), app.isHost);
+  // Guests should know the rule they are playing under, not just the host.
+  show($('meanieBadge'), !!app.config.meanie);
   $('blindsLabel').textContent = `${app.config.smallBlind} / ${app.config.bigBlind}`;
   paintVault();
   history.replaceState(null, '', `#${app.code}`);
