@@ -3,6 +3,7 @@ import { Table } from '../engine/game.js';
 import { makeDeck, shuffle } from '../engine/cards.js';
 import { decide, equity, chen, BOT_STYLES } from '../bot.js';
 import * as vault from '../vault.js';
+import * as friends from '../friends.js';
 
 let passed = 0;
 let failed = 0;
@@ -1099,6 +1100,60 @@ test('timing out with nothing to call still shoves', () => {
   const p = t.seats[t.actingSeat];
   t.timeoutAct();
   eq(p.chips, 0, 'all in even though checking was free');
+});
+
+// ------------------------------------------------------------------ friends
+
+test('people you play with are remembered, bots are not', () => {
+  globalThis.localStorage.clear();
+  friends.note('Sam', 'ABCD');
+  friends.note('Pat', 'ABCD');
+  eq(friends.count(), 2);
+  const names = friends.list().map((f) => f.name).sort();
+  eq(names.join(','), 'Pat,Sam');
+});
+
+test('a shared game counts once, however many updates arrive', () => {
+  globalThis.localStorage.clear();
+  for (let i = 0; i < 20; i++) friends.note('Sam', 'ABCD');
+  eq(friends.list()[0].games, 1, 'one game, not twenty');
+
+  friends.note('Sam', 'WXYZ');
+  eq(friends.list()[0].games, 2, 'a different table is a second game');
+});
+
+test('favourites come first, then whoever was seen most recently', () => {
+  globalThis.localStorage.clear();
+  friends.note('Old', 'A');
+  friends.note('Recent', 'B');
+  const key = friends.list().find((f) => f.name === 'Old').key;
+  friends.star(key, true);
+  eq(friends.list()[0].name, 'Old', 'a favourite outranks a recent game');
+});
+
+test('renaming shows your name and keeps theirs', () => {
+  globalThis.localStorage.clear();
+  friends.note('Jonathan', 'A');
+  const key = friends.list()[0].key;
+  friends.rename(key, 'Jonno');
+  const f = friends.list()[0];
+  eq(friends.displayName(f), 'Jonno');
+  eq(f.name, 'Jonathan', 'their own name is still there');
+});
+
+test('forgetting someone removes them', () => {
+  globalThis.localStorage.clear();
+  friends.note('Sam', 'A');
+  friends.remove(friends.list()[0].key);
+  eq(friends.count(), 0);
+});
+
+test('the same person under different capitals is one entry', () => {
+  globalThis.localStorage.clear();
+  friends.note('sam', 'A');
+  friends.note('SAM', 'B');
+  eq(friends.count(), 1, 'matched case-insensitively');
+  eq(friends.list()[0].name, 'SAM', 'showing their latest spelling');
 });
 
 // ------------------------------------------------------------------ report

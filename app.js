@@ -1,9 +1,10 @@
-import { HostNet, GuestNet } from './net.js?v=mvo8q3lo';
-import { TableHost } from './host.js?v=mvo8q3lo';
-import * as vault from './vault.js?v=mvo8q3lo';
-import * as cloud from './cloud.js?v=mvo8q3lo';
-import { bestHand } from './engine/hand.js?v=mvo8q3lo';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo8q3lo';
+import { HostNet, GuestNet } from './net.js?v=mvo9065l';
+import { TableHost } from './host.js?v=mvo9065l';
+import * as vault from './vault.js?v=mvo9065l';
+import * as friends from './friends.js?v=mvo9065l';
+import * as cloud from './cloud.js?v=mvo9065l';
+import { bestHand } from './engine/hand.js?v=mvo9065l';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo9065l';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +22,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 44;
+const BUILD = 45;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -632,6 +633,7 @@ function initAdmin() {
   $('adminModal').addEventListener('click', (e) => {
     if (e.target === $('adminModal')) show($('adminModal'), false);
 show($('shareModal'), false);
+show($('friendsModal'), false);
   });
 
   $('adminGrantGo').addEventListener('click', () => {
@@ -726,6 +728,114 @@ function initPhoneHosting() {
       if (peer && peer.disconnected && !peer.destroyed) peer.reconnect();
     } catch { /* the retry loop will pick it up */ }
   });
+}
+
+
+// ---------------------------------------------------------------- friends
+
+function whenSeen(ts) {
+  if (!ts) return 'a while ago';
+  const days = Math.floor((Date.now() - ts) / 86400000);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 30) return `${days} days ago`;
+  const months = Math.round(days / 30);
+  return months === 1 ? 'a month ago' : `${months} months ago`;
+}
+
+function paintFriends() {
+  const host = $('friendList');
+  host.innerHTML = '';
+  const all = friends.list();
+
+  if (!all.length) {
+    host.innerHTML = '<p class="friend-empty">Nobody yet. Anyone who sits down at a '
+      + 'table with you is added here automatically — computer players are not.</p>';
+    return;
+  }
+
+  // Who is at this table right now, so the list is useful mid-game.
+  const seatedNow = new Set(
+    (app.state?.seats || [])
+      .filter((p) => p && !p.bot && !p.isMe)
+      .map((p) => p.name.trim().toLowerCase()),
+  );
+
+  for (const f of all) {
+    const row = document.createElement('div');
+    row.className = 'friend-row' + (seatedNow.has(f.key) ? ' here' : '');
+
+    const main = document.createElement('div');
+    main.className = 'friend-main';
+
+    const name = document.createElement('div');
+    name.className = 'friend-name';
+    name.textContent = friends.displayName(f);
+
+    const sub = document.createElement('div');
+    sub.className = 'friend-sub';
+    const games = f.games === 1 ? '1 game' : `${f.games} games`;
+    sub.textContent = f.nick ? `${f.name} · ${games} · ${whenSeen(f.seen)}`
+      : `${games} · ${whenSeen(f.seen)}`;
+
+    main.append(name, sub);
+    if (seatedNow.has(f.key)) {
+      const here = document.createElement('div');
+      here.className = 'friend-here';
+      here.textContent = 'At this table';
+      main.appendChild(here);
+    }
+
+    const star = document.createElement('button');
+    star.className = 'star' + (f.fav ? ' on' : '');
+    star.textContent = f.fav ? '★' : '☆';
+    star.title = f.fav ? 'Remove from favourites' : 'Add to favourites';
+    star.addEventListener('click', () => {
+      friends.star(f.key, !f.fav);
+      paintFriends();
+    });
+
+    const nick = document.createElement('button');
+    nick.textContent = 'Rename';
+    nick.addEventListener('click', () => {
+      const next = prompt(`What do you want to call ${f.name}?`, f.nick || f.name);
+      if (next === null) return;
+      friends.rename(f.key, next === f.name ? '' : next);
+      paintFriends();
+    });
+
+    const drop = document.createElement('button');
+    drop.className = 'drop';
+    drop.textContent = 'Forget';
+    drop.addEventListener('click', () => {
+      friends.remove(f.key);
+      paintFriends();
+    });
+
+    row.append(main, star, nick, drop);
+    host.appendChild(row);
+  }
+}
+
+function openFriends() {
+  paintFriends();
+  show($('friendsModal'), true);
+}
+
+function initFriends() {
+  $('friendsBtn').addEventListener('click', openFriends);
+  $('lobbyFriends').addEventListener('click', openFriends);
+  $('friendsClose').addEventListener('click', () => show($('friendsModal'), false));
+  $('friendsModal').addEventListener('click', (e) => {
+    if (e.target === $('friendsModal')) show($('friendsModal'), false);
+  });
+}
+
+/** Everyone seated with you goes in the list; computer players do not. */
+function recordFriends(state) {
+  for (const p of state.seats || []) {
+    if (p && !p.bot && !p.isMe) friends.note(p.name, app.code);
+  }
 }
 
 // ---------------------------------------------------------------- loading
@@ -1176,7 +1286,8 @@ function initVaultUi() {
   });
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
-    if (!$('adminModal').hidden) show($('adminModal'), false);
+    if (!$('friendsModal').hidden) show($('friendsModal'), false);
+    else if (!$('adminModal').hidden) show($('adminModal'), false);
     else if (!$('settingsModal').hidden) show($('settingsModal'), false);
     else if (!$('helpModal').hidden) show($('helpModal'), false);
     else if (!$('modal').hidden) closeSeatDialog();
@@ -1869,7 +1980,9 @@ function render(state) {
     sizeFelt();
   }
 
+  recordFriends(state);
   if (!$('adminModal').hidden) paintAdminList();
+  if (!$('friendsModal').hidden) paintFriends();
 
   renderBoard(state);
   renderSeats(state);
@@ -2266,6 +2379,7 @@ initVaultUi();
 initCodeBoxes();
 initBackup();
 initShare();
+initFriends();
 initPhoneHosting();
 initAdmin();
 requestPersistence();

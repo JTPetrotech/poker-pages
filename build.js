@@ -23,7 +23,7 @@ const SCRIPT_SRC = /(<script type="module" src=")([\w./-]+\.js)(\?v=[\w]+)?(")/;
 const STYLE_HREF = /(<link rel="stylesheet" href=")([\w./-]+\.css)(\?v=[\w]+)?(")/;
 
 const FILES = [
-  'app.js', 'net.js', 'host.js', 'bot.js', 'vault.js', 'cloud.js',
+  'app.js', 'net.js', 'host.js', 'bot.js', 'vault.js', 'cloud.js', 'friends.js',
   'firebase-config.js', 'engine/game.js', 'engine/hand.js', 'engine/cards.js',
 ];
 
@@ -43,6 +43,7 @@ const REQUIRED = {
     ['cardValue(', './engine/cards.js'],
     ['new TableHost', './host.js'],
     ['new HostNet', './net.js'],
+    ['friends.note(', './friends.js'],
   ],
   'host.js': [['new Table(', './engine/game.js'], ['decide(', './bot.js']],
   'bot.js': [['bestHand(', './engine/hand.js'], ['makeDeck(', './engine/cards.js']],

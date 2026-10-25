@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mvo8q3lo" />
+<link rel="stylesheet" href="style.css?v=mvo9065l" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
@@ -79,6 +79,7 @@
 
 <!-- ------------------------------------------------------------ lobby -->
 <div id="lobby" class="lobby">
+  <button id="lobbyFriends" class="corner-friends" title="Friends">Friends</button>
   <button id="lobbyGear" class="corner-gear" aria-label="Appearance" title="Appearance">&#9881;</button>
   <div class="lobby-card">
     <h1>Side Pot</h1>
@@ -238,6 +239,7 @@
     <button id="leaveBtn" class="ghost">Leave</button>
     <button id="panelToggle" class="ghost" aria-label="Toggle chat">Chat</button>
     <button id="adminBtn" class="ghost admin-btn" hidden>Admin</button>
+    <button id="friendsBtn" class="ghost">Friends</button>
     <button id="settingsBtn" class="ghost gear" aria-label="Appearance">&#9881;</button>
   </header>
 
@@ -372,6 +374,21 @@
     </div>
 
     <p id="modalError" class="error" hidden></p>
+  </div>
+</div>
+
+<!-- ------------------------------------------------------------ friends -->
+<div id="friendsModal" class="modal" hidden>
+  <div class="modal-card wide" role="dialog" aria-modal="true" aria-labelledby="friendsTitle">
+    <button id="friendsClose" class="modal-x" aria-label="Close">&times;</button>
+    <h2 id="friendsTitle">Friends</h2>
+    <p class="modal-sub">Everyone you have played with, on this device.</p>
+
+    <div id="friendList" class="friend-list"></div>
+    <p class="rank-foot" id="friendsNote">
+      Players are remembered by the name they sit down under — there are no
+      accounts, so a friend who changes their name looks like someone new.
+    </p>
   </div>
 </div>
 
@@ -533,6 +550,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvo8q3lo"></script>
+<script type="module" src="app.js?v=mvo9065l"></script>
 </body>
 </html>
