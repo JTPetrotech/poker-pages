@@ -174,39 +174,78 @@ export function reload() {
 }
 
 /**
- * A short code carrying your chips, for moving to another device or keeping
- * somewhere safe. Browsers clear stored data on their own schedule — Safari
- * after about a week of not visiting — and this is the way back.
+ * A short code carrying your chips to another device.
+ *
+ * Crockford's base32 alphabet: no I, L, O or U, so there is nothing to
+ * confuse with 1 and 0 and nothing that spells a word by accident. Case and
+ * dashes are ignored when reading one back, and two check characters catch a
+ * mistyped code rather than silently setting the wrong balance.
+ *
+ * Only the chips travel. Hands played and biggest pot stay on the device
+ * that earned them — carrying them would make the code longer for no real
+ * gain.
  */
-export function backupCode() {
-  const p = read();
-  const payload = {
-    v: 1,
-    c: p.vault + (p.atTable ? p.atTable.amount : 0),
-    h: p.handsPlayed,
-    b: p.biggestPot,
-    n: p.name,
-  };
-  return btoa(JSON.stringify(payload)).replace(/=+$/, '');
+const C32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
+function encode32(n) {
+  let out = '';
+  let v = Math.max(0, Math.floor(n));
+  do {
+    out = C32[v % 32] + out;
+    v = Math.floor(v / 32);
+  } while (v > 0);
+  return out;
 }
 
-/** Returns the restored balance, or null if the code is not one of ours. */
-export function restoreCode(code) {
-  try {
-    const text = String(code || '').trim();
-    if (!text) return null;
-    const json = JSON.parse(atob(text));
-    if (!json || json.v !== 1 || typeof json.c !== 'number') return null;
-
-    const p = read();
-    p.vault = Math.min(MAX_VAULT, Math.max(0, Math.floor(json.c)));
-    p.atTable = null;
-    p.handsPlayed = Math.max(0, Math.floor(json.h) || 0);
-    p.biggestPot = Math.max(0, Math.floor(json.b) || 0);
-    if (json.n) p.name = String(json.n).slice(0, 16);
-    write(p);
-    return p.vault;
-  } catch {
-    return null;
+function decode32(text) {
+  let v = 0;
+  for (const ch of text) {
+    const i = C32.indexOf(ch);
+    if (i < 0) return null;
+    v = v * 32 + i;
   }
+  return v;
+}
+
+function checkChars(body) {
+  let sum = 7;
+  for (const ch of body) sum = (sum * 31 + C32.indexOf(ch)) % 1024;
+  return C32[Math.floor(sum / 32)] + C32[sum % 32];
+}
+
+/** Normalise what someone typed: case, dashes, and the usual lookalikes. */
+function tidy(text) {
+  return String(text || '')
+    .toUpperCase()
+    .replace(/[^0-9A-Z]/g, '')
+    .replace(/[IL]/g, '1')
+    .replace(/O/g, '0')
+    .replace(/U/g, 'V');
+}
+
+export function backupCode() {
+  const p = read();
+  const chips = p.vault + (p.atTable ? p.atTable.amount : 0);
+  const body = encode32(chips);
+  const full = body + checkChars(body);
+  // Grouped in fours, which is easier to read aloud and to type.
+  return full.match(/.{1,4}/g).join('-');
+}
+
+/** Returns the restored balance, or null if the code is not a valid one. */
+export function restoreCode(code) {
+  const clean = tidy(code);
+  if (clean.length < 3) return null;
+
+  const body = clean.slice(0, -2);
+  if (checkChars(body) !== clean.slice(-2)) return null;
+
+  const chips = decode32(body);
+  if (chips === null || !Number.isFinite(chips)) return null;
+
+  const p = read();
+  p.vault = Math.min(MAX_VAULT, Math.max(0, Math.floor(chips)));
+  p.atTable = null;
+  write(p);
+  return p.vault;
 }
