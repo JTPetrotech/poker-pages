@@ -696,20 +696,23 @@ input { font: inherit; }
 
 .kick-bot {
   position: absolute;
-  top: -6px;
-  left: -6px;
-  width: 18px;
-  height: 18px;
+  top: -8px;
+  left: -8px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: #fdecec;
-  border: 1px solid #e4949b;
-  color: #a81f2a;
-  font-size: 11px;
+  background: var(--red);
+  border: 2px solid #fff;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
   line-height: 1;
   display: grid;
   place-items: center;
   padding: 0;
+  box-shadow: 0 2px 6px rgba(22, 32, 42, 0.35);
 }
+.kick-bot:hover { filter: brightness(1.1); }
 
 @media (max-width: 860px) {
   .modal-card { padding: 18px; }
@@ -1692,3 +1695,21 @@ kbd {
 
 .install { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
 .install .field { margin-bottom: 8px; }
+
+.remove-player {
+  width: 100%;
+  margin-top: 14px;
+  padding: 11px;
+  background: #fdecec;
+  border: 1px solid #e4949b;
+  border-radius: 10px;
+  color: #a81f2a;
+  font-size: 13px;
+  font-weight: 600;
+}
+.remove-player:hover { background: #fadada; }
+:root[data-theme="dark"] .remove-player {
+  background: rgba(226, 97, 107, 0.16);
+  border-color: rgba(226, 97, 107, 0.45);
+  color: #ff9ba1;
+}

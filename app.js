@@ -1,9 +1,9 @@
-import { HostNet, GuestNet } from './net.js?v=mvo8e14e';
-import { TableHost } from './host.js?v=mvo8e14e';
-import * as vault from './vault.js?v=mvo8e14e';
-import * as cloud from './cloud.js?v=mvo8e14e';
-import { bestHand } from './engine/hand.js?v=mvo8e14e';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo8e14e';
+import { HostNet, GuestNet } from './net.js?v=mvo8jtxt';
+import { TableHost } from './host.js?v=mvo8jtxt';
+import * as vault from './vault.js?v=mvo8jtxt';
+import * as cloud from './cloud.js?v=mvo8jtxt';
+import { bestHand } from './engine/hand.js?v=mvo8jtxt';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo8jtxt';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 42;
+const BUILD = 43;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
