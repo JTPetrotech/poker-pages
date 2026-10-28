@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mvrjpchb" />
+<link rel="stylesheet" href="style.css?v=mvrk03te" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
@@ -81,7 +81,7 @@
 <div id="lobby" class="lobby">
   <div class="corner-left">
     <button id="lobbyFriends" class="corner-pill" title="Friends">Friends</button>
-    <button id="lobbyDecks" class="corner-pill" title="Card skins">Skins</button>
+    <button id="lobbyDecks" class="corner-pill" title="Shop">Shop</button>
   </div>
   <button id="lobbyGear" class="corner-gear" aria-label="Appearance" title="Appearance">&#9881;</button>
   <div class="lobby-card">
@@ -243,7 +243,7 @@
     <button id="panelToggle" class="ghost" aria-label="Toggle chat">Chat</button>
     <button id="adminBtn" class="ghost admin-btn" hidden>Admin</button>
     <button id="friendsBtn" class="ghost">Friends</button>
-    <button id="decksBtn" class="ghost">Skins</button>
+    <button id="decksBtn" class="ghost">Shop</button>
     <button id="settingsBtn" class="ghost gear" aria-label="Appearance">&#9881;</button>
   </header>
 
@@ -396,22 +396,58 @@
   </div>
 </div>
 
-<!-- ------------------------------------------------------------ card packs -->
+<!-- ------------------------------------------------------------ the shop -->
 <div id="decksModal" class="modal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="decksTitle">
     <button id="decksClose" class="modal-x" aria-label="Close">&times;</button>
-    <h2 id="decksTitle">Card skins</h2>
-    <p class="modal-sub">
-      Vault: <strong id="decksChips">0</strong> chips.
-      Every pack costs 1,000. The four themed ones always give you a skin you
-      don't have; All or Nothing is a gamble.
-    </p>
+    <h2 id="decksTitle">Shop</h2>
+    <p class="modal-sub">Vault: <strong id="decksChips">0</strong> chips.</p>
 
-    <p id="decksPull" class="deck-pull" hidden></p>
-    <div id="decksPicker"></div>
-    <p class="rank-foot">
-      Everyone at the table sees the skin you are wearing on your cards.
-    </p>
+    <div class="help-tabs shop-tabs">
+      <button class="htab active" data-stab="skins" type="button">Skins</button>
+      <button class="htab" data-stab="chips" type="button">Chips</button>
+    </div>
+
+    <div id="spane-skins" class="spane active">
+      <p class="deck-note">
+        Every pack costs 1,000. The four themed ones always give you a skin you
+        don't have; All or Nothing is a gamble.
+      </p>
+      <p id="decksPull" class="deck-pull" hidden></p>
+      <div id="decksPicker"></div>
+      <p class="rank-foot">
+        Everyone at the table sees the skin you are wearing on your cards.
+      </p>
+    </div>
+
+    <div id="spane-chips" class="spane">
+      <div class="pack gamble">
+        <div class="pack-head">
+          <div><strong>All or Nothing</strong>
+            <span class="pack-count">double it, or lose it</span></div>
+        </div>
+        <p class="pack-blurb">
+          A straight coin flip on your own chips. Win and your stake doubles;
+          lose and it is gone. Neither side has an edge, so over enough flips
+          you end up roughly where you started &mdash; it is the swing that is
+          the point.
+        </p>
+        <div class="stake-row">
+          <input id="stakeAmount" type="number" inputmode="numeric" min="1" placeholder="Stake" />
+          <button id="stakeFlip" class="pack-buy" type="button">Flip</button>
+        </div>
+        <div class="stake-quick">
+          <button class="quick" data-stake="1000" type="button">1,000</button>
+          <button class="quick" data-stake="quarter" type="button">Quarter</button>
+          <button class="quick" data-stake="half" type="button">Half</button>
+          <button class="quick" data-stake="all" type="button">All in</button>
+        </div>
+        <p id="flipResult" class="deck-pull" hidden></p>
+      </div>
+      <p class="rank-foot">
+        Chips here are the ones in your vault, not the ones on a table.
+      </p>
+    </div>
   </div>
 </div>
 
@@ -455,7 +491,7 @@
     </div>
 
     <label class="field"><span>Card skins</span></label>
-    <p class="deck-note">Bought in packs, from the Skins button.</p>
+    <p class="deck-note">Bought in packs, from the Shop button.</p>
 
     <div class="install">
       <label class="field"><span>Open on your phone</span></label>
@@ -586,6 +622,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvrjpchb"></script>
+<script type="module" src="app.js?v=mvrk03te"></script>
 </body>
 </html>

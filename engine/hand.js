@@ -1,4 +1,4 @@
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './cards.js?v=mvrjpchb';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './cards.js?v=mvrk03te';
 
 export const CATEGORIES = [
   'High Card', 'Pair', 'Two Pair', 'Three of a Kind', 'Straight',

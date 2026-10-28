@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvrjpchb';
-import { TableHost } from './host.js?v=mvrjpchb';
-import * as vault from './vault.js?v=mvrjpchb';
-import * as friends from './friends.js?v=mvrjpchb';
-import * as packs from './decks.js?v=mvrjpchb';
-import * as cloud from './cloud.js?v=mvrjpchb';
-import { bestHand } from './engine/hand.js?v=mvrjpchb';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrjpchb';
+import { HostNet, GuestNet } from './net.js?v=mvrk03te';
+import { TableHost } from './host.js?v=mvrk03te';
+import * as vault from './vault.js?v=mvrk03te';
+import * as friends from './friends.js?v=mvrk03te';
+import * as packs from './decks.js?v=mvrk03te';
+import * as cloud from './cloud.js?v=mvrk03te';
+import { bestHand } from './engine/hand.js?v=mvrk03te';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrk03te';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 51;
+const BUILD = 52;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -589,6 +589,76 @@ function openDecks() {
   lastPull = null;
   paintDecks();
   show($('decksModal'), true);
+}
+
+// ---------------------------------------------------------- flipping chips
+
+/** What a quick button means, read against the vault at the time. */
+function stakeFor(key) {
+  const held = vault.balance();
+  if (key === 'all') return held;
+  if (key === 'half') return Math.floor(held / 2);
+  if (key === 'quarter') return Math.floor(held / 4);
+  return Math.min(Number(key) || 0, held);
+}
+
+function flipMsg(html, kind) {
+  const el = $('flipResult');
+  el.innerHTML = html;
+  el.classList.toggle('lost', kind === 'lost');
+  show(el, !!html);
+}
+
+function doFlip() {
+  const stake = Math.floor(Number($('stakeAmount').value) || 0);
+  if (stake <= 0) {
+    flipMsg('Put a stake in first.', 'lost');
+    return;
+  }
+  if (stake > vault.balance()) {
+    flipMsg(`Your vault only has ${fmt(vault.balance())}.`, 'lost');
+    return;
+  }
+  const result = vault.coinFlip(stake);
+  if (!result) {
+    flipMsg('That stake is not one you can make.', 'lost');
+    return;
+  }
+  paintVault();
+  $('decksChips').textContent = fmt(vault.balance());
+  flipMsg(
+    result.won
+      ? `<strong>Won ${fmt(result.stake)}.</strong> Your vault is ${fmt(result.balance)}.`
+      : `<strong>Lost ${fmt(result.stake)}.</strong> Your vault is ${fmt(result.balance)}.`,
+    result.won ? 'won' : 'lost',
+  );
+  // Leaving the stake in place makes it one tap to let it ride, which is
+  // exactly the thing to be careful about — so it clears after a loss.
+  if (!result.won) $('stakeAmount').value = '';
+}
+
+function initShop() {
+  const modal = $('decksModal');
+  for (const tab of modal.querySelectorAll('.htab')) {
+    tab.addEventListener('click', () => {
+      modal.querySelectorAll('.htab').forEach((t) => t.classList.toggle('active', t === tab));
+      modal.querySelectorAll('.spane').forEach((pane) => {
+        pane.classList.toggle('active', pane.id === `spane-${tab.dataset.stab}`);
+      });
+    });
+  }
+
+  for (const b of modal.querySelectorAll('.stake-quick .quick')) {
+    b.addEventListener('click', () => {
+      $('stakeAmount').value = String(stakeFor(b.dataset.stake));
+      flipMsg('');
+    });
+  }
+
+  $('stakeFlip').addEventListener('click', doFlip);
+  $('stakeAmount').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') doFlip();
+  });
 }
 
 function initSettings() {
@@ -1920,11 +1990,13 @@ function paintTableFacts() {
 
   note('Tap the Vault chip to move chips between your vault and the table, '
     + 'either way. Tap another seat to send chips to that player.');
-  note(`Skins opens your card skins. A pack costs ${fmt(packs.PACK_PRICE)} chips `
+  note(`Shop sells card skins. A pack costs ${fmt(packs.PACK_PRICE)} chips `
     + 'and always gives you one you do not already have. Everyone at the table '
     + 'sees the skin you are wearing.');
   note('All or Nothing is the exception: half the time it gives nothing at '
-    + 'all, and the other half it can hand you anything in the game.');
+    + 'all, and the other half it can hand you anything in the game. The '
+    + 'Chips tab flips your own chips on the same idea: double the stake, '
+    + 'or lose it.');
   note('The gear opens Settings, for the background and the light or dark '
     + 'look. Those two are yours alone — nobody else sees them.');
   if (app.isHost) {
@@ -2046,10 +2118,13 @@ function initGame() {
     send({ t: 'chat', text });
   });
 
-  for (const tab of document.querySelectorAll('.htab')) {
+  // Scoped to the help dialog: the shop borrows the same tab styling, and an
+  // unscoped query would leave each dialog's tabs switching the other's panes.
+  const help = $('helpModal');
+  for (const tab of help.querySelectorAll('.htab')) {
     tab.addEventListener('click', () => {
-      document.querySelectorAll('.htab').forEach((t) => t.classList.toggle('active', t === tab));
-      document.querySelectorAll('.hpane').forEach((pane) => {
+      help.querySelectorAll('.htab').forEach((t) => t.classList.toggle('active', t === tab));
+      help.querySelectorAll('.hpane').forEach((pane) => {
         pane.classList.toggle('active', pane.id === `hpane-${tab.dataset.htab}`);
       });
     });
@@ -2654,6 +2729,7 @@ initPhoneHosting();
 initAdmin();
 requestPersistence();
 initSettings();
+initShop();
 initAuthUi();
 watchFeltSpace();
 window.addEventListener('resize', scheduleSizeFelt);

@@ -7,7 +7,7 @@
  * you cash out.
  */
 
-import { DECK_IDS } from './decks.js?v=mvrjpchb';
+import { DECK_IDS } from './decks.js?v=mvrk03te';
 
 const KEY = 'pn.profile.v1';
 
@@ -154,6 +154,31 @@ export function grantDeck(id) {
   p.decks = [...p.decks, id];
   write(p);
   return true;
+}
+
+/** How often a chip flip comes up heads. A fair coin, by design. */
+export const COIN_ODDS = 0.5;
+
+/**
+ * Stake chips on a coin flip. Win and the stake doubles, lose and it is gone.
+ *
+ * At even odds and an even payout neither side has an edge, which is the
+ * honest version of this and the only one worth building: nobody is quietly
+ * being drained. `roll` is passed in by the tests so an outcome can be
+ * checked exactly rather than hoped for.
+ *
+ * Returns null when the stake is not a real one or is more than the vault
+ * holds, so nothing moves on a bad bet.
+ */
+export function coinFlip(stake, roll = Math.random()) {
+  const bet = Math.floor(Number(stake));
+  if (!Number.isFinite(bet) || bet <= 0) return null;
+  const p = read();
+  if (p.vault < bet) return null;
+  const won = roll < COIN_ODDS;
+  p.vault = won ? Math.min(MAX_VAULT, p.vault + bet) : p.vault - bet;
+  write(p);
+  return { won, stake: bet, balance: p.vault };
 }
 
 /**

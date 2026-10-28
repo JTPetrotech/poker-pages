@@ -1383,6 +1383,55 @@ test('Jackpot comes from the gamble and nowhere else', () => {
   eq(packs.deckById('jackpot').pack, 'gamble');
 });
 
+// ------------------------------------------------------------------ flipping chips
+
+test('a won flip doubles the stake and a lost one takes it', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  const start = vault.balance();
+
+  const won = vault.coinFlip(1000, 0);
+  eq(won.won, true);
+  eq(won.balance, start + 1000, 'the stake doubled');
+
+  const lost = vault.coinFlip(1000, 0.99);
+  eq(lost.won, false);
+  eq(lost.balance, start, 'and back where we began');
+});
+
+test('the chip flip is a fair coin', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  let wins = 0;
+  for (let i = 0; i < 1000; i++) {
+    // A tiny stake so the vault cannot run dry mid-sweep.
+    if (vault.coinFlip(1, i / 1000).won) wins++;
+  }
+  const share = wins / 1000;
+  assert(Math.abs(share - vault.COIN_ODDS) < 0.02, `won ${share} of the time`);
+});
+
+test('a flip you cannot cover moves nothing', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  const start = vault.balance();
+  eq(vault.coinFlip(start + 1, 0), null, 'more than the vault holds');
+  eq(vault.coinFlip(0, 0), null, 'nothing at all');
+  eq(vault.coinFlip(-500, 0), null, 'a negative stake');
+  eq(vault.coinFlip('rubbish', 0), null, 'not a number');
+  eq(vault.balance(), start, 'and the vault is untouched');
+});
+
+test('betting the lot is allowed, and losing it empties the vault', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  const all = vault.balance();
+  const result = vault.coinFlip(all, 0.99);
+  eq(result.won, false);
+  eq(result.balance, 0);
+  eq(vault.coinFlip(1, 0), null, 'nothing left to stake');
+});
+
 // ------------------------------------------------------------------ report
 
 console.log('\n');

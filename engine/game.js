@@ -1,5 +1,5 @@
-import { makeDeck, shuffle } from './cards.js?v=mvrjpchb';
-import { bestHand, compareScores } from './hand.js?v=mvrjpchb';
+import { makeDeck, shuffle } from './cards.js?v=mvrk03te';
+import { bestHand, compareScores } from './hand.js?v=mvrk03te';
 
 export const STAGES = ['idle', 'preflop', 'flop', 'turn', 'river', 'showdown', 'handover'];
 
