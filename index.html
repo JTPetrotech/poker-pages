@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mvriq2h2" />
+<link rel="stylesheet" href="style.css?v=mvrj5uct" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
@@ -499,9 +499,19 @@
       <button id="adminGrantGo" class="primary small" type="button">To vault</button>
     </div>
 
+    <label class="field admin-gap"><span>Give yourself card backs</span></label>
+    <div id="adminSkins" class="decks"></div>
+
     <label class="field admin-gap"><span>Take from a player</span></label>
     <div id="adminList" class="admin-list"></div>
     <p id="adminMsg" class="backup-msg" hidden></p>
+
+    <label class="field admin-gap"><span>Admin itself</span></label>
+    <p class="backup-note">
+      Turning it off hides this panel. Nothing it has already given you is
+      taken back, and the code switches it on again.
+    </p>
+    <button id="adminOff" class="remove-player" type="button">Turn admin off</button>
   </div>
 </div>
 
@@ -575,6 +585,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvriq2h2"></script>
+<script type="module" src="app.js?v=mvrj5uct"></script>
 </body>
 </html>

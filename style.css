@@ -456,6 +456,31 @@ input { font: inherit; }
   --deck-edge: #f0c250;
   --deck-glyph: "\1F3C6";
 }
+
+/* ---------------------------------------------------------- ultra rare */
+
+/* These four are pictures rather than patterns, drawn by tools/make-backs.mjs.
+   No motif sits on top: the picture is the whole design. */
+.deck-galaxy {
+  --deck-bg: url("backs/galaxy.png") center / cover no-repeat;
+  --deck-edge: #cdb9ff;
+  --deck-glyph: "";
+}
+.deck-strip {
+  --deck-bg: url("backs/strip.png") center / cover no-repeat;
+  --deck-edge: #ff9ad2;
+  --deck-glyph: "";
+}
+.deck-melon {
+  --deck-bg: url("backs/melon.png") center / cover no-repeat;
+  --deck-edge: #2f7a3e;
+  --deck-glyph: "";
+}
+.deck-stadium {
+  --deck-bg: url("backs/stadium.png") center / cover no-repeat;
+  --deck-edge: #fff6cf;
+  --deck-glyph: "";
+}
 .card.small { width: 32px; height: 45px; border-radius: 5px; }
 .card.small .r { font-size: 14px; }
 .card.small .s { font-size: 11px; }
@@ -1642,6 +1667,33 @@ input { font: inherit; }
 }
 .rarity.rare { background: #dbeafe; color: #1a4f8a; }
 .rarity.legendary { background: #fdeccd; color: #8a5a0b; }
+.rarity.ultra { background: linear-gradient(90deg, #f0c3ff, #ffd4a8); color: #6b2a8a; }
+
+/* Rarity reads off the tile's own ring, so you can see what a pack still
+   owes you without reading a word. */
+.deck-opt.rar-rare { border-color: #7da8d8; }
+.deck-opt.rar-legendary { border-color: #d9a43c; }
+.deck-opt.rar-ultra {
+  border-color: #b968e0;
+  box-shadow: 0 0 0 1px rgba(185, 104, 224, 0.3), 0 2px 10px rgba(185, 104, 224, 0.3);
+}
+.deck-opt.rar-ultra.active, .deck-opt.rar-legendary.active, .deck-opt.rar-rare.active {
+  border-color: var(--chip);
+}
+
+.deck-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 12px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.deck-legend span { display: flex; align-items: center; gap: 4px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--line); }
+.dot.rar-rare { border-color: #7da8d8; }
+.dot.rar-legendary { border-color: #d9a43c; }
+.dot.rar-ultra { border-color: #b968e0; }
 
 .custom-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
 .custom-row input[type="color"] {

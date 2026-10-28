@@ -1278,6 +1278,68 @@ test('computer players do not copy a back already at the table', () => {
   assert(free.length === packs.DECKS.length - 1, 'and only that one');
 });
 
+test('every pack has exactly one ultra rare, and it is a picture', () => {
+  for (const pack of packs.PACKS) {
+    const ultras = packs.packContents(pack.id).filter((d) => d.rarity === 'ultra');
+    eq(ultras.length, 1, `${pack.id} has one`);
+  }
+  eq(packs.DECKS.filter((d) => d.rarity === 'ultra').length, packs.PACKS.length);
+});
+
+test('every rarity in the catalogue is one the tiles can show', () => {
+  for (const d of packs.DECKS) {
+    if (d.id === packs.FREE_DECK) continue;
+    assert(packs.RARITIES.includes(d.rarity), `${d.id} is ${d.rarity}`);
+  }
+});
+
+test('an ultra rare tends to come last out of its pack', () => {
+  // Over many openings of a fresh pack, the ultra should be the rarest
+  // first pull by a wide margin — that is the whole point of the tier.
+  const counts = {};
+  for (let i = 0; i < 1000; i++) {
+    const first = packs.drawFromPack('cosmic', [], i / 1000);
+    counts[first.rarity] = (counts[first.rarity] || 0) + 1;
+  }
+  assert(counts.ultra > 0, 'but it is still reachable');
+  assert(counts.ultra < counts.common / 4, `ultra ${counts.ultra} vs common ${counts.common}`);
+});
+
+test('a backup code carries an ultra rare, which did not fit the old width', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  // The ultra rares sit past the first twenty catalogue places.
+  const last = packs.DECKS[packs.DECKS.length - 1].id;
+  assert(packs.DECK_IDS.indexOf(last) >= 20, 'past the old field width');
+  vault.grantDeck(last);
+  vault.grantDeck('galaxy');
+  const code = vault.backupCode();
+
+  globalThis.localStorage.clear();
+  vault.detach();
+  vault.restoreCode(code);
+  assert(vault.ownsDeck(last), 'the last design came across');
+  assert(vault.ownsDeck('galaxy'), 'and so did the first ultra');
+  eq(vault.decks().length, 2);
+});
+
+test('a code written at the old width still reads', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  const C32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+  const check = (body) => {
+    let sum = 7;
+    for (const ch of body) sum = (sum * 31 + C32.indexOf(ch)) % 1024;
+    return C32[Math.floor(sum / 32)] + C32[sum % 32];
+  };
+  // C + chips + 3 hands + 4 deck characters. Bit 0 is Classic, so the value
+  // 2 sets bit 1: the first design after it.
+  const body = 'C' + 'F4' + '001' + '0002';
+  const code = body + check(body);
+  assert(vault.restoreCode(code) !== null, 'it reads');
+  eq(vault.decks()[0], packs.DECK_IDS[1], 'and the bit means the same design');
+});
+
 // ------------------------------------------------------------------ report
 
 console.log('\n');

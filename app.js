@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvriq2h2';
-import { TableHost } from './host.js?v=mvriq2h2';
-import * as vault from './vault.js?v=mvriq2h2';
-import * as friends from './friends.js?v=mvriq2h2';
-import * as packs from './decks.js?v=mvriq2h2';
-import * as cloud from './cloud.js?v=mvriq2h2';
-import { bestHand } from './engine/hand.js?v=mvriq2h2';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvriq2h2';
+import { HostNet, GuestNet } from './net.js?v=mvrj5uct';
+import { TableHost } from './host.js?v=mvrj5uct';
+import * as vault from './vault.js?v=mvrj5uct';
+import * as friends from './friends.js?v=mvrj5uct';
+import * as packs from './decks.js?v=mvrj5uct';
+import * as cloud from './cloud.js?v=mvrj5uct';
+import { bestHand } from './engine/hand.js?v=mvrj5uct';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrj5uct';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 48;
+const BUILD = 49;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -464,10 +464,11 @@ function deckTile(d, ownedList) {
   b.type = 'button';
   // The design's own class paints the preview, so each tile shows the real
   // card back rather than a picture of one.
-  b.className = `deck-opt deck-${d.id}${owned ? '' : ' locked'}`;
+  b.className = `deck-opt deck-${d.id} rar-${d.rarity}${owned ? '' : ' locked'}`;
   b.classList.toggle('active', owned && d.id === myDeck());
   b.dataset.deck = d.id;
-  b.title = owned ? d.name : `${d.name} — not yours yet`;
+  // Even a locked tile says how rare it is — that is half of wanting it.
+  b.title = owned ? `${d.name} — ${d.rarity}` : `${d.rarity}, not yours yet`;
   b.innerHTML = `<span class="card back small"></span><span>${owned ? d.name : '???'}</span>`;
   if (owned) b.addEventListener('click', () => { wearDeck(d.id); paintDecks(); });
   return b;
@@ -492,6 +493,13 @@ function paintDecks() {
   } else {
     show(note, false);
   }
+
+  const legend = document.createElement('div');
+  legend.className = 'deck-legend';
+  legend.innerHTML = packs.RARITIES
+    .map((r) => `<span><i class="dot rar-${r}"></i>${r}</span>`)
+    .join('');
+  host.appendChild(legend);
 
   // Classic on its own, then one row per pack.
   const free = document.createElement('div');
@@ -720,6 +728,36 @@ function adminMsg(text, good) {
   el.hidden = !text;
 }
 
+/**
+ * Every card back, as a tile you can hand yourself.
+ *
+ * Deliberately one at a time rather than an unlock-everything button: the
+ * collection is the point of the packs, and emptying it in one click is a
+ * thing you cannot undo.
+ */
+function paintAdminSkins() {
+  const host = $('adminSkins');
+  if (!host) return;
+  host.innerHTML = '';
+  for (const d of packs.DECKS) {
+    if (d.id === packs.FREE_DECK) continue;
+    const owned = vault.ownsDeck(d.id);
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = `deck-opt deck-${d.id} rar-${d.rarity}${owned ? '' : ' locked'}`;
+    b.title = owned ? `${d.name} — already yours` : `Give yourself ${d.name}`;
+    b.innerHTML = `<span class="card back small"></span><span>${d.name}</span>`;
+    if (!owned) {
+      b.addEventListener('click', () => {
+        vault.grantDeck(d.id);
+        adminMsg(`${d.name} is yours.`, true);
+        paintAdminSkins();
+      });
+    }
+    host.appendChild(b);
+  }
+}
+
 function paintAdminList() {
   const host = $('adminList');
   host.innerHTML = '';
@@ -779,6 +817,7 @@ function openAdmin() {
   if (!isAdmin()) return;
   adminMsg('');
   paintAdminList();
+  paintAdminSkins();
   show($('adminModal'), true);
 }
 
@@ -797,6 +836,12 @@ function initAdmin() {
     paintVault();
     $('adminGrant').value = '';
     adminMsg(`Added ${fmt(n)} to your vault, now ${fmt(vault.balance())}.`, true);
+  });
+
+  $('adminOff').addEventListener('click', () => {
+    setAdmin(false);
+    show($('adminModal'), false);
+    toast('Admin is off. The code switches it back on.');
   });
 }
 

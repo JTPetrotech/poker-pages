@@ -46,7 +46,17 @@ export const DECKS = [
   { id: 'hoops', name: 'Hoops', pack: 'sport', rarity: 'common' },
   { id: 'tennis', name: 'Tennis', pack: 'sport', rarity: 'rare' },
   { id: 'trophy', name: 'Trophy', pack: 'sport', rarity: 'legendary' },
+
+  // One ultra rare in each pack. These four are real pictures rather than a
+  // pattern, which is what makes them worth chasing — see tools/make-backs.
+  { id: 'galaxy', name: 'Galaxy', pack: 'cosmic', rarity: 'ultra' },
+  { id: 'strip', name: 'Night Drive', pack: 'car', rarity: 'ultra' },
+  { id: 'melon', name: 'Watermelon', pack: 'food', rarity: 'ultra' },
+  { id: 'stadium', name: 'Floodlights', pack: 'sport', rarity: 'ultra' },
 ];
+
+/** Shown on the tiles, brightest last. */
+export const RARITIES = ['common', 'rare', 'legendary', 'ultra'];
 
 export const DECK_IDS = DECKS.map((d) => d.id);
 
@@ -73,7 +83,7 @@ export function safeDeck(id) {
  * decide the order you tend to collect a pack in, not whether you waste a
  * purchase.
  */
-const WEIGHT = { common: 6, rare: 3, legendary: 1 };
+const WEIGHT = { common: 10, rare: 5, legendary: 2, ultra: 1 };
 
 /**
  * Pull one design out of a pack.

@@ -7,7 +7,7 @@
  * you cash out.
  */
 
-import { DECK_IDS } from './decks.js?v=mvriq2h2';
+import { DECK_IDS } from './decks.js?v=mvrj5uct';
 
 const KEY = 'pn.profile.v1';
 
@@ -275,17 +275,25 @@ function tidy(text) {
 // Three base32 characters, so the most hands a code can carry.
 const MAX_CODED_HANDS = 32 ** 3 - 1;
 
-// One bit per design, at its fixed position in the catalogue. Four base32
-// characters hold twenty bits, which leaves room for designs added later.
-const DECK_FIELD = 4;
+/**
+ * One bit per design, at its fixed position in the catalogue, packed into
+ * base32 characters at five bits each.
+ *
+ * The letter at the front of a code says how wide that field is, because the
+ * catalogue outgrew the first width when the ultra rares were added. Codes
+ * written at the old width keep reading at the old width.
+ */
+const DECK_FIELD = { C: 4, D: 5 };
+const DECK_VERSION = 'D';
 
 function encodeDecks(list) {
+  const width = DECK_FIELD[DECK_VERSION];
   let bits = 0;
   for (const id of list) {
     const i = DECK_IDS.indexOf(id);
-    if (i >= 0 && i < DECK_FIELD * 5) bits |= 1 << i;
+    if (i >= 0 && i < width * 5) bits |= 1 << i;
   }
-  return encode32(bits).padStart(DECK_FIELD, '0');
+  return encode32(bits).padStart(width, '0');
 }
 
 function decodeDecks(text) {
@@ -298,7 +306,7 @@ export function backupCode() {
   const p = read();
   const chips = p.vault + (p.atTable ? p.atTable.amount : 0);
   const hands = encode32(Math.min(p.handsPlayed, MAX_CODED_HANDS)).padStart(3, '0');
-  const body = `C${encode32(chips)}${hands}${encodeDecks(p.decks)}`;
+  const body = `${DECK_VERSION}${encode32(chips)}${hands}${encodeDecks(p.decks)}`;
   const full = body + checkChars(body);
   // Grouped in fours, which is easier to read aloud and to type.
   return full.match(/.{1,4}/g).join('-');
@@ -312,15 +320,17 @@ export function restoreCode(code) {
   const body = clean.slice(0, -2);
   if (checkChars(body) !== clean.slice(-2)) return null;
 
-  // C carries the card backs as well as the chips and hands, B carries chips
-  // and hands, and anything else is an older chips-only code. All read back.
+  // C and D carry the card backs as well as the chips and hands, differing
+  // only in how wide that field is; B carries chips and hands; anything else
+  // is an older chips-only code. All of them read back.
   let chips;
   let hands = null;
   let decksOwned = null;
-  if (body[0] === 'C' && body.length >= 2 + 3 + DECK_FIELD) {
-    chips = decode32(body.slice(1, -(3 + DECK_FIELD)));
-    hands = decode32(body.slice(-(3 + DECK_FIELD), -DECK_FIELD));
-    decksOwned = decodeDecks(body.slice(-DECK_FIELD));
+  const width = DECK_FIELD[body[0]];
+  if (width && body.length >= 2 + 3 + width) {
+    chips = decode32(body.slice(1, -(3 + width)));
+    hands = decode32(body.slice(-(3 + width), -width));
+    decksOwned = decodeDecks(body.slice(-width));
   } else if (body[0] === 'B' && body.length >= 5) {
     chips = decode32(body.slice(1, -3));
     hands = decode32(body.slice(-3));
