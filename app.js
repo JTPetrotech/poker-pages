@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvrlasmj';
-import { TableHost } from './host.js?v=mvrlasmj';
-import * as vault from './vault.js?v=mvrlasmj';
-import * as friends from './friends.js?v=mvrlasmj';
-import * as packs from './decks.js?v=mvrlasmj';
-import * as cloud from './cloud.js?v=mvrlasmj';
-import { bestHand } from './engine/hand.js?v=mvrlasmj';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrlasmj';
+import { HostNet, GuestNet } from './net.js?v=mvrljcqe';
+import { TableHost } from './host.js?v=mvrljcqe';
+import * as vault from './vault.js?v=mvrljcqe';
+import * as friends from './friends.js?v=mvrljcqe';
+import * as packs from './decks.js?v=mvrljcqe';
+import * as cloud from './cloud.js?v=mvrljcqe';
+import { bestHand } from './engine/hand.js?v=mvrljcqe';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrljcqe';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 56;
+const BUILD = 57;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -126,35 +126,42 @@ function claimLink(code) {
 }
 
 /**
- * Redeem a claim code carried in the address — what the QR actually opens.
+ * Hand over what a claim code gives, if it is one. Returns false when the
+ * text is not a code at all, so the caller can carry on and try it as
+ * something else.
  *
- * The code is cleared from the address straight away, so a refresh is not a
- * second redemption and a shared screenshot of the tab does not leak it. A
- * claim code is a gift, not a secret: redeeming twice simply says you have
- * it already.
+ * Redeeming one you already hold is not an error — a claim code is a gift
+ * rather than a secret, and it simply says you have it.
  */
-function redeemFromUrl() {
-  if (!location.hash.startsWith(CLAIM_PREFIX)) return;
-  const code = decodeURIComponent(location.hash.slice(CLAIM_PREFIX.length)).toUpperCase();
-  history.replaceState(null, '', location.pathname + location.search);
-
-  const claim = packs.CLAIMS[code];
-  if (!claim) {
-    toast('That is not a code we know.');
-    return;
-  }
+function applyClaim(text) {
+  const claim = packs.findClaim(text);
+  if (!claim) return false;
 
   let fresh = 0;
   for (const id of claim.decks) if (vault.grantDeck(id)) fresh++;
   for (const id of claim.chips) if (vault.grantChip(id)) fresh++;
   if (!fresh) {
     toast(`You already have ${claim.name}.`);
-    return;
+    return true;
   }
   // Put it on straight away, so it is obvious something arrived.
   if (claim.decks.length) wearDeck(claim.decks[0]);
   if (claim.chips.length) wearChip(claim.chips[0]);
   toast(`Unlocked ${claim.name}.`);
+  return true;
+}
+
+/**
+ * Redeem a claim code carried in the address — what the QR actually opens.
+ *
+ * The code is cleared from the address straight away, so a refresh is not a
+ * second redemption and a screenshot of the tab does not carry it on.
+ */
+function redeemFromUrl() {
+  if (!location.hash.startsWith(CLAIM_PREFIX)) return;
+  const code = decodeURIComponent(location.hash.slice(CLAIM_PREFIX.length));
+  history.replaceState(null, '', location.pathname + location.search);
+  if (!applyClaim(code)) toast('That is not a code we know.');
 }
 
 function inviteLink() {
@@ -942,9 +949,17 @@ async function redeem(box) {
   const text = box.value.trim();
   if (!text) return;
 
-  const ok = await matchesUnlock(text);
   box.classList.remove('ok', 'bad');
   void box.offsetWidth;   // restart the flash on a repeated result
+
+  // A claim code first: it is the one thing here that is not a secret.
+  if (applyClaim(text)) {
+    box.value = '';
+    box.classList.add('ok');
+    return;
+  }
+
+  const ok = await matchesUnlock(text);
 
   if (ok) {
     setAdmin(true);

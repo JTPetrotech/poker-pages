@@ -936,7 +936,10 @@ test('a backup code is short and carries chips and hands', () => {
   vault.setAtTable('ABCD', 4500);   // some chips still on a table
   for (let i = 0; i < 42; i++) vault.recordHand({ pot: 100 });
   const code = vault.backupCode();
-  assert(code.length <= 20, `code should be typable, got ${code.length}: ${code}`);
+  // It was twelve characters when it carried only chips. Two collections
+  // cost nine characters between them, one bit per skin, and that is the
+  // price of a code that restores everything rather than just a balance.
+  assert(code.length <= 24, `code should stay typable, got ${code.length}: ${code}`);
   assert(/^[0-9A-Z-]+$/.test(code), 'uppercase and dashes only');
 
   freshVault();
@@ -1600,6 +1603,36 @@ test('the new chip skins are real and distinct', () => {
     eq(packs.safeChip(id), id, `${id} survives validation`);
   }
   eq(new Set(packs.CHIP_IDS).size, packs.CHIP_IDS.length, 'no duplicate ids');
+});
+
+test('a claim code can be typed, however it is typed', () => {
+  for (const text of ['MILK-714', 'milk714', 'Milk-714', ' milk 714 ']) {
+    assert(packs.findClaim(text), `"${text}" is recognised`);
+  }
+  eq(packs.findClaim('MILK-715'), null, 'a wrong one is not');
+  eq(packs.findClaim('milk714a'), null, 'and nor is the admin word');
+  eq(packs.findClaim(''), null);
+  eq(packs.findClaim(undefined), null);
+});
+
+test('the chip catalogue grew and still fits its code field', () => {
+  assert(packs.CHIP_IDS.length > 10, `${packs.CHIP_IDS.length} chip skins`);
+  assert(packs.CHIP_IDS.length <= vault.CODED_CHIP_LIMIT,
+    `${packs.CHIP_IDS.length} chip skins, room for ${vault.CODED_CHIP_LIMIT}`);
+});
+
+test('a code carries a chip skin from past the old field width', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  const last = packs.CHIP_IDS[packs.CHIP_IDS.length - 1];
+  assert(packs.CHIP_IDS.indexOf(last) >= 10, 'past the old width');
+  vault.grantChip(last);
+  const code = vault.backupCode();
+
+  globalThis.localStorage.clear();
+  vault.detach();
+  vault.restoreCode(code);
+  assert(vault.ownsChip(last), `${last} came across`);
 });
 
 // ------------------------------------------------------------------ report

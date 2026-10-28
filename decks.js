@@ -104,8 +104,14 @@ export const CHIP_SKINS = [
   { id: 'neon', name: 'Neon', rarity: 'legendary' },
   { id: 'prism', name: 'Prism', rarity: 'ultra' },
   { id: 'bucket', name: 'Bucket', rarity: 'common' },
+  { id: 'vinyl', name: 'Vinyl', rarity: 'common' },
+  { id: 'candy', name: 'Candy', rarity: 'common' },
+  { id: 'target', name: 'Target', rarity: 'common' },
   { id: 'melon', name: 'Watermelon', rarity: 'rare' },
+  { id: 'ice', name: 'Ice', rarity: 'rare' },
+  { id: 'lava', name: 'Lava', rarity: 'legendary' },
   { id: 'galaxy', name: 'Galaxy', rarity: 'ultra' },
+  { id: 'eight', name: 'Eight Ball', rarity: 'ultra' },
   // Not in the pack at any price: the only way to it is the Milk code.
   { id: 'milk', name: 'Milk', rarity: 'milk', claim: true },
 ];
@@ -146,6 +152,19 @@ export function drawChip(owned, roll = Math.random()) {
   const pool = chipPackContents().filter((c) => !owned.includes(c.id));
   if (!pool.length) return null;
   return pick(pool, roll);
+}
+
+/**
+ * Look up a claim code the way someone might type it: any capitalisation,
+ * with or without the dash. Scanning one is exact; typing one is not.
+ */
+export function findClaim(text) {
+  const want = String(text || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+  if (!want) return null;
+  for (const [code, claim] of Object.entries(CLAIMS)) {
+    if (code.replace(/[^0-9A-Z]/g, '') === want) return claim;
+  }
+  return null;
 }
 
 /** Every skin a claim code gives away, so a tile can say it costs nothing. */

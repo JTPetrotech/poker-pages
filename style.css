@@ -2333,3 +2333,69 @@ kbd {
   letter-spacing: 0.08em;
   color: var(--green);
 }
+
+/* Vinyl: a record, grooves and all, turning. */
+.chipskin-vinyl {
+  --tok-bg: radial-gradient(circle, #d94f6a 0 22%, #15161a 24%);
+  --tok-edge: #2b2d33;
+  --tok-face:
+    repeating-radial-gradient(circle, rgba(255,255,255,0.14) 0 1px, transparent 1px 2px);
+  --tok-inset: 1px;
+  --tok-spin: tok-spin 2.2s linear infinite;
+}
+
+/* Candy: a peppermint swirl. */
+.chipskin-candy {
+  --tok-bg: #fff;
+  --tok-edge: #e23a4e;
+  --tok-face:
+    conic-gradient(#e23a4e 0 12.5%, #fff 0 25%, #e23a4e 0 37.5%, #fff 0 50%,
+                   #e23a4e 0 62.5%, #fff 0 75%, #e23a4e 0 87.5%, #fff 0);
+  --tok-inset: 0;
+  --tok-spin: tok-spin 5s linear infinite;
+}
+
+/* Target: rings, sitting still. */
+.chipskin-target {
+  --tok-bg: #fff;
+  --tok-edge: #c42b2b;
+  --tok-face:
+    radial-gradient(circle, #c42b2b 0 22%, #fff 22% 42%, #c42b2b 42% 62%,
+                    #fff 62% 82%, #c42b2b 82%);
+  --tok-inset: 0;
+  --tok-spin: none;
+}
+
+/* Ice: a cold chip with a highlight sliding across it. */
+.chipskin-ice {
+  --tok-bg: radial-gradient(circle at 36% 28%, #eaf8ff, #8cc9e8 70%, #4d9ec4 100%);
+  --tok-edge: #e8f7ff;
+  --tok-glow: 0 0 6px rgba(140, 220, 255, 0.7);
+  --tok-face:
+    conic-gradient(from 0deg, rgba(255,255,255,0) 0 40%, rgba(255,255,255,0.9) 50%,
+                   rgba(255,255,255,0) 60%);
+  --tok-inset: 0;
+  --tok-spin: tok-spin 2.8s linear infinite;
+}
+
+/* Lava: a hot wheel churning under the rim. */
+.chipskin-lava {
+  --tok-bg: radial-gradient(circle at 50% 50%, #ffe08a 0 14%, #e2541a 48%, #5e1205 100%);
+  --tok-edge: #ffb067;
+  --tok-glow: 0 0 8px rgba(255, 110, 40, 0.85);
+  --tok-face:
+    conic-gradient(from 0deg, rgba(255,214,120,0.9) 0 14%, rgba(0,0,0,0) 28%,
+                   rgba(255,160,60,0.85) 45%, rgba(0,0,0,0) 62%,
+                   rgba(255,230,160,0.8) 80%, rgba(0,0,0,0) 96%);
+  --tok-inset: 1px;
+  --tok-spin: tok-spin 3.4s linear infinite;
+}
+
+/* Eight ball: black, with the white spot on the front. */
+.chipskin-eight {
+  --tok-bg: radial-gradient(circle at 34% 26%, #4a4f58, #0b0d11 72%);
+  --tok-edge: #2a2e36;
+  --tok-face: radial-gradient(circle, #fff 0 34%, transparent 36%);
+  --tok-inset: 0;
+  --tok-spin: none;
+}

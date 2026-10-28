@@ -96,6 +96,42 @@ function canvas() {
 
 const mix = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
 
+/**
+ * A five-by-seven alphabet, enough for the few words that go on a picture.
+ * There is no font to load here, so letters are drawn as pixels and scaled
+ * up -- blocky on purpose, like something stencilled on.
+ */
+const GLYPHS = {
+  F: ['11111', '10000', '11110', '10000', '10000', '10000', '10000'],
+  R: ['11110', '10001', '10001', '11110', '10100', '10010', '10001'],
+  E: ['11111', '10000', '11110', '10000', '10000', '10000', '11111'],
+};
+
+const textWidth = (text, scale, gap) => text.length * 5 * scale + (text.length - 1) * gap;
+
+/** Stencil `text` with its left edge at `x` and its top at `y`. */
+function drawText(c, text, x, y, scale, colour, alpha = 1, gap = scale) {
+  const [r, g, b] = colour;
+  let cursor = x;
+  for (const ch of text) {
+    const rows = GLYPHS[ch];
+    if (rows) {
+      rows.forEach((row, ry) => {
+        [...row].forEach((on, rx) => {
+          if (on !== '1') return;
+          for (let dy = 0; dy < scale; dy++) {
+            for (let dx = 0; dx < scale; dx++) {
+              c.blend(Math.round(cursor + rx * scale + dx),
+                Math.round(y + ry * scale + dy), r, g, b, alpha);
+            }
+          }
+        });
+      });
+    }
+    cursor += 5 * scale + gap;
+  }
+}
+
 /** Repeatable noise: the same picture every time the script is run. */
 function rand(seed) {
   let s = seed >>> 0;
@@ -445,6 +481,12 @@ function milk() {
       c.blend(Math.round(W / 2 - half + 4 + d), y, 255, 255, 255, 0.4);
     }
   }
+
+  // Stencilled across the glass: this one is given away, not sold.
+  const scale = 2;
+  const gap = 3;
+  drawText(c, 'FREE', (W - textWidth('FREE', scale, gap)) / 2, H * 0.53,
+    scale, [104, 126, 162], 0.95, gap);
   return c.bytes();
 }
 

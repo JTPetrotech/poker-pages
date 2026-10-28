@@ -7,7 +7,7 @@
  * you cash out.
  */
 
-import { DECK_IDS, CHIP_IDS } from './decks.js?v=mvrlasmj';
+import { DECK_IDS, CHIP_IDS } from './decks.js?v=mvrljcqe';
 
 const KEY = 'pn.profile.v1';
 
@@ -331,10 +331,11 @@ const MAX_CODED_HANDS = 32 ** 3 - 1;
  * catalogue outgrew the first width when the ultra rares were added. Codes
  * written at the old width keep reading at the old width.
  */
-const DECK_FIELD = { C: 4, D: 5, E: 5 };
-// Only E carries chip skins; two characters is ten of them.
-const CHIP_FIELD = { E: 2 };
-const DECK_VERSION = 'E';
+const DECK_FIELD = { C: 4, D: 5, E: 5, F: 5 };
+// E and F carry chip skins; F widened the field when the chip catalogue
+// outgrew ten of them.
+const CHIP_FIELD = { E: 2, F: 4 };
+const DECK_VERSION = 'F';
 
 /**
  * How many skins the current code width can carry. A skin past this point
@@ -381,9 +382,9 @@ export function restoreCode(code) {
   const body = clean.slice(0, -2);
   if (checkChars(body) !== clean.slice(-2)) return null;
 
-  // E carries chip skins too, C and D the card backs, B the chips and hands
-  // alone, and anything else is an older chips-only code. The leading letter
-  // says which, and every one of them still reads back.
+  // E and F carry chip skins too, C and D the card backs, B the chips and
+  // hands alone, and anything else is an older chips-only code. The leading
+  // letter says which, and every one of them still reads back.
   let chips;
   let hands = null;
   let decksOwned = null;
