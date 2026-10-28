@@ -1443,6 +1443,85 @@ test('betting the lot is allowed, and losing it empties the vault', () => {
   eq(vault.coinFlip(1, 0), null, 'nothing left to stake');
 });
 
+// ------------------------------------------------------------------ chip skins
+
+test('the chip pack never hands over one you have', () => {
+  const all = packs.chipPackContents().map((c) => c.id);
+  const owned = [];
+  for (let i = 0; i < all.length; i++) {
+    const got = packs.drawChip(owned, i / all.length);
+    assert(got, 'the pack still had something');
+    assert(!owned.includes(got.id), 'never a repeat');
+    owned.push(got.id);
+  }
+  eq(owned.length, all.length);
+  eq(packs.drawChip(owned, 0.5), null, 'and then nothing');
+});
+
+test('Pink is free and never sold', () => {
+  const ids = packs.chipPackContents().map((c) => c.id);
+  assert(!ids.includes(packs.FREE_CHIP), 'not in the pack');
+  assert(packs.chipById(packs.FREE_CHIP), 'but it is a real skin');
+});
+
+test('a chip id that is not one becomes Pink', () => {
+  eq(packs.safeChip('prism'), 'prism');
+  eq(packs.safeChip('chipskin-x" onload="y'), 'pink', 'nothing injectable gets through');
+  eq(packs.safeChip(undefined), 'pink');
+});
+
+test('chip skins are owned separately from card skins', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  assert(vault.grantChip('prism'), 'granted');
+  eq(vault.ownsChip('prism'), true);
+  eq(vault.ownsDeck('prism'), false, 'and it is not a card skin');
+  eq(vault.grantChip('prism'), false, 'granting twice changes nothing');
+  eq(vault.grantChip('not-a-chip'), false);
+  eq(vault.decks().length, 0, 'the card list is untouched');
+});
+
+test('a backup code carries the chip skins too', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  vault.grantChip('triangle');
+  vault.grantChip('prism');
+  vault.grantDeck('rocket');
+  const code = vault.backupCode();
+
+  globalThis.localStorage.clear();
+  vault.detach();
+  vault.restoreCode(code);
+  assert(vault.ownsChip('triangle'), 'triangle came across');
+  assert(vault.ownsChip('prism'), 'prism came across');
+  assert(vault.ownsDeck('rocket'), 'and the card skin did too');
+  eq(vault.chipSkins().length, 2);
+});
+
+test('a code from before chip skins leaves them alone', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  const C32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+  const check = (body) => {
+    let sum = 7;
+    for (const ch of body) sum = (sum * 31 + C32.indexOf(ch)) % 1024;
+    return C32[Math.floor(sum / 32)] + C32[sum % 32];
+  };
+  // A D code: chips, hands and card skins, written before chips had skins.
+  const body = 'D' + 'F4' + '001' + '00002';
+  const old = body + check(body);
+  vault.grantChip('prism');
+  assert(vault.restoreCode(old) !== null, 'the older code still reads');
+  assert(vault.ownsChip('prism'), 'and did not wipe the chip skins');
+});
+
+test('both collections still fit the backup code', () => {
+  assert(packs.DECK_IDS.length <= vault.CODED_DECK_LIMIT,
+    `${packs.DECK_IDS.length} card skins, room for ${vault.CODED_DECK_LIMIT}`);
+  assert(packs.CHIP_IDS.length <= vault.CODED_CHIP_LIMIT,
+    `${packs.CHIP_IDS.length} chip skins, room for ${vault.CODED_CHIP_LIMIT}`);
+});
+
 // ------------------------------------------------------------------ report
 
 console.log('\n');

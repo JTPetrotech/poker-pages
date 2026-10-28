@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mvrkhs90" />
+<link rel="stylesheet" href="style.css?v=mvrkqt69" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
@@ -404,8 +404,18 @@
     <p class="modal-sub">Vault: <strong id="decksChips">0</strong> chips.</p>
 
     <div class="help-tabs shop-tabs">
-      <button class="htab active" data-stab="skins" type="button">Skins</button>
-      <button class="htab" data-stab="chips" type="button">Chips</button>
+      <button class="htab active" data-stab="skins" type="button">Cards</button>
+      <button class="htab" data-stab="chipskins" type="button">Chips</button>
+      <button class="htab" data-stab="chips" type="button">Flip</button>
+    </div>
+
+    <div id="spane-chipskins" class="spane">
+      <p id="chipPull" class="deck-pull" hidden></p>
+      <div id="chipPicker"></div>
+      <p class="rank-foot">
+        Your chips, on your screen. This one is yours alone &mdash; the pot
+        belongs to the table rather than to any one player.
+      </p>
     </div>
 
     <div id="spane-skins" class="spane active">
@@ -622,6 +632,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvrkhs90"></script>
+<script type="module" src="app.js?v=mvrkqt69"></script>
 </body>
 </html>

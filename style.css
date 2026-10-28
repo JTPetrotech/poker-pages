@@ -2165,3 +2165,106 @@ kbd {
 .friend-row button.drop:hover { color: var(--red); border-color: var(--red); }
 
 .friend-empty { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+/* ------------------------------------------------------------ chip skins */
+
+/* A chip, drawn small enough to sit inside a bet pill or the pot. The design
+   comes from whichever skin is chosen, and the moving ones all stop for
+   anyone whose device asks for less motion. */
+.token {
+  display: inline-block;
+  vertical-align: -2px;
+  width: 13px;
+  height: 13px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--tok-bg, #e1639a);
+  border: 1.5px solid var(--tok-edge, #fff);
+  box-shadow: var(--tok-glow, none);
+  position: relative;
+  overflow: hidden;
+  flex: none;
+}
+.token::before {
+  content: "";
+  position: absolute;
+  inset: var(--tok-inset, 0);
+  background: var(--tok-face, none);
+  clip-path: var(--tok-clip, none);
+  border-radius: var(--tok-radius, 50%);
+  animation: var(--tok-spin, none);
+}
+.token.big { width: 26px; height: 26px; border-width: 2px; margin-right: 0; }
+
+@keyframes tok-spin { to { transform: rotate(360deg); } }
+@keyframes tok-pulse {
+  0%, 100% { transform: scale(0.45); opacity: 0.95; }
+  50% { transform: scale(1); opacity: 0.25; }
+}
+@keyframes tok-hue { to { filter: hue-rotate(360deg); } }
+
+/* Pink: the chip this game has always used, with its white edge marks. */
+:root, .chipskin-pink {
+  --tok-bg: radial-gradient(circle at 36% 30%, #ef7fae, #c1316f 72%);
+  --tok-edge: #fff;
+  --tok-face:
+    conic-gradient(#fff 0 8%, transparent 8% 25%, #fff 25% 33%, transparent 33% 50%,
+                   #fff 50% 58%, transparent 58% 75%, #fff 75% 83%, transparent 83%);
+  --tok-inset: -3px;
+  --tok-spin: none;
+}
+
+/* Triangle: a solid triangle turning inside the chip. */
+.chipskin-triangle {
+  --tok-bg: radial-gradient(circle at 36% 30%, #2f3a4a, #141b25 75%);
+  --tok-edge: #7fe3c0;
+  --tok-face: linear-gradient(#7fe3c0, #2fb389);
+  --tok-clip: polygon(50% 8%, 93% 88%, 7% 88%);
+  --tok-inset: 1px;
+  --tok-radius: 0;
+  --tok-spin: tok-spin 4s linear infinite;
+}
+
+/* Spinner: the edge marks of a real chip, going round. */
+.chipskin-dashes {
+  --tok-bg: radial-gradient(circle at 36% 30%, #4b6fa8, #22365c 75%);
+  --tok-edge: #fff;
+  --tok-face:
+    conic-gradient(#fff 0 9%, transparent 9% 25%, #fff 25% 34%, transparent 34% 50%,
+                   #fff 50% 59%, transparent 59% 75%, #fff 75% 84%, transparent 84%);
+  --tok-inset: -3px;
+  --tok-spin: tok-spin 3s linear infinite;
+}
+
+/* Pulse: a ring breathing out from the middle. */
+.chipskin-pulse {
+  --tok-bg: radial-gradient(circle at 36% 30%, #ffb45c, #c25a12 75%);
+  --tok-edge: #ffe2b8;
+  --tok-face: radial-gradient(circle, #fff6e2 0 60%, transparent 62%);
+  --tok-inset: 0;
+  --tok-spin: tok-pulse 1.8s ease-in-out infinite;
+}
+
+/* Neon: the whole chip cycling through the spectrum. */
+.chipskin-neon {
+  --tok-bg: radial-gradient(circle at 36% 30%, #ff4ecd, #5b2bff 78%);
+  --tok-edge: #fff;
+  --tok-glow: 0 0 7px rgba(255, 78, 205, 0.8);
+  --tok-face: none;
+  --tok-spin: tok-hue 3.5s linear infinite;
+  --tok-inset: -6px;
+}
+
+/* Prism: a rainbow wheel turning behind the rim. */
+.chipskin-prism {
+  --tok-bg: #11161f;
+  --tok-edge: #fff;
+  --tok-glow: 0 0 8px rgba(255, 255, 255, 0.45);
+  --tok-face: conic-gradient(#ff4d4d, #ffd24d, #4dff88, #4dd2ff, #a84dff, #ff4d9e, #ff4d4d);
+  --tok-inset: 1px;
+  --tok-spin: tok-spin 2.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .token::before { animation: none !important; }
+}

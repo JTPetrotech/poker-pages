@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvrkhs90';
-import { TableHost } from './host.js?v=mvrkhs90';
-import * as vault from './vault.js?v=mvrkhs90';
-import * as friends from './friends.js?v=mvrkhs90';
-import * as packs from './decks.js?v=mvrkhs90';
-import * as cloud from './cloud.js?v=mvrkhs90';
-import { bestHand } from './engine/hand.js?v=mvrkhs90';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrkhs90';
+import { HostNet, GuestNet } from './net.js?v=mvrkqt69';
+import { TableHost } from './host.js?v=mvrkqt69';
+import * as vault from './vault.js?v=mvrkqt69';
+import * as friends from './friends.js?v=mvrkqt69';
+import * as packs from './decks.js?v=mvrkqt69';
+import * as cloud from './cloud.js?v=mvrkqt69';
+import { bestHand } from './engine/hand.js?v=mvrkqt69';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrkqt69';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 53;
+const BUILD = 54;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -355,9 +355,9 @@ async function chooseImage(file) {
 function readLook() {
   try {
     const raw = localStorage.getItem(LOOK_KEY);
-    if (raw) return { theme: 'light', bg: 'felt', deck: 'classic', custom: null, ...JSON.parse(raw) };
+    if (raw) return { theme: 'light', bg: 'felt', deck: 'classic', chip: 'pink', custom: null, ...JSON.parse(raw) };
   } catch { /* unreadable storage falls back to the defaults */ }
-  return { theme: 'light', bg: 'felt', deck: 'classic', custom: null };
+  return { theme: 'light', bg: 'felt', deck: 'classic', chip: 'pink', custom: null };
 }
 
 function writeLook(look) {
@@ -427,6 +427,36 @@ function myDeck() {
   return vault.ownsDeck(chosen) ? chosen : packs.FREE_DECK;
 }
 
+/**
+ * The chip skin you are using. Unlike a card skin this one is yours alone:
+ * the pot belongs to the table rather than to any player, so there is no
+ * sensible owner to take it from.
+ */
+function myChip() {
+  const chosen = readLook().chip;
+  if (chosen === packs.FREE_CHIP) return chosen;
+  return vault.ownsChip(chosen) ? chosen : packs.FREE_CHIP;
+}
+
+function applyChip() {
+  document.documentElement.className = document.documentElement.className
+    .replace(/chipskin-\S+/g, '').trim();
+  document.documentElement.classList.add(`chipskin-${myChip()}`);
+}
+
+function wearChip(id) {
+  updateLook({ chip: id });
+  applyChip();
+}
+
+/** A chip, for a bet pill or the pot. */
+function tokenEl(big) {
+  const t = document.createElement('span');
+  t.className = `token${big ? ' big' : ''}`;
+  t.setAttribute('aria-hidden', 'true');
+  return t;
+}
+
 /** Wear a design, and tell the table so everyone else repaints. */
 function wearDeck(id) {
   updateLook({ deck: id });
@@ -472,6 +502,102 @@ function buyPack(pack) {
   const pulled = packs.drawFromPack(pack.id, owned);
   vault.grantDeck(pulled.id);
   return { ok: true, pulled };
+}
+
+/**
+ * Buy the chip pack. Same rules as a themed card pack: the chips leave the
+ * vault first, and it never hands over one you already have.
+ */
+function buyChipPack() {
+  const owned = vault.chipSkins();
+  if (!packs.drawChip(owned, 0)) {
+    return { ok: false, why: 'You already have every chip skin.' };
+  }
+  if (vault.balance() < packs.PACK_PRICE) {
+    return { ok: false, why: `A pack costs ${fmt(packs.PACK_PRICE)} chips and your vault has ${fmt(vault.balance())}.` };
+  }
+  if (!vault.spend(packs.PACK_PRICE)) {
+    return { ok: false, why: 'Those chips are not in your vault any more.' };
+  }
+  paintVault();
+  const pulled = packs.drawChip(owned);
+  vault.grantChip(pulled.id);
+  return { ok: true, pulled };
+}
+
+function chipTile(c, ownedList) {
+  const owned = c.id === packs.FREE_CHIP || ownedList.includes(c.id);
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = `deck-opt chipskin-${c.id} rar-${c.rarity}${owned ? '' : ' locked'}`;
+  b.classList.toggle('active', owned && c.id === myChip());
+  b.title = owned ? `${c.name} — ${c.rarity}` : `${c.rarity}, not yours yet`;
+  b.innerHTML = `<span class="token big"></span><span>${owned ? c.name : '???'}</span>`;
+  if (owned) b.addEventListener('click', () => { wearChip(c.id); paintChipShop(); });
+  return b;
+}
+
+/** What the chip pack just gave you, or null. */
+let lastChip = null;
+
+function paintChipShop() {
+  const host = $('chipPicker');
+  if (!host) return;
+  host.innerHTML = '';
+  const owned = vault.chipSkins();
+
+  const note = $('chipPull');
+  if (lastChip) {
+    note.innerHTML = `You pulled <strong>${lastChip.name}</strong> `
+      + `<span class="rarity ${lastChip.rarity}">${lastChip.rarity}</span>`;
+    show(note, true);
+  } else {
+    show(note, false);
+  }
+
+  const contents = packs.chipPackContents();
+  const have = contents.filter((c) => owned.includes(c.id)).length;
+  const done = have === contents.length;
+
+  const row = document.createElement('div');
+  row.className = 'pack';
+
+  const head = document.createElement('div');
+  head.className = 'pack-head';
+  head.innerHTML = `<div><strong>${packs.CHIP_PACK.name}</strong> `
+    + `<span class="pack-count">${have} of ${contents.length}</span></div>`;
+
+  const buy = document.createElement('button');
+  buy.className = 'pack-buy';
+  buy.textContent = done ? 'Complete' : `Open — ${fmt(packs.PACK_PRICE)}`;
+  buy.disabled = done;
+  buy.addEventListener('click', () => {
+    const result = buyChipPack();
+    if (!result.ok) {
+      lastChip = null;
+      toast(result.why);
+      paintChipShop();
+      return;
+    }
+    lastChip = result.pulled;
+    wearChip(result.pulled.id);
+    paintChipShop();
+  });
+  head.appendChild(buy);
+  row.appendChild(head);
+
+  const blurb = document.createElement('p');
+  blurb.className = 'pack-blurb';
+  blurb.textContent = packs.CHIP_PACK.blurb;
+  row.appendChild(blurb);
+
+  const tiles = document.createElement('div');
+  tiles.className = 'decks';
+  tiles.appendChild(chipTile(packs.chipById(packs.FREE_CHIP), owned));
+  for (const c of contents) tiles.appendChild(chipTile(c, owned));
+  row.appendChild(tiles);
+
+  host.appendChild(row);
 }
 
 function deckTile(d, ownedList) {
@@ -588,7 +714,9 @@ function paintDecks() {
 
 function openDecks() {
   lastPull = null;
+  lastChip = null;
   paintDecks();
+  paintChipShop();
   show($('decksModal'), true);
 }
 
@@ -728,6 +856,7 @@ function initSettings() {
 
   migrateFreeDecks();
   applyLook(readLook());
+  applyChip();
 }
 
 /**
@@ -2337,6 +2466,8 @@ function render(state) {
 function renderBoard(state) {
   show($('potBox'), state.pot > 0);
   $('potLabel').textContent = fmt(state.pot);
+  const potBox = $('potBox');
+  if (!potBox.querySelector('.token')) potBox.prepend(tokenEl());
 
   // Highlight the cards that actually won the pot — highlighting every
   // player's best five would light up most of the board and mean nothing.
@@ -2510,7 +2641,7 @@ function renderSeats(state) {
     if (p.bet > 0) {
       const pill = document.createElement('div');
       pill.className = 'bet-pill';
-      pill.textContent = fmt(p.bet);
+      pill.append(tokenEl(), fmt(p.bet));
       el.appendChild(pill);
     }
 

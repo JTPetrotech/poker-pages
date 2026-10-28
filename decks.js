@@ -80,6 +80,56 @@ export const DECKS = [
 /** Shown on the tiles, brightest last. */
 export const RARITIES = ['common', 'rare', 'legendary', 'ultra'];
 
+/**
+ * Chip skins: what the chips themselves look like, as opposed to the card
+ * backs above. Bought from their own pack and kept in their own list, so a
+ * chip skin never takes a card skin's place in the backup code.
+ *
+ * Several of them move. The stylesheet stops every one of them for anyone
+ * who has asked their device for less motion.
+ */
+export const CHIP_PACK = {
+  id: 'chipskins',
+  name: 'Chips',
+  blurb: 'What your chips look like. Four of the five move; all of them hold '
+    + 'still for anyone whose device asks for less motion.',
+};
+
+export const CHIP_SKINS = [
+  { id: 'pink', name: 'Pink', rarity: 'free' },
+  { id: 'triangle', name: 'Triangle', rarity: 'common' },
+  { id: 'dashes', name: 'Spinner', rarity: 'common' },
+  { id: 'pulse', name: 'Pulse', rarity: 'rare' },
+  { id: 'neon', name: 'Neon', rarity: 'legendary' },
+  { id: 'prism', name: 'Prism', rarity: 'ultra' },
+];
+
+export const CHIP_IDS = CHIP_SKINS.map((c) => c.id);
+export const FREE_CHIP = 'pink';
+
+const CHIP_BY_ID = new Map(CHIP_SKINS.map((c) => [c.id, c]));
+
+export function chipById(id) {
+  return CHIP_BY_ID.get(id) || null;
+}
+
+/** A chip skin anyone may safely be handed, however odd the id that arrived. */
+export function safeChip(id) {
+  return CHIP_BY_ID.has(id) ? id : FREE_CHIP;
+}
+
+/** The paid chip skins, in catalogue order. */
+export function chipPackContents() {
+  return CHIP_SKINS.filter((c) => c.id !== FREE_CHIP);
+}
+
+/** Draw a chip skin you do not have, the way a themed pack does. */
+export function drawChip(owned, roll = Math.random()) {
+  const pool = chipPackContents().filter((c) => !owned.includes(c.id));
+  if (!pool.length) return null;
+  return pick(pool, roll);
+}
+
 export const DECK_IDS = DECKS.map((d) => d.id);
 
 export const FREE_DECK = 'classic';

@@ -7,7 +7,7 @@
  * you cash out.
  */
 
-import { DECK_IDS } from './decks.js?v=mvrkhs90';
+import { DECK_IDS, CHIP_IDS } from './decks.js?v=mvrkqt69';
 
 const KEY = 'pn.profile.v1';
 
@@ -33,6 +33,9 @@ const BLANK = {
   reloads: 0,
   // Card backs pulled out of packs. Classic is free and never listed.
   decks: [],
+  // Chip skins, in a list of their own so neither kind can shift the
+  // other's place in a backup code. Pink is free and never listed.
+  chipSkins: [],
   created: null,
 };
 
@@ -40,11 +43,13 @@ let cache = null;
 let remote = null;        // { uid, save(profile) } once signed in
 let storageKey = KEY;
 
-/** Keep only real designs, once each — storage and accounts can both lie. */
-function tidyDecks(list) {
+/** Keep only real ids, once each — storage and accounts can both lie. */
+function tidyIds(list, allowed) {
   if (!Array.isArray(list)) return [];
-  return [...new Set(list.filter((id) => DECK_IDS.includes(id)))];
+  return [...new Set(list.filter((id) => allowed.includes(id)))];
 }
+
+const tidyDecks = (list) => tidyIds(list, DECK_IDS);
 
 function readStored() {
   try {
@@ -55,6 +60,7 @@ function readStored() {
     // Storage is editable by hand; never trust what comes back out of it.
     profile.vault = Math.min(MAX_VAULT, Math.max(0, Math.floor(Number(profile.vault) || 0)));
     profile.decks = tidyDecks(profile.decks);
+    profile.chipSkins = tidyIds(profile.chipSkins, CHIP_IDS);
     return profile;
   } catch {
     return { ...BLANK, created: Date.now() };
@@ -142,6 +148,23 @@ export function decks() {
 
 export function ownsDeck(id) {
   return read().decks.includes(id);
+}
+
+/** Every chip skin you own, Pink aside — it is free and always yours. */
+export function chipSkins() {
+  return [...read().chipSkins];
+}
+
+export function ownsChip(id) {
+  return read().chipSkins.includes(id);
+}
+
+export function grantChip(id) {
+  if (!CHIP_IDS.includes(id) || ownsChip(id)) return false;
+  const p = read();
+  p.chipSkins = [...p.chipSkins, id];
+  write(p);
+  return true;
 }
 
 /**
@@ -308,8 +331,10 @@ const MAX_CODED_HANDS = 32 ** 3 - 1;
  * catalogue outgrew the first width when the ultra rares were added. Codes
  * written at the old width keep reading at the old width.
  */
-const DECK_FIELD = { C: 4, D: 5 };
-const DECK_VERSION = 'D';
+const DECK_FIELD = { C: 4, D: 5, E: 5 };
+// Only E carries chip skins; two characters is ten of them.
+const CHIP_FIELD = { E: 2 };
+const DECK_VERSION = 'E';
 
 /**
  * How many skins the current code width can carry. A skin past this point
@@ -318,27 +343,31 @@ const DECK_VERSION = 'D';
  */
 export const CODED_DECK_LIMIT = DECK_FIELD[DECK_VERSION] * 5;
 
-function encodeDecks(list) {
-  const width = DECK_FIELD[DECK_VERSION];
+/** The same, for chip skins. */
+export const CODED_CHIP_LIMIT = CHIP_FIELD[DECK_VERSION] * 5;
+
+function encodeBits(list, catalogue, width) {
   let bits = 0;
   for (const id of list) {
-    const i = DECK_IDS.indexOf(id);
+    const i = catalogue.indexOf(id);
     if (i >= 0 && i < width * 5) bits |= 1 << i;
   }
   return encode32(bits).padStart(width, '0');
 }
 
-function decodeDecks(text) {
+function decodeBits(text, catalogue) {
   const bits = decode32(text);
   if (bits === null) return null;
-  return DECK_IDS.filter((_id, i) => (bits >> i) & 1);
+  return catalogue.filter((_id, i) => (bits >> i) & 1);
 }
 
 export function backupCode() {
   const p = read();
   const chips = p.vault + (p.atTable ? p.atTable.amount : 0);
   const hands = encode32(Math.min(p.handsPlayed, MAX_CODED_HANDS)).padStart(3, '0');
-  const body = `${DECK_VERSION}${encode32(chips)}${hands}${encodeDecks(p.decks)}`;
+  const body = `${DECK_VERSION}${encode32(chips)}${hands}`
+    + encodeBits(p.decks, DECK_IDS, DECK_FIELD[DECK_VERSION])
+    + encodeBits(p.chipSkins, CHIP_IDS, CHIP_FIELD[DECK_VERSION]);
   const full = body + checkChars(body);
   // Grouped in fours, which is easier to read aloud and to type.
   return full.match(/.{1,4}/g).join('-');
@@ -352,17 +381,21 @@ export function restoreCode(code) {
   const body = clean.slice(0, -2);
   if (checkChars(body) !== clean.slice(-2)) return null;
 
-  // C and D carry the card backs as well as the chips and hands, differing
-  // only in how wide that field is; B carries chips and hands; anything else
-  // is an older chips-only code. All of them read back.
+  // E carries chip skins too, C and D the card backs, B the chips and hands
+  // alone, and anything else is an older chips-only code. The leading letter
+  // says which, and every one of them still reads back.
   let chips;
   let hands = null;
   let decksOwned = null;
-  const width = DECK_FIELD[body[0]];
-  if (width && body.length >= 2 + 3 + width) {
-    chips = decode32(body.slice(1, -(3 + width)));
-    hands = decode32(body.slice(-(3 + width), -width));
-    decksOwned = decodeDecks(body.slice(-width));
+  let chipsOwned = null;
+  const deckW = DECK_FIELD[body[0]] || 0;
+  const chipW = CHIP_FIELD[body[0]] || 0;
+  const tail = 3 + deckW + chipW;
+  if (deckW && body.length >= 2 + tail) {
+    chips = decode32(body.slice(1, -tail));
+    hands = decode32(body.slice(-tail, -(deckW + chipW)));
+    decksOwned = decodeBits(body.slice(-(deckW + chipW), chipW ? -chipW : undefined), DECK_IDS);
+    if (chipW) chipsOwned = decodeBits(body.slice(-chipW), CHIP_IDS);
   } else if (body[0] === 'B' && body.length >= 5) {
     chips = decode32(body.slice(1, -3));
     hands = decode32(body.slice(-3));
@@ -375,9 +408,10 @@ export function restoreCode(code) {
   p.vault = Math.min(MAX_VAULT, Math.max(0, Math.floor(chips)));
   p.atTable = null;
   if (hands !== null && Number.isFinite(hands)) p.handsPlayed = Math.max(0, hands);
-  // A code that predates card backs says nothing about them, so it leaves
-  // whatever this device already has rather than wiping the collection.
+  // A code that predates a collection says nothing about it, so it leaves
+  // whatever this device already has rather than wiping what is there.
   if (decksOwned) p.decks = tidyDecks([...p.decks, ...decksOwned]);
+  if (chipsOwned) p.chipSkins = tidyIds([...p.chipSkins, ...chipsOwned], CHIP_IDS);
   write(p);
   return p.vault;
 }
