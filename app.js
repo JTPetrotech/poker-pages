@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvrjawnn';
-import { TableHost } from './host.js?v=mvrjawnn';
-import * as vault from './vault.js?v=mvrjawnn';
-import * as friends from './friends.js?v=mvrjawnn';
-import * as packs from './decks.js?v=mvrjawnn';
-import * as cloud from './cloud.js?v=mvrjawnn';
-import { bestHand } from './engine/hand.js?v=mvrjawnn';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrjawnn';
+import { HostNet, GuestNet } from './net.js?v=mvrjmpz8';
+import { TableHost } from './host.js?v=mvrjmpz8';
+import * as vault from './vault.js?v=mvrjmpz8';
+import * as friends from './friends.js?v=mvrjmpz8';
+import * as packs from './decks.js?v=mvrjmpz8';
+import * as cloud from './cloud.js?v=mvrjmpz8';
+import { bestHand } from './engine/hand.js?v=mvrjmpz8';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrjmpz8';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 50;
+const BUILD = 51;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -433,18 +433,34 @@ function wearDeck(id) {
   if (app.code) send({ t: 'deck', deck: myDeck() });
 }
 
+/** True when there is nothing left for this pack to give you. */
+function packEmptyFor(pack, owned) {
+  return pack.gamble
+    ? packs.missing(owned).length === 0
+    : packs.packContents(pack.id).every((d) => owned.includes(d.id));
+}
+
 /**
- * Buy one pack. The chips leave the vault first and the design is drawn
+ * Buy one pack. The chips leave the vault first and the skin is drawn
  * second, so a draw can never happen without having been paid for.
  *
- * A pack never hands over something you already have, so every purchase is
- * a design you did not have before — and once a pack is complete it refuses
- * the sale instead of taking the chips for nothing.
+ * A themed pack never hands over something you already have, so every
+ * purchase is a skin you did not have before. All or Nothing is the
+ * exception and the whole point of it: half the time it gives nothing, and
+ * the dialog says so before you press the button.
+ *
+ * Either way, once a pack has nothing left to give it refuses the sale
+ * instead of taking the chips for nothing.
  */
-function buyPack(packId) {
+function buyPack(pack) {
   const owned = vault.decks();
-  if (packs.packContents(packId).every((d) => owned.includes(d.id))) {
-    return { ok: false, why: 'You already have every skin in this pack.' };
+  if (packEmptyFor(pack, owned)) {
+    return {
+      ok: false,
+      why: pack.gamble
+        ? 'You already have every skin in the game.'
+        : 'You already have every skin in this pack.',
+    };
   }
   if (vault.balance() < packs.PACK_PRICE) {
     return { ok: false, why: `A pack costs ${fmt(packs.PACK_PRICE)} chips and your vault has ${fmt(vault.balance())}.` };
@@ -452,9 +468,14 @@ function buyPack(packId) {
   if (!vault.spend(packs.PACK_PRICE)) {
     return { ok: false, why: 'Those chips are not in your vault any more.' };
   }
-  const pulled = packs.drawFromPack(packId, owned);
-  vault.grantDeck(pulled.id);
   paintVault();
+
+  const pulled = pack.gamble
+    ? packs.openGamble(owned)
+    : packs.drawFromPack(pack.id, owned);
+  if (!pulled) return { ok: true, pulled: null };   // the gamble lost
+
+  vault.grantDeck(pulled.id);
   return { ok: true, pulled };
 }
 
@@ -486,7 +507,11 @@ function paintDecks() {
   $('decksChips').textContent = fmt(vault.balance());
 
   const note = $('decksPull');
-  if (lastPull) {
+  note.classList.toggle('lost', lastPull === 'nothing');
+  if (lastPull === 'nothing') {
+    note.innerHTML = '<strong>Nothing.</strong> That is the deal — try again.';
+    show(note, true);
+  } else if (lastPull) {
     note.innerHTML = `You pulled <strong>${lastPull.name}</strong> `
       + `<span class="rarity ${lastPull.rarity}">${lastPull.rarity}</span>`;
     show(note, true);
@@ -509,35 +534,47 @@ function paintDecks() {
 
   for (const pack of packs.PACKS) {
     const contents = packs.packContents(pack.id);
-    const have = contents.filter((d) => owned.includes(d.id)).length;
-    const complete = have === contents.length;
+    const done = packEmptyFor(pack, owned);
 
     const row = document.createElement('div');
-    row.className = 'pack';
+    row.className = `pack${pack.gamble ? ' gamble' : ''}`;
 
     const head = document.createElement('div');
     head.className = 'pack-head';
-    head.innerHTML = `<div><strong>${pack.name}</strong> <span class="pack-count">`
-      + `${have} of ${contents.length}</span></div>`;
+    // A themed pack counts towards filling it. The gamble has nothing to
+    // fill, so it says what it is instead.
+    const count = pack.gamble
+      ? 'any skin, or nothing'
+      : `${contents.filter((d) => owned.includes(d.id)).length} of ${contents.length}`;
+    head.innerHTML = `<div><strong>${pack.name}</strong> `
+      + `<span class="pack-count">${count}</span></div>`;
 
     const buy = document.createElement('button');
     buy.className = 'pack-buy';
-    buy.textContent = complete ? 'Complete' : `Open — ${fmt(packs.PACK_PRICE)}`;
-    buy.disabled = complete;
+    buy.textContent = done ? 'Complete' : `Open — ${fmt(packs.PACK_PRICE)}`;
+    buy.disabled = done;
     buy.addEventListener('click', () => {
-      const result = buyPack(pack.id);
+      const result = buyPack(pack);
       if (!result.ok) {
         lastPull = null;
         toast(result.why);
         paintDecks();
         return;
       }
-      lastPull = result.pulled;
-      wearDeck(result.pulled.id);   // wear what you just pulled
+      // A lost gamble is a real outcome, not a failure: the banner says so.
+      lastPull = result.pulled || 'nothing';
+      if (result.pulled) wearDeck(result.pulled.id);   // wear what you pulled
       paintDecks();
     });
     head.appendChild(buy);
     row.appendChild(head);
+
+    if (pack.blurb && pack.gamble) {
+      const why = document.createElement('p');
+      why.className = 'pack-blurb';
+      why.textContent = pack.blurb;
+      row.appendChild(why);
+    }
 
     const tiles = document.createElement('div');
     tiles.className = 'decks';
@@ -1886,6 +1923,8 @@ function paintTableFacts() {
   note(`Skins opens your card skins. A pack costs ${fmt(packs.PACK_PRICE)} chips `
     + 'and always gives you one you do not already have. Everyone at the table '
     + 'sees the skin you are wearing.');
+  note('All or Nothing is the exception: half the time it gives nothing at '
+    + 'all, and the other half it can hand you anything in the game.');
   note('The gear opens Settings, for the background and the light or dark '
     + 'look. Those two are yours alone — nobody else sees them.');
   if (app.isHost) {

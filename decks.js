@@ -18,7 +18,18 @@ export const PACKS = [
   { id: 'car', name: 'Cars', blurb: 'Things that go.' },
   { id: 'food', name: 'Food', blurb: 'Worth the trip.' },
   { id: 'sport', name: 'Sport', blurb: 'Game day.' },
+  {
+    id: 'gamble',
+    name: 'All or Nothing',
+    blurb: 'A coin flip. Half the time the chips are simply gone; the rest of '
+      + 'the time it can hand you anything in the game, ultra rares included — '
+      + 'and Jackpot comes from nowhere else.',
+    gamble: true,
+  },
 ];
+
+/** How often All or Nothing pays out at all. The rest of the time: nothing. */
+export const GAMBLE_ODDS = 0.5;
 
 /**
  * Order matters: a design's position here is its bit in the backup code, so
@@ -53,6 +64,8 @@ export const DECKS = [
   { id: 'strip', name: 'Night Drive', pack: 'car', rarity: 'ultra' },
   { id: 'melon', name: 'Watermelon', pack: 'food', rarity: 'ultra' },
   { id: 'stadium', name: 'Floodlights', pack: 'sport', rarity: 'ultra' },
+
+  { id: 'jackpot', name: 'Jackpot', pack: 'gamble', rarity: 'ultra' },
 ];
 
 /** Shown on the tiles, brightest last. */
@@ -96,6 +109,11 @@ export function drawFromPack(packId, owned, roll = Math.random()) {
   const pool = packContents(packId).filter((d) => !owned.includes(d.id));
   if (!pool.length) return null;
 
+  return pick(pool, roll);
+}
+
+/** Weighted choice from a pool that is already known to be non-empty. */
+function pick(pool, roll) {
   const total = pool.reduce((sum, d) => sum + (WEIGHT[d.rarity] || 1), 0);
   let mark = Math.min(Math.max(roll, 0), 0.999999) * total;
   for (const d of pool) {
@@ -103,4 +121,27 @@ export function drawFromPack(packId, owned, roll = Math.random()) {
     if (mark < 0) return d;
   }
   return pool[pool.length - 1];
+}
+
+/** Everything still missing from a collection, Classic aside. */
+export function missing(owned) {
+  return DECKS.filter((d) => d.id !== FREE_DECK && !owned.includes(d.id));
+}
+
+/**
+ * Open All or Nothing.
+ *
+ * Half the time it gives nothing at all and the chips are gone — that is the
+ * deal, and the dialog says so before you press it. The other half it draws
+ * from the whole catalogue rather than one pack, so it is the only place an
+ * ultra rare can turn up without working through its pack first.
+ *
+ * Both rolls are passed in so the outcome can be tested exactly rather than
+ * hoped for.
+ */
+export function openGamble(owned, flip = Math.random(), roll = Math.random()) {
+  const pool = missing(owned);
+  if (!pool.length) return null;
+  if (flip >= GAMBLE_ODDS) return null;
+  return pick(pool, roll);
 }

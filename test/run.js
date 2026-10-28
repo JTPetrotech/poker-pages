@@ -1340,6 +1340,49 @@ test('a code written at the old width still reads', () => {
   eq(vault.decks()[0], packs.DECK_IDS[1], 'and the bit means the same design');
 });
 
+test('All or Nothing gives nothing about half the time', () => {
+  let nothing = 0;
+  for (let i = 0; i < 1000; i++) {
+    // Sweep the flip across its whole range; the draw roll is held still.
+    if (!packs.openGamble([], i / 1000, 0.5)) nothing++;
+  }
+  const share = nothing / 1000;
+  assert(Math.abs(share - packs.GAMBLE_ODDS) < 0.02, `gave nothing ${share} of the time`);
+});
+
+test('All or Nothing can reach any pack, including the ultra rares', () => {
+  const seen = new Set();
+  for (let i = 0; i < 4000; i++) {
+    const got = packs.openGamble([], 0, i / 4000);
+    if (got) seen.add(got.id);
+  }
+  for (const d of packs.DECKS) {
+    if (d.id === packs.FREE_DECK) continue;
+    assert(seen.has(d.id), `${d.id} is reachable`);
+  }
+});
+
+test('All or Nothing never hands back something you own', () => {
+  const owned = packs.DECKS.map((d) => d.id).filter((id) => id !== 'jackpot');
+  for (let i = 0; i < 200; i++) {
+    const got = packs.openGamble(owned, 0, i / 200);
+    if (got) eq(got.id, 'jackpot', 'only the one thing left');
+  }
+  // Owning everything leaves nothing to win, whatever the flip says.
+  const all = packs.DECKS.map((d) => d.id);
+  eq(packs.openGamble(all, 0, 0), null);
+  eq(packs.missing(all).length, 0);
+});
+
+test('Jackpot comes from the gamble and nowhere else', () => {
+  for (const pack of packs.PACKS) {
+    if (pack.gamble) continue;
+    const ids = packs.packContents(pack.id).map((d) => d.id);
+    assert(!ids.includes('jackpot'), `${pack.id} does not hold it`);
+  }
+  eq(packs.deckById('jackpot').pack, 'gamble');
+});
+
 // ------------------------------------------------------------------ report
 
 console.log('\n');

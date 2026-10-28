@@ -331,10 +331,73 @@ function stadium() {
   return c.bytes();
 }
 
+// ---------------------------------------------------------------- jackpot
+
+/** A gold coin under a spotlight: the one skin the gamble pack hands over. */
+function jackpot() {
+  const c = canvas();
+  const cx = W / 2;
+  const cy = H / 2;
+  const R = W * 0.33;
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const d = Math.hypot(x - cx, y - cy) / (H / 2);
+      c.set(x, y, mix(44, 8, d), mix(28, 5, d), mix(8, 14, d));
+    }
+  }
+
+  // Rays fanning out behind the coin.
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const theta = Math.atan2(y - cy, x - cx);
+      const r = Math.hypot(x - cx, y - cy);
+      if (r < R) continue;
+      const ray = Math.cos(theta * 8) ** 12;
+      c.blend(x, y, 255, 206, 108, ray * Math.max(0, 1 - r / (H * 0.55)) * 0.55);
+    }
+  }
+
+  // The coin: a bevelled rim, a flat face, and a highlight up and left.
+  for (let y = Math.floor(cy - R - 2); y < cy + R + 2; y++) {
+    for (let x = Math.floor(cx - R - 2); x < cx + R + 2; x++) {
+      if (x < 0 || y < 0 || x >= W || y >= H) continue;
+      const dx = x - cx;
+      const dy = y - cy;
+      const r = Math.hypot(dx, dy);
+      if (r > R) continue;
+      // Light from the upper left, so the coin reads as a solid disc.
+      const lit = (-dx - dy) / (R * 2) + 0.5;
+      let [cr, cg, cb] = [mix(176, 255, lit), mix(118, 232, lit), mix(30, 150, lit)];
+      if (r > R * 0.84) {
+        // The milled rim, notched all the way round.
+        const notch = Math.cos(Math.atan2(dy, dx) * 40) > 0 ? 1.12 : 0.82;
+        cr *= notch; cg *= notch; cb *= notch;
+      } else if (r > R * 0.74) {
+        [cr, cg, cb] = [cr * 0.74, cg * 0.74, cb * 0.72];   // the inner groove
+      }
+      c.blend(x, y, cr, cg, cb, 1);
+    }
+  }
+
+  // A four-pointed sparkle on the face, where a mint mark would sit.
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const dx = (x - cx) / (R * 0.52);
+      const dy = (y - cy) / (R * 0.52);
+      const star = 1 - (Math.abs(dx) ** 0.55 + Math.abs(dy) ** 0.55);
+      if (star > 0) c.blend(x, y, 255, 252, 232, Math.min(1, star * 2.4));
+    }
+  }
+
+  glow(c, Math.round(cx - R * 0.34), Math.round(cy - R * 0.34), R * 0.5, 255, 255, 240, 0.4);
+  return c.bytes();
+}
+
 // ------------------------------------------------------------------ write
 
 fs.mkdirSync(outDir, { recursive: true });
-const pictures = { galaxy, strip, melon, stadium };
+const pictures = { galaxy, strip, melon, stadium, jackpot };
 for (const [name, draw] of Object.entries(pictures)) {
   const file = path.join(outDir, `${name}.png`);
   fs.writeFileSync(file, png(W, H, draw()));
