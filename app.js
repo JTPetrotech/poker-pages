@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvrj5uct';
-import { TableHost } from './host.js?v=mvrj5uct';
-import * as vault from './vault.js?v=mvrj5uct';
-import * as friends from './friends.js?v=mvrj5uct';
-import * as packs from './decks.js?v=mvrj5uct';
-import * as cloud from './cloud.js?v=mvrj5uct';
-import { bestHand } from './engine/hand.js?v=mvrj5uct';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrj5uct';
+import { HostNet, GuestNet } from './net.js?v=mvrjawnn';
+import { TableHost } from './host.js?v=mvrjawnn';
+import * as vault from './vault.js?v=mvrjawnn';
+import * as friends from './friends.js?v=mvrjawnn';
+import * as packs from './decks.js?v=mvrjawnn';
+import * as cloud from './cloud.js?v=mvrjawnn';
+import { bestHand } from './engine/hand.js?v=mvrjawnn';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrjawnn';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 49;
+const BUILD = 50;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -413,10 +413,10 @@ function updateLook(patch) {
   scheduleSizeFelt();
 }
 
-// ------------------------------------------------------------ card backs
+// ------------------------------------------------------------ card skins
 
 /**
- * The card back you are using, which the other players see on your cards.
+ * The card skin you are using, which the other players see on your cards.
  *
  * Checked against what you actually own on the way out, so a design can never
  * be worn because the stored setting says so — buying it is the only way.
@@ -444,7 +444,7 @@ function wearDeck(id) {
 function buyPack(packId) {
   const owned = vault.decks();
   if (packs.packContents(packId).every((d) => owned.includes(d.id))) {
-    return { ok: false, why: 'You already have every card back in this pack.' };
+    return { ok: false, why: 'You already have every skin in this pack.' };
   }
   if (vault.balance() < packs.PACK_PRICE) {
     return { ok: false, why: `A pack costs ${fmt(packs.PACK_PRICE)} chips and your vault has ${fmt(vault.balance())}.` };
@@ -623,7 +623,7 @@ function initSettings() {
 }
 
 /**
- * Card backs used to be free, chosen by the name of their pack. They are
+ * Card skins used to be free, chosen by the name of their pack. They are
  * bought now, so anyone who had already picked one keeps that exact design
  * rather than losing it to the change.
  */
@@ -729,7 +729,7 @@ function adminMsg(text, good) {
 }
 
 /**
- * Every card back, as a tile you can hand yourself.
+ * Every card skin, as a tile you can hand yourself.
  *
  * Deliberately one at a time rather than an unlock-everything button: the
  * collection is the point of the packs, and emptying it in one click is a
@@ -1207,7 +1207,7 @@ function onMessage(msg) {
   switch (msg.t) {
     case 'joined': {
       app.config = msg.config;
-      // Reconnecting after changing your card back: the greeting does not
+      // Reconnecting after changing your skin: the greeting does not
       // carry it, so say it now rather than wearing the old one until you
       // next sit down.
       send({ t: 'deck', deck: myDeck() });
@@ -1883,9 +1883,9 @@ function paintTableFacts() {
 
   note('Tap the Vault chip to move chips between your vault and the table, '
     + 'either way. Tap another seat to send chips to that player.');
-  note(`Cards opens your card backs. A pack costs ${fmt(packs.PACK_PRICE)} chips `
+  note(`Skins opens your card skins. A pack costs ${fmt(packs.PACK_PRICE)} chips `
     + 'and always gives you one you do not already have. Everyone at the table '
-    + 'sees the back you are wearing.');
+    + 'sees the skin you are wearing.');
   note('The gear opens Settings, for the background and the light or dark '
     + 'look. Those two are yours alone — nobody else sees them.');
   if (app.isHost) {

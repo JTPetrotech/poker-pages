@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mvrj5uct" />
+<link rel="stylesheet" href="style.css?v=mvrjawnn" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
@@ -81,7 +81,7 @@
 <div id="lobby" class="lobby">
   <div class="corner-left">
     <button id="lobbyFriends" class="corner-pill" title="Friends">Friends</button>
-    <button id="lobbyDecks" class="corner-pill" title="Card backs">Cards</button>
+    <button id="lobbyDecks" class="corner-pill" title="Card skins">Skins</button>
   </div>
   <button id="lobbyGear" class="corner-gear" aria-label="Appearance" title="Appearance">&#9881;</button>
   <div class="lobby-card">
@@ -243,7 +243,7 @@
     <button id="panelToggle" class="ghost" aria-label="Toggle chat">Chat</button>
     <button id="adminBtn" class="ghost admin-btn" hidden>Admin</button>
     <button id="friendsBtn" class="ghost">Friends</button>
-    <button id="decksBtn" class="ghost">Cards</button>
+    <button id="decksBtn" class="ghost">Skins</button>
     <button id="settingsBtn" class="ghost gear" aria-label="Appearance">&#9881;</button>
   </header>
 
@@ -400,7 +400,7 @@
 <div id="decksModal" class="modal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="decksTitle">
     <button id="decksClose" class="modal-x" aria-label="Close">&times;</button>
-    <h2 id="decksTitle">Card backs</h2>
+    <h2 id="decksTitle">Card skins</h2>
     <p class="modal-sub">
       Vault: <strong id="decksChips">0</strong> chips.
       A pack costs 1,000 and always gives you one you don't have.
@@ -409,7 +409,7 @@
     <p id="decksPull" class="deck-pull" hidden></p>
     <div id="decksPicker"></div>
     <p class="rank-foot">
-      Everyone at the table sees the back you are wearing on your cards.
+      Everyone at the table sees the skin you are wearing on your cards.
     </p>
   </div>
 </div>
@@ -453,8 +453,8 @@
       <label for="customBg">Or pick any colour</label>
     </div>
 
-    <label class="field"><span>Card backs</span></label>
-    <p class="deck-note">Bought in packs, from the Cards button.</p>
+    <label class="field"><span>Card skins</span></label>
+    <p class="deck-note">Bought in packs, from the Skins button.</p>
 
     <div class="install">
       <label class="field"><span>Open on your phone</span></label>
@@ -499,7 +499,7 @@
       <button id="adminGrantGo" class="primary small" type="button">To vault</button>
     </div>
 
-    <label class="field admin-gap"><span>Give yourself card backs</span></label>
+    <label class="field admin-gap"><span>Give yourself skins</span></label>
     <div id="adminSkins" class="decks"></div>
 
     <label class="field admin-gap"><span>Take from a player</span></label>
@@ -585,6 +585,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvrj5uct"></script>
+<script type="module" src="app.js?v=mvrjawnn"></script>
 </body>
 </html>

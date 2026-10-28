@@ -1,5 +1,5 @@
 /**
- * The card back catalogue.
+ * The card skin catalogue.
  *
  * Classic is yours from the start. Everything else comes out of a pack bought
  * with chips, and the design you are using travels to the other players, so
