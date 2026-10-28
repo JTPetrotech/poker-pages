@@ -1268,6 +1268,16 @@ test('changing your card back mid-hand touches nothing else', () => {
   eq(t.seats[0].cards.join(' '), cards, 'and the hand is the same hand');
 });
 
+test('computer players do not copy a back already at the table', () => {
+  const t = new Table({ id: 'F', smallBlind: 5, bigBlind: 10, startingStack: 1000, maxSeats: 6 });
+  t.sit('me', 'Me', 0, { deck: 'rocket' });
+  // Stand in for the host's own bot seating, which is what picks the design.
+  const worn = new Set(t.players().map((p) => p.deck));
+  const free = packs.DECKS.filter((d) => !worn.has(d.id));
+  assert(!free.some((d) => d.id === 'rocket'), 'the one in use is off the list');
+  assert(free.length === packs.DECKS.length - 1, 'and only that one');
+});
+
 // ------------------------------------------------------------------ report
 
 console.log('\n');

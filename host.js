@@ -1,6 +1,6 @@
-import { Table } from './engine/game.js?v=mvrihxl5';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvrihxl5';
-import { safeDeck, DECKS } from './decks.js?v=mvrihxl5';
+import { Table } from './engine/game.js?v=mvriq2h2';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvriq2h2';
+import { safeDeck, DECKS } from './decks.js?v=mvriq2h2';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;
@@ -234,9 +234,14 @@ export class TableHost {
     const taken = new Set(table.players().map((p) => p.name));
     const name = BOT_NAMES.find((n) => !taken.has(n)) || `Bot${++this.botSeq}`;
     const id = `bot:${seat}:${++this.botSeq}`;
-    // Give each computer player a card back of its own, so a table full of
-    // them does not look like one person playing every seat.
-    const deck = DECKS[(seat * 3 + this.botSeq) % DECKS.length].id;
+    // Give each computer player a card back nobody at the table is already
+    // using, so you can tell whose cards are whose at a glance. Once the
+    // catalogue runs out they start repeating, which only happens at a table
+    // fuller than the game allows.
+    const worn = new Set(table.players().map((p) => p.deck));
+    const free = DECKS.filter((d) => !worn.has(d.id));
+    const pool = free.length ? free : DECKS;
+    const deck = pool[(seat * 3 + this.botSeq) % pool.length].id;
     table.sit(id, name, seat, {
       bot: true, botStyle: style, buyIn: table.startingStack, deck,
     });
