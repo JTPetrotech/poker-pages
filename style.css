@@ -1800,11 +1800,15 @@ kbd {
 
 /* ---------------------------------------------------------------- friends */
 
-.corner-friends {
+.corner-left {
   position: absolute;
   top: max(14px, env(safe-area-inset-top, 0px));
   left: 14px;
   z-index: 5;
+  display: flex;
+  gap: 8px;
+}
+.corner-pill {
   padding: 9px 14px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.92);
@@ -1813,7 +1817,7 @@ kbd {
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.22);
   font-size: 13px;
 }
-.corner-friends:hover { background: #fff; }
+.corner-pill:hover { background: #fff; }
 
 .friend-list { display: flex; flex-direction: column; gap: 7px; }
 

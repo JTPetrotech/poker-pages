@@ -1,10 +1,10 @@
-import { HostNet, GuestNet } from './net.js?v=mvrhvvsl';
-import { TableHost } from './host.js?v=mvrhvvsl';
-import * as vault from './vault.js?v=mvrhvvsl';
-import * as friends from './friends.js?v=mvrhvvsl';
-import * as cloud from './cloud.js?v=mvrhvvsl';
-import { bestHand } from './engine/hand.js?v=mvrhvvsl';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrhvvsl';
+import { HostNet, GuestNet } from './net.js?v=mvri0yrc';
+import { TableHost } from './host.js?v=mvri0yrc';
+import * as vault from './vault.js?v=mvri0yrc';
+import * as friends from './friends.js?v=mvri0yrc';
+import * as cloud from './cloud.js?v=mvri0yrc';
+import { bestHand } from './engine/hand.js?v=mvri0yrc';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvri0yrc';
 
 const $ = (id) => document.getElementById(id);
 
@@ -22,7 +22,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 46;
+const BUILD = 47;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -434,6 +434,31 @@ function updateLook(patch) {
   scheduleSizeFelt();
 }
 
+/**
+ * Fill a container with one tile per pack. The same tiles appear in Settings
+ * and behind the Cards button, and `paintSettings` marks whichever is chosen
+ * across every copy, so the two pickers can never disagree.
+ */
+function buildDeckTiles(host) {
+  for (const d of DECKS) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    // The pack's own class paints the preview, so each tile shows its real
+    // back rather than a picture of one.
+    b.className = `deck-opt deck-${d.id}`;
+    b.dataset.deck = d.id;
+    b.title = d.name;
+    b.innerHTML = `<span class="card back small"></span><span>${d.name}</span>`;
+    b.addEventListener('click', () => updateLook({ deck: d.id }));
+    host.appendChild(b);
+  }
+}
+
+function openDecks() {
+  paintSettings();
+  show($('decksModal'), true);
+}
+
 function initSettings() {
   const host = $('swatches');
   for (const bg of BACKGROUNDS) {
@@ -448,19 +473,8 @@ function initSettings() {
     host.appendChild(b);
   }
 
-  const deckHost = $('decks');
-  for (const d of DECKS) {
-    const b = document.createElement('button');
-    b.type = 'button';
-    // The pack's own class paints the preview, so each tile shows its real
-    // back rather than a picture of one.
-    b.className = `deck-opt deck-${d.id}`;
-    b.dataset.deck = d.id;
-    b.title = d.name;
-    b.innerHTML = `<span class="card back small"></span><span>${d.name}</span>`;
-    b.addEventListener('click', () => updateLook({ deck: d.id }));
-    deckHost.appendChild(b);
-  }
+  buildDeckTiles($('decks'));
+  buildDeckTiles($('decksPicker'));
 
   const photo = document.createElement('button');
   photo.type = 'button';
@@ -503,6 +517,13 @@ function initSettings() {
   $('settingsClose').addEventListener('click', () => show($('settingsModal'), false));
   $('settingsModal').addEventListener('click', (e) => {
     if (e.target === $('settingsModal')) show($('settingsModal'), false);
+  });
+
+  $('decksBtn').addEventListener('click', openDecks);
+  $('lobbyDecks').addEventListener('click', openDecks);
+  $('decksClose').addEventListener('click', () => show($('decksModal'), false));
+  $('decksModal').addEventListener('click', (e) => {
+    if (e.target === $('decksModal')) show($('decksModal'), false);
   });
 
   applyLook(readLook());
@@ -668,8 +689,6 @@ function initAdmin() {
   $('adminClose').addEventListener('click', () => show($('adminModal'), false));
   $('adminModal').addEventListener('click', (e) => {
     if (e.target === $('adminModal')) show($('adminModal'), false);
-show($('shareModal'), false);
-show($('friendsModal'), false);
   });
 
   $('adminGrantGo').addEventListener('click', () => {
@@ -1342,7 +1361,8 @@ function initVaultUi() {
   });
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
-    if (!$('friendsModal').hidden) show($('friendsModal'), false);
+    if (!$('decksModal').hidden) show($('decksModal'), false);
+    else if (!$('friendsModal').hidden) show($('friendsModal'), false);
     else if (!$('adminModal').hidden) show($('adminModal'), false);
     else if (!$('settingsModal').hidden) show($('settingsModal'), false);
     else if (!$('helpModal').hidden) show($('helpModal'), false);

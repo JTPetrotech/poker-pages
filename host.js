@@ -1,5 +1,5 @@
-import { Table } from './engine/game.js?v=mvrhvvsl';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvrhvvsl';
+import { Table } from './engine/game.js?v=mvri0yrc';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvri0yrc';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;
