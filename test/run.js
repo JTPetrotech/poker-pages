@@ -1372,7 +1372,7 @@ test('Limited repeats what you already own, by design', () => {
 
 test('Bad is the common one and the other two are not', () => {
   eq(packs.deckById('bad').rarity, 'common');
-  eq(packs.deckById('milk').rarity, 'ultra');
+  eq(packs.deckById('milk').rarity, 'milk', 'Milk has a tier of its own now');
   eq(packs.deckById('supra').rarity, 'ultra');
   eq(packs.deckById('bad').pack, 'limited');
 });
@@ -1552,6 +1552,54 @@ test('a claim-only skin is in no pack at any price', () => {
 
 test('a pack costs five thousand', () => {
   eq(packs.PACK_PRICE, 5000);
+});
+
+test('everyone at the table is told which chip you wear', () => {
+  const t = new Table({ id: 'G', smallBlind: 5, bigBlind: 10, startingStack: 1000 });
+  t.sit('a', 'Ann', 0, { chip: 'galaxy' });
+  t.sit('b', 'Bob', 1, {});
+  eq(t.snapshot('b').seats[0].chip, 'galaxy', 'Bob sees what Ann is wearing');
+  eq(t.snapshot('a').seats[1].chip, 'pink', 'and the default when none was sent');
+
+  assert(t.setChip('a', 'melon'), 'changed');
+  eq(t.snapshot('b').seats[0].chip, 'melon', 'a change reaches the table');
+  eq(t.setChip('nobody', 'melon'), false);
+});
+
+test('a card skin and a chip skin travel independently', () => {
+  const t = new Table({ id: 'H', smallBlind: 5, bigBlind: 10, startingStack: 1000 });
+  t.sit('a', 'Ann', 0, { deck: 'rocket', chip: 'prism' });
+  const seen = t.snapshot('b').seats[0];
+  eq(seen.deck, 'rocket');
+  eq(seen.chip, 'prism');
+  t.setChip('a', 'milk');
+  eq(t.snapshot('b').seats[0].deck, 'rocket', 'the card skin did not move');
+  eq(t.snapshot('b').seats[0].chip, 'milk');
+});
+
+test('Milk is a rarity of its own, above ultra, and is never sold', () => {
+  assert(packs.RARITIES.includes('milk'), 'the tier exists');
+  eq(packs.RARITIES[packs.RARITIES.length - 1], 'milk', 'and it is the top one');
+  eq(packs.chipById('milk').rarity, 'milk');
+  eq(packs.deckById('milk').rarity, 'milk');
+  const sold = packs.chipPackContents().map((c) => c.id);
+  assert(!sold.includes('milk'), 'the chip pack does not sell it');
+});
+
+test('the claim list says which skins cost nothing', () => {
+  const freeDecks = packs.claimable('decks');
+  const freeChips = packs.claimable('chips');
+  assert(freeDecks.has('milk'), 'the Milk card is free');
+  assert(freeChips.has('milk'), 'the Milk chip is free');
+  assert(!freeChips.has('prism'), 'a pack skin is not');
+});
+
+test('the new chip skins are real and distinct', () => {
+  for (const id of ['bucket', 'melon', 'galaxy', 'milk']) {
+    assert(packs.chipById(id), `${id} exists`);
+    eq(packs.safeChip(id), id, `${id} survives validation`);
+  }
+  eq(new Set(packs.CHIP_IDS).size, packs.CHIP_IDS.length, 'no duplicate ids');
 });
 
 // ------------------------------------------------------------------ report

@@ -73,12 +73,12 @@ export const DECKS = [
   // Limited draws on stated odds rather than on what you are missing, so
   // these three carry their own chances and they must add up to one.
   { id: 'bad', name: 'Bad', pack: 'limited', rarity: 'common', odds: 0.98 },
-  { id: 'milk', name: 'Milk', pack: 'limited', rarity: 'ultra', odds: 0.01 },
+  { id: 'milk', name: 'Milk', pack: 'limited', rarity: 'milk', odds: 0.01 },
   { id: 'supra', name: 'Supra MK4', pack: 'limited', rarity: 'ultra', odds: 0.01 },
 ];
 
-/** Shown on the tiles, brightest last. */
-export const RARITIES = ['common', 'rare', 'legendary', 'ultra'];
+/** Shown on the tiles, rarest last. Milk is above ultra and is not sold. */
+export const RARITIES = ['common', 'rare', 'legendary', 'ultra', 'milk'];
 
 /**
  * Chip skins: what the chips themselves look like, as opposed to the card
@@ -102,8 +102,11 @@ export const CHIP_SKINS = [
   { id: 'pulse', name: 'Pulse', rarity: 'rare' },
   { id: 'neon', name: 'Neon', rarity: 'legendary' },
   { id: 'prism', name: 'Prism', rarity: 'ultra' },
+  { id: 'bucket', name: 'Bucket', rarity: 'common' },
+  { id: 'melon', name: 'Watermelon', rarity: 'rare' },
+  { id: 'galaxy', name: 'Galaxy', rarity: 'ultra' },
   // Not in the pack at any price: the only way to it is the Milk code.
-  { id: 'milk', name: 'Milk', rarity: 'ultra', claim: true },
+  { id: 'milk', name: 'Milk', rarity: 'milk', claim: true },
 ];
 
 /**
@@ -144,6 +147,15 @@ export function drawChip(owned, roll = Math.random()) {
   return pick(pool, roll);
 }
 
+/** Every skin a claim code gives away, so a tile can say it costs nothing. */
+export function claimable(kind) {
+  const out = new Set();
+  for (const claim of Object.values(CLAIMS)) {
+    for (const id of claim[kind]) out.add(id);
+  }
+  return out;
+}
+
 export const DECK_IDS = DECKS.map((d) => d.id);
 
 export const FREE_DECK = 'classic';
@@ -171,7 +183,9 @@ export function safeDeck(id) {
  * Skewed hard towards the commons, so the ultra rare is now almost always
  * the last thing a pack gives up instead of a lucky second open.
  */
-const WEIGHT = { common: 40, rare: 10, legendary: 3, ultra: 1 };
+// Milk is never drawn from a pack, but a weight keeps the sums honest if
+// one ever ends up in a pool by mistake.
+const WEIGHT = { common: 40, rare: 10, legendary: 3, ultra: 1, milk: 1 };
 
 /**
  * Pull one design out of a pack.

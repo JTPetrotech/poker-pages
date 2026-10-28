@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvrkypu2';
-import { TableHost } from './host.js?v=mvrkypu2';
-import * as vault from './vault.js?v=mvrkypu2';
-import * as friends from './friends.js?v=mvrkypu2';
-import * as packs from './decks.js?v=mvrkypu2';
-import * as cloud from './cloud.js?v=mvrkypu2';
-import { bestHand } from './engine/hand.js?v=mvrkypu2';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrkypu2';
+import { HostNet, GuestNet } from './net.js?v=mvrl9146';
+import { TableHost } from './host.js?v=mvrl9146';
+import * as vault from './vault.js?v=mvrl9146';
+import * as friends from './friends.js?v=mvrl9146';
+import * as packs from './decks.js?v=mvrl9146';
+import * as cloud from './cloud.js?v=mvrl9146';
+import { bestHand } from './engine/hand.js?v=mvrl9146';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrl9146';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 55;
+const BUILD = 56;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -466,9 +466,10 @@ function myDeck() {
 }
 
 /**
- * The chip skin you are using. Unlike a card skin this one is yours alone:
- * the pot belongs to the table rather than to any player, so there is no
- * sensible owner to take it from.
+ * The chip skin you are using, which the other players see on your bets.
+ *
+ * Checked against what you own on the way out, the same as a card skin, so
+ * one can never be worn just because the stored setting says so.
  */
 function myChip() {
   const chosen = readLook().chip;
@@ -485,12 +486,20 @@ function applyChip() {
 function wearChip(id) {
   updateLook({ chip: id });
   applyChip();
+  if (app.code) send({ t: 'chip', chip: myChip() });
 }
 
-/** A chip, for a bet pill or the pot. */
-function tokenEl(big) {
+/**
+ * A chip, for a bet pill or the pot.
+ *
+ * Given a skin it carries that skin's own class, so a bet shows the chip of
+ * whoever made it. The pot takes none, because it belongs to the table and
+ * falls back to your own.
+ */
+function tokenEl(big, chip) {
   const t = document.createElement('span');
-  t.className = `token${big ? ' big' : ''}`;
+  t.className = `token${big ? ' big' : ''}`
+    + (chip ? ` chipskin-${packs.safeChip(chip)}` : '');
   t.setAttribute('aria-hidden', 'true');
   return t;
 }
@@ -570,7 +579,10 @@ function chipTile(c, ownedList) {
   b.className = `deck-opt chipskin-${c.id} rar-${c.rarity}${owned ? '' : ' locked'}`;
   b.classList.toggle('active', owned && c.id === myChip());
   b.title = owned ? `${c.name} — ${c.rarity}` : `${c.rarity}, not yours yet`;
-  b.innerHTML = `<span class="token big"></span><span>${owned ? c.name : '???'}</span>`;
+  const free = packs.claimable('chips').has(c.id);
+  b.innerHTML = `<span class="token big"></span>`
+    + `<span>${owned || free ? c.name : '???'}`
+    + `${free ? '<span class="free-tag">free</span>' : ''}</span>`;
   if (owned) b.addEventListener('click', () => { wearChip(c.id); paintChipShop(); });
   return b;
 }
@@ -636,6 +648,11 @@ function paintChipShop() {
   tiles.className = 'decks';
   tiles.appendChild(chipTile(packs.chipById(packs.FREE_CHIP), owned));
   for (const c of contents) tiles.appendChild(chipTile(c, owned));
+  // The claim-only ones sit at the end: no pack sells them, so they are not
+  // part of the count above.
+  for (const c of packs.CHIP_SKINS) {
+    if (c.claim) tiles.appendChild(chipTile(c, owned));
+  }
   row.appendChild(tiles);
 
   host.appendChild(row);
@@ -655,8 +672,9 @@ function deckTile(d, ownedList) {
   // Where a pack advertises its odds, every tile shows its own share, so the
   // 98 and the two 1s are on screen next to the thing they apply to.
   const chance = d.odds ? `<span class="odds">${Math.round(d.odds * 100)}%</span>` : '';
+  const free = packs.claimable('decks').has(d.id) ? '<span class="free-tag">free</span>' : '';
   b.innerHTML = `<span class="card back small"></span>`
-    + `<span>${owned || d.odds ? d.name : '???'}${chance}</span>`;
+    + `<span>${owned || d.odds ? d.name : '???'}${chance}${free}</span>`;
   if (owned) b.addEventListener('click', () => { wearDeck(d.id); paintDecks(); });
   return b;
 }
@@ -1458,7 +1476,7 @@ async function playSolo() {
   app.pendingBuyIn = buyIn;
   vault.setAtTable(app.code, buyIn);
   paintVault();
-  send({ t: 'sit', seat: 0, name: app.name, buyIn, deck: myDeck() });
+  send({ t: 'sit', seat: 0, name: app.name, buyIn, deck: myDeck(), chip: myChip() });
 
   SOLO_OPPONENTS.forEach((style, i) => send({ t: 'addbot', seat: i + 1, style }));
 }
@@ -1504,6 +1522,7 @@ function onMessage(msg) {
       // carry it, so say it now rather than wearing the old one until you
       // next sit down.
       send({ t: 'deck', deck: myDeck() });
+      send({ t: 'chip', chip: myChip() });
       enterGame();
       break;
     }
@@ -1865,7 +1884,7 @@ function initVaultUi() {
     app.pendingBuyIn = taken;
     vault.setAtTable(app.code, taken);
     paintVault();
-    send({ t: 'sit', seat, name: app.name, buyIn: taken, deck: myDeck() });
+    send({ t: 'sit', seat, name: app.name, buyIn: taken, deck: myDeck(), chip: myChip() });
     closeSeatDialog();
   });
 
@@ -2697,7 +2716,7 @@ function renderSeats(state) {
     if (p.bet > 0) {
       const pill = document.createElement('div');
       pill.className = 'bet-pill';
-      pill.append(tokenEl(), fmt(p.bet));
+      pill.append(tokenEl(false, p.chip), fmt(p.bet));
       el.appendChild(pill);
     }
 

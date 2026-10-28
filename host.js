@@ -1,6 +1,6 @@
-import { Table } from './engine/game.js?v=mvrkypu2';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvrkypu2';
-import { safeDeck, DECKS } from './decks.js?v=mvrkypu2';
+import { Table } from './engine/game.js?v=mvrl9146';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvrl9146';
+import { safeDeck, safeChip, DECKS, CHIP_SKINS } from './decks.js?v=mvrl9146';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;
@@ -133,6 +133,7 @@ export class TableHost {
         table.sit(token, cleanName(msg.name), clampInt(msg.seat, 0, table.maxSeats - 1, 0), {
           buyIn: Number(msg.buyIn) || table.startingStack,
           deck: safeDeck(msg.deck),
+          chip: safeChip(msg.chip),
         });
         this.#scheduleStart(IDLE_START_DELAY_MS);
         break;
@@ -141,6 +142,9 @@ export class TableHost {
       // passed along.
       case 'deck':
         table.setDeck(token, safeDeck(msg.deck));
+        break;
+      case 'chip':
+        table.setChip(token, safeChip(msg.chip));
         break;
       case 'stand': {
         // Tell them what they're walking away with, so it reaches their vault.
@@ -242,8 +246,9 @@ export class TableHost {
     const free = DECKS.filter((d) => !worn.has(d.id));
     const pool = free.length ? free : DECKS;
     const deck = pool[(seat * 3 + this.botSeq) % pool.length].id;
+    const chip = CHIP_SKINS[(seat * 2 + this.botSeq) % CHIP_SKINS.length].id;
     table.sit(id, name, seat, {
-      bot: true, botStyle: style, buyIn: table.startingStack, deck,
+      bot: true, botStyle: style, buyIn: table.startingStack, deck, chip,
     });
   }
 

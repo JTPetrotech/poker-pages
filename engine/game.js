@@ -1,5 +1,5 @@
-import { makeDeck, shuffle } from './cards.js?v=mvrkypu2';
-import { bestHand, compareScores } from './hand.js?v=mvrkypu2';
+import { makeDeck, shuffle } from './cards.js?v=mvrl9146';
+import { bestHand, compareScores } from './hand.js?v=mvrl9146';
 
 export const STAGES = ['idle', 'preflop', 'flop', 'turn', 'river', 'showdown', 'handover'];
 
@@ -83,9 +83,10 @@ export class Table {
       seat,
       bot: !!opts.bot,
       botStyle: opts.botStyle || null,
-      // The card back the other players see on this player's cards. The host
-      // checks it against the catalogue before it reaches here.
+      // The card back and the chip the other players see for this player.
+      // The host checks both against the catalogue before they reach here.
       deck: opts.deck || 'classic',
+      chip: opts.chip || 'pink',
       chips: buyIn,
       cards: [],
       bet: 0,
@@ -116,6 +117,14 @@ export class Table {
     const p = this.playerById(id);
     if (!p) return false;
     p.deck = deck;
+    return true;
+  }
+
+  /** The same for the chip others see on this player's bets. */
+  setChip(id, chip) {
+    const p = this.playerById(id);
+    if (!p) return false;
+    p.chip = chip;
     return true;
   }
 
@@ -861,6 +870,7 @@ export class Table {
           sitOut: p.sitOut,
           bot: !!p.bot,
           deck: p.deck || 'classic',
+          chip: p.chip || 'pink',
           disconnected: p.disconnected,
           lastAction: p.lastAction,
           handsPlayed: p.handsPlayed,
