@@ -1583,22 +1583,29 @@ test('a card skin and a chip skin travel independently', () => {
 test('Milk is a rarity of its own, above ultra, and is never sold', () => {
   assert(packs.RARITIES.includes('milk'), 'the tier exists');
   eq(packs.RARITIES[packs.RARITIES.length - 1], 'milk', 'and it is the top one');
-  eq(packs.chipById('milk').rarity, 'milk');
   eq(packs.deckById('milk').rarity, 'milk');
-  const sold = packs.chipPackContents().map((c) => c.id);
-  assert(!sold.includes('milk'), 'the chip pack does not sell it');
+  // One skin carries it, and it is a card skin.
+  eq(packs.DECKS.filter((d) => d.rarity === 'milk').length, 1);
+  eq(packs.CHIP_SKINS.filter((c) => c.rarity === 'milk').length, 0);
+});
+
+test('there is no Milk chip, and the code is about cards alone', () => {
+  eq(packs.chipById('milk'), null, 'no such chip skin');
+  assert(!packs.CHIP_IDS.includes('milk'), 'and it is not in the catalogue');
+  eq(packs.claimable('chips').size, 0, 'no claim gives a chip away');
+  const claim = packs.findClaim('MILK-714');
+  eq(claim.chips.length, 0, 'the Milk code carries no chip');
+  eq(claim.decks.join(), 'milk', 'just the card skin');
 });
 
 test('the claim list says which skins cost nothing', () => {
   const freeDecks = packs.claimable('decks');
-  const freeChips = packs.claimable('chips');
   assert(freeDecks.has('milk'), 'the Milk card is free');
-  assert(freeChips.has('milk'), 'the Milk chip is free');
-  assert(!freeChips.has('prism'), 'a pack skin is not');
+  assert(!freeDecks.has('rocket'), 'a pack skin is not');
 });
 
 test('the new chip skins are real and distinct', () => {
-  for (const id of ['bucket', 'melon', 'galaxy', 'milk']) {
+  for (const id of ['bucket', 'melon', 'galaxy', 'eight']) {
     assert(packs.chipById(id), `${id} exists`);
     eq(packs.safeChip(id), id, `${id} survives validation`);
   }

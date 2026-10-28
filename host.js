@@ -1,6 +1,6 @@
-import { Table } from './engine/game.js?v=mvrlloys';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvrlloys';
-import { safeDeck, safeChip, DECKS, CHIP_SKINS } from './decks.js?v=mvrlloys';
+import { Table } from './engine/game.js?v=mvrlrtp9';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvrlrtp9';
+import { safeDeck, safeChip, DECKS, CHIP_SKINS } from './decks.js?v=mvrlrtp9';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;

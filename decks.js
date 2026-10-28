@@ -112,8 +112,6 @@ export const CHIP_SKINS = [
   { id: 'lava', name: 'Lava', rarity: 'legendary' },
   { id: 'galaxy', name: 'Galaxy', rarity: 'ultra' },
   { id: 'eight', name: 'Eight Ball', rarity: 'ultra' },
-  // Not in the pack at any price: the only way to it is the Milk code.
-  { id: 'milk', name: 'Milk', rarity: 'milk', claim: true },
 ];
 
 /**
@@ -121,10 +119,12 @@ export const CHIP_SKINS = [
  * marked `claim`, so these skins sit outside the shop entirely.
  */
 export const CLAIMS = {
+  // Card skins only. There is no Milk chip: the code and the chip shop are
+  // separate things, and this one is about the cards.
   'MILK-714': {
-    name: 'the Milk set',
+    name: 'the Milk card skin',
     decks: ['milk'],
-    chips: ['milk'],
+    chips: [],
   },
 };
 
