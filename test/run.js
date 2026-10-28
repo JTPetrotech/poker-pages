@@ -1304,7 +1304,7 @@ test('an ultra rare tends to come last out of its pack', () => {
     counts[first.rarity] = (counts[first.rarity] || 0) + 1;
   }
   assert(counts.ultra > 0, 'but it is still reachable');
-  assert(counts.ultra < counts.common / 4, `ultra ${counts.ultra} vs common ${counts.common}`);
+  assert(counts.ultra < counts.common / 20, `ultra ${counts.ultra} vs common ${counts.common}`);
 });
 
 test('a backup code carries an ultra rare, which did not fit the old width', () => {
@@ -1520,6 +1520,38 @@ test('both collections still fit the backup code', () => {
     `${packs.DECK_IDS.length} card skins, room for ${vault.CODED_DECK_LIMIT}`);
   assert(packs.CHIP_IDS.length <= vault.CODED_CHIP_LIMIT,
     `${packs.CHIP_IDS.length} chip skins, room for ${vault.CODED_CHIP_LIMIT}`);
+});
+
+// ------------------------------------------------------------------ claim codes
+
+test('a claim code names skins that actually exist', () => {
+  for (const [code, claim] of Object.entries(packs.CLAIMS)) {
+    assert(claim.name, `${code} says what it gives`);
+    for (const id of claim.decks) assert(packs.deckById(id), `${code}: card ${id}`);
+    for (const id of claim.chips) assert(packs.chipById(id), `${code}: chip ${id}`);
+  }
+});
+
+test('a claim-only skin is in no pack at any price', () => {
+  const sold = packs.chipPackContents().map((c) => c.id);
+  for (const claim of Object.values(packs.CLAIMS)) {
+    for (const id of claim.chips) {
+      assert(!sold.includes(id), `${id} is not sold`);
+      eq(packs.chipById(id).claim, true, `${id} is marked claim-only`);
+    }
+  }
+  // Drawing the whole pack must never turn one up either.
+  const owned = [];
+  for (;;) {
+    const got = packs.drawChip(owned, Math.random());
+    if (!got) break;
+    assert(!got.claim, `the pack gave up ${got.id}`);
+    owned.push(got.id);
+  }
+});
+
+test('a pack costs five thousand', () => {
+  eq(packs.PACK_PRICE, 5000);
 });
 
 // ------------------------------------------------------------------ report

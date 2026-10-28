@@ -2268,3 +2268,13 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   .token::before { animation: none !important; }
 }
+
+/* Milk: the chip that comes with the Milk code, and nowhere else. */
+.chipskin-milk {
+  --tok-bg: radial-gradient(circle at 36% 28%, #ffffff, #e4e9f2 70%, #c3ccdb 100%);
+  --tok-edge: #8fa0bb;
+  --tok-glow: 0 0 6px rgba(255, 255, 255, 0.65);
+  --tok-face: conic-gradient(from 0deg, rgba(255,255,255,0) 0 55%, rgba(176,192,216,0.65) 72%, rgba(255,255,255,0) 85%);
+  --tok-inset: 1px;
+  --tok-spin: tok-spin 5s linear infinite;
+}

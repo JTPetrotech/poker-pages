@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvrksi7q';
-import { TableHost } from './host.js?v=mvrksi7q';
-import * as vault from './vault.js?v=mvrksi7q';
-import * as friends from './friends.js?v=mvrksi7q';
-import * as packs from './decks.js?v=mvrksi7q';
-import * as cloud from './cloud.js?v=mvrksi7q';
-import { bestHand } from './engine/hand.js?v=mvrksi7q';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrksi7q';
+import { HostNet, GuestNet } from './net.js?v=mvrkypu2';
+import { TableHost } from './host.js?v=mvrkypu2';
+import * as vault from './vault.js?v=mvrkypu2';
+import * as friends from './friends.js?v=mvrkypu2';
+import * as packs from './decks.js?v=mvrkypu2';
+import * as cloud from './cloud.js?v=mvrkypu2';
+import { bestHand } from './engine/hand.js?v=mvrkypu2';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrkypu2';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 54;
+const BUILD = 55;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -117,6 +117,44 @@ const app = {
 function codeFromUrl() {
   const m = location.hash.match(/^#([A-Za-z0-9]{1,8})$/);
   return m ? m[1].toUpperCase() : '';
+}
+
+const CLAIM_PREFIX = '#claim=';
+
+function claimLink(code) {
+  return `${location.origin}${location.pathname}${CLAIM_PREFIX}${code}`;
+}
+
+/**
+ * Redeem a claim code carried in the address — what the QR actually opens.
+ *
+ * The code is cleared from the address straight away, so a refresh is not a
+ * second redemption and a shared screenshot of the tab does not leak it. A
+ * claim code is a gift, not a secret: redeeming twice simply says you have
+ * it already.
+ */
+function redeemFromUrl() {
+  if (!location.hash.startsWith(CLAIM_PREFIX)) return;
+  const code = decodeURIComponent(location.hash.slice(CLAIM_PREFIX.length)).toUpperCase();
+  history.replaceState(null, '', location.pathname + location.search);
+
+  const claim = packs.CLAIMS[code];
+  if (!claim) {
+    toast('That is not a code we know.');
+    return;
+  }
+
+  let fresh = 0;
+  for (const id of claim.decks) if (vault.grantDeck(id)) fresh++;
+  for (const id of claim.chips) if (vault.grantChip(id)) fresh++;
+  if (!fresh) {
+    toast(`You already have ${claim.name}.`);
+    return;
+  }
+  // Put it on straight away, so it is obvious something arrived.
+  if (claim.decks.length) wearDeck(claim.decks[0]);
+  if (claim.chips.length) wearChip(claim.chips[0]);
+  toast(`Unlocked ${claim.name}.`);
 }
 
 function inviteLink() {
@@ -1053,11 +1091,15 @@ function paintAdminList() {
   }
 }
 
+const MILK_CODE = 'MILK-714';
+
 function openAdmin() {
   if (!isAdmin()) return;
   adminMsg('');
   paintAdminList();
   paintAdminSkins();
+  $('milkLink').value = claimLink(MILK_CODE);
+  drawQr($('milkQr'), claimLink(MILK_CODE));
   show($('adminModal'), true);
 }
 
@@ -1076,6 +1118,17 @@ function initAdmin() {
     paintVault();
     $('adminGrant').value = '';
     adminMsg(`Added ${fmt(n)} to your vault, now ${fmt(vault.balance())}.`, true);
+  });
+
+  $('milkCopy').addEventListener('click', async () => {
+    const link = claimLink(MILK_CODE);
+    try {
+      await navigator.clipboard.writeText(link);
+      adminMsg('Milk link copied.', true);
+    } catch {
+      $('milkLink').select();
+      adminMsg('Copy the link from the box.', true);
+    }
   });
 
   $('adminOff').addEventListener('click', () => {
@@ -2864,6 +2917,7 @@ initAdmin();
 requestPersistence();
 initSettings();
 initShop();
+redeemFromUrl();
 initAuthUi();
 watchFeltSpace();
 window.addEventListener('resize', scheduleSizeFelt);

@@ -11,7 +11,7 @@
  * because an id becomes a CSS class and nothing from the network is trusted.
  */
 
-export const PACK_PRICE = 1000;
+export const PACK_PRICE = 5000;
 
 export const PACKS = [
   { id: 'cosmic', name: 'Cosmic', blurb: 'Deep space.' },
@@ -26,7 +26,7 @@ export const PACKS = [
       + 'the Supra are 1 in 100 each, and this pack does not skip what you '
       + 'already own — so once you have Bad, and you will almost at once, '
       + 'those 98 opens give you a duplicate and nothing else. Reckon on '
-      + 'around 50,000 chips before either rare one turns up.',
+      + 'around 250,000 chips before either rare one turns up.',
   },
 ];
 
@@ -102,7 +102,21 @@ export const CHIP_SKINS = [
   { id: 'pulse', name: 'Pulse', rarity: 'rare' },
   { id: 'neon', name: 'Neon', rarity: 'legendary' },
   { id: 'prism', name: 'Prism', rarity: 'ultra' },
+  // Not in the pack at any price: the only way to it is the Milk code.
+  { id: 'milk', name: 'Milk', rarity: 'ultra', claim: true },
 ];
+
+/**
+ * What a claim code hands over. Scanning one is the only route to anything
+ * marked `claim`, so these skins sit outside the shop entirely.
+ */
+export const CLAIMS = {
+  'MILK-714': {
+    name: 'the Milk set',
+    decks: ['milk'],
+    chips: ['milk'],
+  },
+};
 
 export const CHIP_IDS = CHIP_SKINS.map((c) => c.id);
 export const FREE_CHIP = 'pink';
@@ -118,9 +132,9 @@ export function safeChip(id) {
   return CHIP_BY_ID.has(id) ? id : FREE_CHIP;
 }
 
-/** The paid chip skins, in catalogue order. */
+/** The chip skins the pack can give you: not the free one, not claim-only. */
 export function chipPackContents() {
-  return CHIP_SKINS.filter((c) => c.id !== FREE_CHIP);
+  return CHIP_SKINS.filter((c) => c.id !== FREE_CHIP && !c.claim);
 }
 
 /** Draw a chip skin you do not have, the way a themed pack does. */
@@ -150,12 +164,14 @@ export function safeDeck(id) {
 }
 
 /**
- * How often each rarity comes up. A pack never hands over a design you
- * already have — every thousand chips buys something new — so these only
- * decide the order you tend to collect a pack in, not whether you waste a
- * purchase.
+ * How often each rarity comes up.
+ *
+ * A themed pack never hands over a design you already have, so these decide
+ * the order you collect a pack in rather than whether a purchase is wasted.
+ * Skewed hard towards the commons, so the ultra rare is now almost always
+ * the last thing a pack gives up instead of a lucky second open.
  */
-const WEIGHT = { common: 10, rare: 5, legendary: 2, ultra: 1 };
+const WEIGHT = { common: 40, rare: 10, legendary: 3, ultra: 1 };
 
 /**
  * Pull one design out of a pack.
