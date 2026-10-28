@@ -91,8 +91,9 @@ export const RARITIES = ['common', 'rare', 'legendary', 'ultra', 'milk'];
 export const CHIP_PACK = {
   id: 'chipskins',
   name: 'Chips',
-  blurb: 'What your chips look like. Four of the five move; all of them hold '
-    + 'still for anyone whose device asks for less motion.',
+  blurb: 'What your chips look like, on your bets and on every other screen '
+    + 'at the table. Most of them move; every one of them holds still for '
+    + 'anyone whose device asks for less motion.',
 };
 
 export const CHIP_SKINS = [
