@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvrkqt69';
-import { TableHost } from './host.js?v=mvrkqt69';
-import * as vault from './vault.js?v=mvrkqt69';
-import * as friends from './friends.js?v=mvrkqt69';
-import * as packs from './decks.js?v=mvrkqt69';
-import * as cloud from './cloud.js?v=mvrkqt69';
-import { bestHand } from './engine/hand.js?v=mvrkqt69';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrkqt69';
+import { HostNet, GuestNet } from './net.js?v=mvrksi7q';
+import { TableHost } from './host.js?v=mvrksi7q';
+import * as vault from './vault.js?v=mvrksi7q';
+import * as friends from './friends.js?v=mvrksi7q';
+import * as packs from './decks.js?v=mvrksi7q';
+import * as cloud from './cloud.js?v=mvrksi7q';
+import { bestHand } from './engine/hand.js?v=mvrksi7q';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrksi7q';
 
 const $ = (id) => document.getElementById(id);
 
@@ -545,6 +545,9 @@ function paintChipShop() {
   if (!host) return;
   host.innerHTML = '';
   const owned = vault.chipSkins();
+  // The shop's heading is shared by all three tabs, so buying here has to
+  // keep it current too.
+  $('decksChips').textContent = fmt(vault.balance());
 
   const note = $('chipPull');
   if (lastChip) {
