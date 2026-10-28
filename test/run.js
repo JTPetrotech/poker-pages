@@ -4,6 +4,7 @@ import { makeDeck, shuffle } from '../engine/cards.js';
 import { decide, equity, chen, BOT_STYLES } from '../bot.js';
 import * as vault from '../vault.js';
 import * as friends from '../friends.js';
+import * as packs from '../decks.js';
 
 let passed = 0;
 let failed = 0;
@@ -1154,6 +1155,117 @@ test('the same person under different capitals is one entry', () => {
   friends.note('SAM', 'B');
   eq(friends.count(), 1, 'matched case-insensitively');
   eq(friends.list()[0].name, 'SAM', 'showing their latest spelling');
+});
+
+// ------------------------------------------------------------------ card packs
+
+test('a pack only ever hands over something you do not have', () => {
+  const all = packs.packContents('cosmic').map((d) => d.id);
+  // Draw the whole pack, one at a time, always taking what comes back.
+  const owned = [];
+  for (let i = 0; i < all.length; i++) {
+    const pulled = packs.drawFromPack('cosmic', owned, i / all.length);
+    assert(pulled, 'the pack still had something in it');
+    assert(!owned.includes(pulled.id), 'never a repeat');
+    owned.push(pulled.id);
+  }
+  eq(owned.length, all.length, 'the pack empties exactly');
+  eq(packs.drawFromPack('cosmic', owned, 0.5), null, 'and then gives nothing');
+});
+
+test('a draw stays inside its own pack', () => {
+  for (const pack of packs.PACKS) {
+    for (const roll of [0, 0.25, 0.5, 0.75, 0.999]) {
+      const pulled = packs.drawFromPack(pack.id, [], roll);
+      eq(pulled.pack, pack.id, `${pack.id} at ${roll}`);
+    }
+  }
+});
+
+test('an id that is not a card back becomes Classic', () => {
+  eq(packs.safeDeck('rocket'), 'rocket');
+  eq(packs.safeDeck('nonsense'), 'classic');
+  eq(packs.safeDeck('deck-opt locked" onload="x'), 'classic', 'nothing injectable gets through');
+  eq(packs.safeDeck(undefined), 'classic');
+});
+
+test('buying is the only way to own a card back', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  eq(vault.ownsDeck('rocket'), false);
+  assert(vault.grantDeck('rocket'), 'granted');
+  eq(vault.ownsDeck('rocket'), true);
+  eq(vault.grantDeck('rocket'), false, 'granting twice changes nothing');
+  eq(vault.decks().length, 1);
+  eq(vault.grantDeck('not-a-deck'), false, 'and nonsense is refused');
+});
+
+test('chips leave the vault before a design arrives', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  const before = vault.balance();
+  assert(vault.spend(packs.PACK_PRICE), 'paid');
+  eq(vault.balance(), before - packs.PACK_PRICE);
+  eq(vault.spend(vault.balance() + 1), false, 'cannot spend what is not there');
+  eq(vault.balance(), before - packs.PACK_PRICE, 'a refused spend takes nothing');
+});
+
+test('a backup code carries the card backs you bought', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  vault.grantDeck('rocket');
+  vault.grantDeck('donut');
+  const code = vault.backupCode();
+
+  globalThis.localStorage.clear();
+  vault.detach();
+  eq(vault.decks().length, 0, 'a fresh device has none');
+  vault.restoreCode(code);
+  assert(vault.ownsDeck('rocket'), 'rocket came across');
+  assert(vault.ownsDeck('donut'), 'donut came across');
+  eq(vault.decks().length, 2, 'and nothing else did');
+});
+
+test('an older code leaves the collection alone', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  // A B-format code: chips and hands, made before card backs existed.
+  const body = 'B' + 'F4' + '001';
+  const old = body + (() => {
+    let sum = 7;
+    for (const ch of body) sum = (sum * 31 + '0123456789ABCDEFGHJKMNPQRSTVWXYZ'.indexOf(ch)) % 1024;
+    return '0123456789ABCDEFGHJKMNPQRSTVWXYZ'[Math.floor(sum / 32)]
+      + '0123456789ABCDEFGHJKMNPQRSTVWXYZ'[sum % 32];
+  })();
+  vault.grantDeck('rocket');
+  assert(vault.restoreCode(old) !== null, 'the old code still reads');
+  assert(vault.ownsDeck('rocket'), 'and did not wipe what this device had');
+});
+
+test('everyone at the table is told which back you wear', () => {
+  const t = new Table({ id: 'D', smallBlind: 5, bigBlind: 10, startingStack: 1000 });
+  t.sit('a', 'Ann', 0, { deck: 'rocket' });
+  t.sit('b', 'Bob', 1, {});
+  const seen = t.snapshot('b').seats[0];
+  eq(seen.deck, 'rocket', 'Bob sees what Ann is wearing');
+  eq(t.snapshot('a').seats[1].deck, 'classic', 'and the default when none was sent');
+  eq(seen.cards.length, 0);
+
+  assert(t.setDeck('a', 'donut'), 'changed');
+  eq(t.snapshot('b').seats[0].deck, 'donut', 'a change reaches the table');
+  eq(t.setDeck('nobody', 'donut'), false);
+});
+
+test('changing your card back mid-hand touches nothing else', () => {
+  const t = new Table({ id: 'E', smallBlind: 5, bigBlind: 10, startingStack: 1000 });
+  t.sit('a', 'Ann', 0, { deck: 'rocket' });
+  t.sit('b', 'Bob', 1, { deck: 'pizza' });
+  t.startHand();
+  const before = JSON.stringify(t.snapshot('a').seats.map((p) => p && p.chips));
+  const cards = t.seats[0].cards.join(' ');
+  t.setDeck('a', 'trophy');
+  eq(JSON.stringify(t.snapshot('a').seats.map((p) => p && p.chips)), before, 'stacks untouched');
+  eq(t.seats[0].cards.join(' '), cards, 'and the hand is the same hand');
 });
 
 // ------------------------------------------------------------------ report

@@ -1,5 +1,6 @@
-import { Table } from './engine/game.js?v=mvri0yrc';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvri0yrc';
+import { Table } from './engine/game.js?v=mvrihxl5';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvrihxl5';
+import { safeDeck, DECKS } from './decks.js?v=mvrihxl5';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;
@@ -131,8 +132,15 @@ export class TableHost {
       case 'sit':
         table.sit(token, cleanName(msg.name), clampInt(msg.seat, 0, table.maxSeats - 1, 0), {
           buyIn: Number(msg.buyIn) || table.startingStack,
+          deck: safeDeck(msg.deck),
         });
         this.#scheduleStart(IDLE_START_DELAY_MS);
+        break;
+      // A card back becomes a CSS class on everyone else's screen, so an id
+      // that is not in the catalogue turns into Classic rather than being
+      // passed along.
+      case 'deck':
+        table.setDeck(token, safeDeck(msg.deck));
         break;
       case 'stand': {
         // Tell them what they're walking away with, so it reaches their vault.
@@ -226,7 +234,12 @@ export class TableHost {
     const taken = new Set(table.players().map((p) => p.name));
     const name = BOT_NAMES.find((n) => !taken.has(n)) || `Bot${++this.botSeq}`;
     const id = `bot:${seat}:${++this.botSeq}`;
-    table.sit(id, name, seat, { bot: true, botStyle: style, buyIn: table.startingStack });
+    // Give each computer player a card back of its own, so a table full of
+    // them does not look like one person playing every seat.
+    const deck = DECKS[(seat * 3 + this.botSeq) % DECKS.length].id;
+    table.sit(id, name, seat, {
+      bot: true, botStyle: style, buyIn: table.startingStack, deck,
+    });
   }
 
   /** Let a bot act once its thinking pause is up. */

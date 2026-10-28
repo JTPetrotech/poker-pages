@@ -287,15 +287,19 @@ input { font: inherit; }
 
 /* ---------------------------------------------------------- card packs */
 
-/* Each pack dims its own middle so the motif stays readable over whatever
-   pattern sits behind it. */
+/* Every design dims or lifts its own middle so the motif stays readable over
+   whatever pattern sits behind it. The class goes on the card itself, not on
+   the page, because each player's cards are drawn with that player's design.
+   :root carries Classic, so a card with no design at all still looks right. */
 :root, .deck-classic {
   --deck-bg: repeating-linear-gradient(45deg, #3f6ea8 0 6px, #335c90 6px 12px);
   --deck-edge: #fff;
   --deck-glyph: "";
 }
 
-:root[data-deck="cosmic"], .deck-cosmic {
+/* -------------------------------------------------------------- cosmic */
+
+.deck-planet {
   --deck-bg:
     radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.38) 0 34%, transparent 62%),
     radial-gradient(1.4px 1.4px at 18% 22%, #fff 50%, transparent 51%),
@@ -308,7 +312,37 @@ input { font: inherit; }
   --deck-glyph: "\1FA90";
 }
 
-:root[data-deck="car"], .deck-car {
+.deck-nebula {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(28, 8, 48, 0.45) 0 32%, transparent 60%),
+    radial-gradient(70% 50% at 22% 28%, rgba(255, 122, 196, 0.75), transparent 70%),
+    radial-gradient(70% 55% at 80% 72%, rgba(118, 150, 255, 0.72), transparent 72%),
+    linear-gradient(150deg, #4a1766 0%, #2a1050 60%, #150833 100%);
+  --deck-edge: #ffc3e6;
+  --deck-glyph: "\1F31F";
+}
+
+.deck-comet {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.42) 0 34%, transparent 62%),
+    repeating-linear-gradient(118deg, rgba(150, 200, 255, 0.22) 0 2px, transparent 2px 13px),
+    linear-gradient(160deg, #11306b 0%, #0a1d47 55%, #050e26 100%);
+  --deck-edge: #9fd0ff;
+  --deck-glyph: "\2604\FE0F";
+}
+
+.deck-rocket {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.5) 0 32%, transparent 60%),
+    radial-gradient(60% 40% at 50% 104%, rgba(255, 150, 54, 0.85), transparent 72%),
+    linear-gradient(180deg, #1b2130 0%, #0c1018 100%);
+  --deck-edge: #ffb057;
+  --deck-glyph: "\1F680";
+}
+
+/* ---------------------------------------------------------------- cars */
+
+.deck-checker {
   --deck-bg:
     radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.5) 0 34%, transparent 64%),
     conic-gradient(#20252b 0 25%, #eef1f4 0 50%, #20252b 0 75%, #eef1f4 0) 0 0 / 11px 11px;
@@ -316,7 +350,36 @@ input { font: inherit; }
   --deck-glyph: "\1F697";
 }
 
-:root[data-deck="food"], .deck-food {
+.deck-taxi {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 241, 196, 0.85) 0 32%, transparent 60%),
+    conic-gradient(#1d1d1d 0 25%, #ffcf2d 0 50%, #1d1d1d 0 75%, #ffcf2d 0) 0 0 / 9px 9px;
+  --deck-edge: #1d1d1d;
+  --deck-glyph: "\1F695";
+}
+
+.deck-hauler {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.4) 0 34%, transparent 62%),
+    repeating-linear-gradient(0deg, #3f5f80 0 6px, #34506c 6px 12px);
+  --deck-edge: #cfe0f0;
+  --deck-glyph: "\1F69A";
+}
+
+.deck-racer {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.46) 0 32%, transparent 60%),
+    /* A carbon weave: two fine hatchings crossing at right angles. */
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.07) 0 2px, transparent 2px 5px),
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.3) 0 2px, transparent 2px 5px),
+    linear-gradient(160deg, #8f1420 0%, #4a0a11 100%);
+  --deck-edge: #ffd3d7;
+  --deck-glyph: "\1F3CE\FE0F";
+}
+
+/* ---------------------------------------------------------------- food */
+
+.deck-pizza {
   --deck-bg:
     radial-gradient(circle at 50% 50%, rgba(255, 248, 236, 0.86) 0 32%, transparent 60%),
     repeating-linear-gradient(0deg, rgba(206, 58, 58, 0.5) 0 5px, transparent 5px 10px),
@@ -326,7 +389,38 @@ input { font: inherit; }
   --deck-glyph: "\1F355";
 }
 
-:root[data-deck="sport"], .deck-sport {
+.deck-burger {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 238, 206, 0.82) 0 32%, transparent 60%),
+    repeating-linear-gradient(0deg, #c98b46 0 5px, #a96c30 5px 10px);
+  --deck-edge: #5a3418;
+  --deck-glyph: "\1F354";
+}
+
+.deck-donut {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 230, 243, 0.86) 0 32%, transparent 60%),
+    radial-gradient(2px 1px at 20% 24%, #4fd0c0 50%, transparent 51%),
+    radial-gradient(1px 2px at 70% 20%, #ffd84d 50%, transparent 51%),
+    radial-gradient(2px 1px at 32% 72%, #7a9bff 50%, transparent 51%),
+    radial-gradient(1px 2px at 80% 76%, #fff 50%, transparent 51%),
+    radial-gradient(2px 1px at 56% 48%, #ff8bd0 50%, transparent 51%),
+    linear-gradient(160deg, #f9a8cd 0%, #ef7ab4 100%);
+  --deck-edge: #fff;
+  --deck-glyph: "\1F369";
+}
+
+.deck-sushi {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.42) 0 34%, transparent 62%),
+    repeating-linear-gradient(90deg, #1d2a33 0 8px, #16222a 8px 16px);
+  --deck-edge: #f2f6f8;
+  --deck-glyph: "\1F363";
+}
+
+/* --------------------------------------------------------------- sport */
+
+.deck-pitch {
   --deck-bg:
     radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.34) 0 34%, transparent 62%),
     /* Deliberately darker than the felt: a pitch green close to the table's
@@ -334,6 +428,33 @@ input { font: inherit; }
     repeating-linear-gradient(90deg, #11512f 0 7px, #0b3c22 7px 14px);
   --deck-edge: #fff;
   --deck-glyph: "\26BD";
+}
+
+.deck-hoops {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.3) 0 32%, transparent 60%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.22) 0 1px, transparent 1px 10px),
+    linear-gradient(160deg, #d2762c 0%, #a9521a 100%);
+  --deck-edge: #2c1708;
+  --deck-glyph: "\1F3C0";
+}
+
+.deck-tennis {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.3) 0 32%, transparent 60%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.28) 0 1px, transparent 1px 11px),
+    linear-gradient(160deg, #1f6f99 0%, #15506f 100%);
+  --deck-edge: #e4f36b;
+  --deck-glyph: "\1F3BE";
+}
+
+.deck-trophy {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.46) 0 32%, transparent 60%),
+    repeating-linear-gradient(45deg, rgba(255, 213, 110, 0.16) 0 3px, transparent 3px 9px),
+    linear-gradient(160deg, #1b2440 0%, #0d1326 100%);
+  --deck-edge: #f0c250;
+  --deck-glyph: "\1F3C6";
 }
 .card.small { width: 32px; height: 45px; border-radius: 5px; }
 .card.small .r { font-size: 14px; }
@@ -1466,6 +1587,61 @@ input { font: inherit; }
   box-shadow: 0 0 0 2px rgba(193, 49, 111, 0.22);
 }
 .deck-opt .card { box-shadow: none; cursor: inherit; }
+
+/* A design you have not pulled yet: shown, but plainly not yours. */
+.deck-opt.locked { cursor: default; opacity: 0.4; filter: grayscale(0.7); }
+.deck-opt.locked:hover { border-color: var(--line); }
+
+.pack { margin-bottom: 14px; }
+.pack-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+  font-size: 13px;
+}
+.pack-count { color: var(--muted); font-size: 11.5px; }
+.pack-buy {
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--chip);
+  background: var(--chip);
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.pack-buy:hover:not(:disabled) { filter: brightness(1.08); }
+.pack-buy:disabled {
+  background: transparent;
+  color: var(--muted);
+  border-color: var(--line);
+  cursor: default;
+}
+
+.deck-pull {
+  margin: 0 0 12px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  font-size: 13px;
+}
+.rarity {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--line);
+  color: var(--muted);
+}
+.rarity.rare { background: #dbeafe; color: #1a4f8a; }
+.rarity.legendary { background: #fdeccd; color: #8a5a0b; }
 
 .custom-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
 .custom-row input[type="color"] {

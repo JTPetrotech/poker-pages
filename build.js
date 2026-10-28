@@ -24,6 +24,7 @@ const STYLE_HREF = /(<link rel="stylesheet" href=")([\w./-]+\.css)(\?v=[\w]+)?("
 
 const FILES = [
   'app.js', 'net.js', 'host.js', 'bot.js', 'vault.js', 'cloud.js', 'friends.js',
+  'decks.js',
   'firebase-config.js', 'engine/game.js', 'engine/hand.js', 'engine/cards.js',
 ];
 
@@ -44,8 +45,10 @@ const REQUIRED = {
     ['new TableHost', './host.js'],
     ['new HostNet', './net.js'],
     ['friends.note(', './friends.js'],
+    ['packs.safeDeck(', './decks.js'],
   ],
-  'host.js': [['new Table(', './engine/game.js'], ['decide(', './bot.js']],
+  'host.js': [['new Table(', './engine/game.js'], ['decide(', './bot.js'], ['safeDeck(', './decks.js']],
+  'vault.js': [['DECK_IDS', './decks.js']],
   'bot.js': [['bestHand(', './engine/hand.js'], ['makeDeck(', './engine/cards.js']],
 };
 

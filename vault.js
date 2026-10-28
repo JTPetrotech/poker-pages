@@ -7,6 +7,8 @@
  * you cash out.
  */
 
+import { DECK_IDS } from './decks.js?v=mvrihxl5';
+
 const KEY = 'pn.profile.v1';
 
 export const STARTING_VAULT = 10_000;
@@ -29,12 +31,20 @@ const BLANK = {
   biggestPot: 0,
   bestHand: null,
   reloads: 0,
+  // Card backs pulled out of packs. Classic is free and never listed.
+  decks: [],
   created: null,
 };
 
 let cache = null;
 let remote = null;        // { uid, save(profile) } once signed in
 let storageKey = KEY;
+
+/** Keep only real designs, once each — storage and accounts can both lie. */
+function tidyDecks(list) {
+  if (!Array.isArray(list)) return [];
+  return [...new Set(list.filter((id) => DECK_IDS.includes(id)))];
+}
 
 function readStored() {
   try {
@@ -44,6 +54,7 @@ function readStored() {
     const profile = { ...BLANK, ...parsed };
     // Storage is editable by hand; never trust what comes back out of it.
     profile.vault = Math.min(MAX_VAULT, Math.max(0, Math.floor(Number(profile.vault) || 0)));
+    profile.decks = tidyDecks(profile.decks);
     return profile;
   } catch {
     return { ...BLANK, created: Date.now() };
@@ -122,6 +133,43 @@ export function deposit(amount) {
   return p.vault;
 }
 
+// ------------------------------------------------------------ card backs
+
+/** Every design you own, Classic aside — it is free and always yours. */
+export function decks() {
+  return [...read().decks];
+}
+
+export function ownsDeck(id) {
+  return read().decks.includes(id);
+}
+
+/**
+ * Hand over a design. Returns false when it is already yours or is not a
+ * design at all, so the caller can tell a real pull from a no-op.
+ */
+export function grantDeck(id) {
+  if (!DECK_IDS.includes(id) || ownsDeck(id)) return false;
+  const p = read();
+  p.decks = [...p.decks, id];
+  write(p);
+  return true;
+}
+
+/**
+ * Pay for a pack. Returns true only if the chips were there and have been
+ * taken — the caller draws the design afterwards, so a draw can never happen
+ * without the chips having left the vault.
+ */
+export function spend(amount) {
+  const cost = Math.max(0, Math.floor(amount));
+  const p = read();
+  if (p.vault < cost) return false;
+  p.vault -= cost;
+  write(p);
+  return true;
+}
+
 /** Remember what we're holding at a table, so it survives anything. */
 export function setAtTable(code, amount) {
   const p = read();
@@ -181,10 +229,10 @@ export function reload() {
  * dashes are ignored when reading one back, and two check characters catch a
  * mistyped code rather than silently setting the wrong balance.
  *
- * Carries your chips and your hands played. Hands are held in three fixed
- * characters at the end, which is what lets the two numbers be told apart
- * without a separator; a leading B marks this format, so codes made before
- * it still read back.
+ * Carries your chips, your hands played and the card backs you have bought.
+ * Hands take three fixed characters and the backs four, which is what lets
+ * the fields be told apart without separators; the leading letter marks the
+ * format, so every older code still reads back.
  */
 const C32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
@@ -227,11 +275,30 @@ function tidy(text) {
 // Three base32 characters, so the most hands a code can carry.
 const MAX_CODED_HANDS = 32 ** 3 - 1;
 
+// One bit per design, at its fixed position in the catalogue. Four base32
+// characters hold twenty bits, which leaves room for designs added later.
+const DECK_FIELD = 4;
+
+function encodeDecks(list) {
+  let bits = 0;
+  for (const id of list) {
+    const i = DECK_IDS.indexOf(id);
+    if (i >= 0 && i < DECK_FIELD * 5) bits |= 1 << i;
+  }
+  return encode32(bits).padStart(DECK_FIELD, '0');
+}
+
+function decodeDecks(text) {
+  const bits = decode32(text);
+  if (bits === null) return null;
+  return DECK_IDS.filter((_id, i) => (bits >> i) & 1);
+}
+
 export function backupCode() {
   const p = read();
   const chips = p.vault + (p.atTable ? p.atTable.amount : 0);
   const hands = encode32(Math.min(p.handsPlayed, MAX_CODED_HANDS)).padStart(3, '0');
-  const body = `B${encode32(chips)}${hands}`;
+  const body = `C${encode32(chips)}${hands}${encodeDecks(p.decks)}`;
   const full = body + checkChars(body);
   // Grouped in fours, which is easier to read aloud and to type.
   return full.match(/.{1,4}/g).join('-');
@@ -245,11 +312,16 @@ export function restoreCode(code) {
   const body = clean.slice(0, -2);
   if (checkChars(body) !== clean.slice(-2)) return null;
 
-  // A leading B means chips and hands; anything else is an older chips-only
-  // code, which still reads back.
+  // C carries the card backs as well as the chips and hands, B carries chips
+  // and hands, and anything else is an older chips-only code. All read back.
   let chips;
   let hands = null;
-  if (body[0] === 'B' && body.length >= 5) {
+  let decksOwned = null;
+  if (body[0] === 'C' && body.length >= 2 + 3 + DECK_FIELD) {
+    chips = decode32(body.slice(1, -(3 + DECK_FIELD)));
+    hands = decode32(body.slice(-(3 + DECK_FIELD), -DECK_FIELD));
+    decksOwned = decodeDecks(body.slice(-DECK_FIELD));
+  } else if (body[0] === 'B' && body.length >= 5) {
     chips = decode32(body.slice(1, -3));
     hands = decode32(body.slice(-3));
   } else {
@@ -261,6 +333,9 @@ export function restoreCode(code) {
   p.vault = Math.min(MAX_VAULT, Math.max(0, Math.floor(chips)));
   p.atTable = null;
   if (hands !== null && Number.isFinite(hands)) p.handsPlayed = Math.max(0, hands);
+  // A code that predates card backs says nothing about them, so it leaves
+  // whatever this device already has rather than wiping the collection.
+  if (decksOwned) p.decks = tidyDecks([...p.decks, ...decksOwned]);
   write(p);
   return p.vault;
 }

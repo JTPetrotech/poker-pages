@@ -1,10 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvri0yrc';
-import { TableHost } from './host.js?v=mvri0yrc';
-import * as vault from './vault.js?v=mvri0yrc';
-import * as friends from './friends.js?v=mvri0yrc';
-import * as cloud from './cloud.js?v=mvri0yrc';
-import { bestHand } from './engine/hand.js?v=mvri0yrc';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvri0yrc';
+import { HostNet, GuestNet } from './net.js?v=mvrihxl5';
+import { TableHost } from './host.js?v=mvrihxl5';
+import * as vault from './vault.js?v=mvrihxl5';
+import * as friends from './friends.js?v=mvrihxl5';
+import * as packs from './decks.js?v=mvrihxl5';
+import * as cloud from './cloud.js?v=mvrihxl5';
+import { bestHand } from './engine/hand.js?v=mvrihxl5';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrihxl5';
 
 const $ = (id) => document.getElementById(id);
 
@@ -22,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 47;
+const BUILD = 48;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -275,21 +276,6 @@ const BACKGROUNDS = [
   { id: 'charcoal', name: 'Charcoal', css: 'radial-gradient(90% 70% at 50% 35%, #3a4249 0%, #262c32 55%, #15191d 100%)' },
 ];
 
-/**
- * Card back packs. The artwork itself lives in the stylesheet — each id has a
- * matching `.deck-<id>` rule — so a pack is nothing but a name here.
- *
- * The pack is yours alone, like the theme: the host deals the cards, but what
- * the backs look like is decided by whoever is looking at them.
- */
-const DECKS = [
-  { id: 'classic', name: 'Classic' },
-  { id: 'cosmic', name: 'Cosmic' },
-  { id: 'car', name: 'Cars' },
-  { id: 'food', name: 'Food' },
-  { id: 'sport', name: 'Sport' },
-];
-
 const LOOK_KEY = 'pn.look.v1';
 
 const BG_IMAGE_KEY = 'pn.bgimage.v1';
@@ -382,10 +368,6 @@ function writeLook(look) {
 
 function applyLook(look) {
   document.documentElement.dataset.theme = look.theme === 'dark' ? 'dark' : 'light';
-  // An unknown pack — an older choice, or a damaged setting — falls back to
-  // the plain blue rather than leaving the backs unpainted.
-  const deck = DECKS.some((d) => d.id === look.deck) ? look.deck : 'classic';
-  document.documentElement.dataset.deck = deck;
   const preset = BACKGROUNDS.find((b) => b.id === look.bg);
   let css = preset && preset.css;
   if (look.bg === 'custom' && look.custom) css = look.custom;
@@ -407,9 +389,6 @@ function paintSettings() {
   });
   document.querySelectorAll('.swatch').forEach((b) => {
     b.classList.toggle('active', b.dataset.bg === look.bg);
-  });
-  document.querySelectorAll('.deck-opt').forEach((b) => {
-    b.classList.toggle('active', b.dataset.deck === document.documentElement.dataset.deck);
   });
   if (look.custom) $('customBg').value = look.custom;
 
@@ -434,28 +413,136 @@ function updateLook(patch) {
   scheduleSizeFelt();
 }
 
+// ------------------------------------------------------------ card backs
+
 /**
- * Fill a container with one tile per pack. The same tiles appear in Settings
- * and behind the Cards button, and `paintSettings` marks whichever is chosen
- * across every copy, so the two pickers can never disagree.
+ * The card back you are using, which the other players see on your cards.
+ *
+ * Checked against what you actually own on the way out, so a design can never
+ * be worn because the stored setting says so — buying it is the only way.
  */
-function buildDeckTiles(host) {
-  for (const d of DECKS) {
-    const b = document.createElement('button');
-    b.type = 'button';
-    // The pack's own class paints the preview, so each tile shows its real
-    // back rather than a picture of one.
-    b.className = `deck-opt deck-${d.id}`;
-    b.dataset.deck = d.id;
-    b.title = d.name;
-    b.innerHTML = `<span class="card back small"></span><span>${d.name}</span>`;
-    b.addEventListener('click', () => updateLook({ deck: d.id }));
-    host.appendChild(b);
+function myDeck() {
+  const chosen = readLook().deck;
+  if (chosen === packs.FREE_DECK) return chosen;
+  return vault.ownsDeck(chosen) ? chosen : packs.FREE_DECK;
+}
+
+/** Wear a design, and tell the table so everyone else repaints. */
+function wearDeck(id) {
+  updateLook({ deck: id });
+  if (app.code) send({ t: 'deck', deck: myDeck() });
+}
+
+/**
+ * Buy one pack. The chips leave the vault first and the design is drawn
+ * second, so a draw can never happen without having been paid for.
+ *
+ * A pack never hands over something you already have, so every purchase is
+ * a design you did not have before — and once a pack is complete it refuses
+ * the sale instead of taking the chips for nothing.
+ */
+function buyPack(packId) {
+  const owned = vault.decks();
+  if (packs.packContents(packId).every((d) => owned.includes(d.id))) {
+    return { ok: false, why: 'You already have every card back in this pack.' };
+  }
+  if (vault.balance() < packs.PACK_PRICE) {
+    return { ok: false, why: `A pack costs ${fmt(packs.PACK_PRICE)} chips and your vault has ${fmt(vault.balance())}.` };
+  }
+  if (!vault.spend(packs.PACK_PRICE)) {
+    return { ok: false, why: 'Those chips are not in your vault any more.' };
+  }
+  const pulled = packs.drawFromPack(packId, owned);
+  vault.grantDeck(pulled.id);
+  paintVault();
+  return { ok: true, pulled };
+}
+
+function deckTile(d, ownedList) {
+  const owned = d.id === packs.FREE_DECK || ownedList.includes(d.id);
+  const b = document.createElement('button');
+  b.type = 'button';
+  // The design's own class paints the preview, so each tile shows the real
+  // card back rather than a picture of one.
+  b.className = `deck-opt deck-${d.id}${owned ? '' : ' locked'}`;
+  b.classList.toggle('active', owned && d.id === myDeck());
+  b.dataset.deck = d.id;
+  b.title = owned ? d.name : `${d.name} — not yours yet`;
+  b.innerHTML = `<span class="card back small"></span><span>${owned ? d.name : '???'}</span>`;
+  if (owned) b.addEventListener('click', () => { wearDeck(d.id); paintDecks(); });
+  return b;
+}
+
+/** The pulled-design announcement, or nothing when no pack was just opened. */
+let lastPull = null;
+
+function paintDecks() {
+  const host = $('decksPicker');
+  if (!host) return;
+  host.innerHTML = '';
+  const owned = vault.decks();
+
+  $('decksChips').textContent = fmt(vault.balance());
+
+  const note = $('decksPull');
+  if (lastPull) {
+    note.innerHTML = `You pulled <strong>${lastPull.name}</strong> `
+      + `<span class="rarity ${lastPull.rarity}">${lastPull.rarity}</span>`;
+    show(note, true);
+  } else {
+    show(note, false);
+  }
+
+  // Classic on its own, then one row per pack.
+  const free = document.createElement('div');
+  free.className = 'decks';
+  free.appendChild(deckTile(packs.deckById(packs.FREE_DECK), owned));
+  host.appendChild(free);
+
+  for (const pack of packs.PACKS) {
+    const contents = packs.packContents(pack.id);
+    const have = contents.filter((d) => owned.includes(d.id)).length;
+    const complete = have === contents.length;
+
+    const row = document.createElement('div');
+    row.className = 'pack';
+
+    const head = document.createElement('div');
+    head.className = 'pack-head';
+    head.innerHTML = `<div><strong>${pack.name}</strong> <span class="pack-count">`
+      + `${have} of ${contents.length}</span></div>`;
+
+    const buy = document.createElement('button');
+    buy.className = 'pack-buy';
+    buy.textContent = complete ? 'Complete' : `Open — ${fmt(packs.PACK_PRICE)}`;
+    buy.disabled = complete;
+    buy.addEventListener('click', () => {
+      const result = buyPack(pack.id);
+      if (!result.ok) {
+        lastPull = null;
+        toast(result.why);
+        paintDecks();
+        return;
+      }
+      lastPull = result.pulled;
+      wearDeck(result.pulled.id);   // wear what you just pulled
+      paintDecks();
+    });
+    head.appendChild(buy);
+    row.appendChild(head);
+
+    const tiles = document.createElement('div');
+    tiles.className = 'decks';
+    for (const d of contents) tiles.appendChild(deckTile(d, owned));
+    row.appendChild(tiles);
+
+    host.appendChild(row);
   }
 }
 
 function openDecks() {
-  paintSettings();
+  lastPull = null;
+  paintDecks();
   show($('decksModal'), true);
 }
 
@@ -472,9 +559,6 @@ function initSettings() {
     b.addEventListener('click', () => updateLook({ bg: bg.id }));
     host.appendChild(b);
   }
-
-  buildDeckTiles($('decks'));
-  buildDeckTiles($('decksPicker'));
 
   const photo = document.createElement('button');
   photo.type = 'button';
@@ -526,7 +610,22 @@ function initSettings() {
     if (e.target === $('decksModal')) show($('decksModal'), false);
   });
 
+  migrateFreeDecks();
   applyLook(readLook());
+}
+
+/**
+ * Card backs used to be free, chosen by the name of their pack. They are
+ * bought now, so anyone who had already picked one keeps that exact design
+ * rather than losing it to the change.
+ */
+function migrateFreeDecks() {
+  const WAS_FREE = { cosmic: 'planet', car: 'checker', food: 'pizza', sport: 'pitch' };
+  const look = readLook();
+  const now = WAS_FREE[look.deck];
+  if (!now) return;
+  vault.grantDeck(now);
+  updateLook({ deck: now });
 }
 
 
@@ -1021,7 +1120,7 @@ async function playSolo() {
   app.pendingBuyIn = buyIn;
   vault.setAtTable(app.code, buyIn);
   paintVault();
-  send({ t: 'sit', seat: 0, name: app.name, buyIn });
+  send({ t: 'sit', seat: 0, name: app.name, buyIn, deck: myDeck() });
 
   SOLO_OPPONENTS.forEach((style, i) => send({ t: 'addbot', seat: i + 1, style }));
 }
@@ -1063,6 +1162,10 @@ function onMessage(msg) {
   switch (msg.t) {
     case 'joined': {
       app.config = msg.config;
+      // Reconnecting after changing your card back: the greeting does not
+      // carry it, so say it now rather than wearing the old one until you
+      // next sit down.
+      send({ t: 'deck', deck: myDeck() });
       enterGame();
       break;
     }
@@ -1424,7 +1527,7 @@ function initVaultUi() {
     app.pendingBuyIn = taken;
     vault.setAtTable(app.code, taken);
     paintVault();
-    send({ t: 'sit', seat, name: app.name, buyIn: taken });
+    send({ t: 'sit', seat, name: app.name, buyIn: taken, deck: myDeck() });
     closeSeatDialog();
   });
 
@@ -1735,9 +1838,11 @@ function paintTableFacts() {
 
   note('Tap the Vault chip to move chips between your vault and the table, '
     + 'either way. Tap another seat to send chips to that player.');
-  note('The gear opens Settings, where you can change the card backs, the '
-    + 'background and the light or dark look. Those are yours alone — nobody '
-    + 'else at the table sees them.');
+  note(`Cards opens your card backs. A pack costs ${fmt(packs.PACK_PRICE)} chips `
+    + 'and always gives you one you do not already have. Everyone at the table '
+    + 'sees the back you are wearing.');
+  note('The gear opens Settings, for the background and the light or dark '
+    + 'look. Those two are yours alone — nobody else sees them.');
   if (app.isHost) {
     note('You are hosting, so this tab is the table. Closing it ends the game '
       + 'for everyone.');
@@ -2158,7 +2263,7 @@ function renderSeats(state) {
     for (const c of p.cards || []) {
       // The server already masks what you're not allowed to see, so trust the
       // value: '??' means face down, anything else is a real, revealed card.
-      cards.appendChild(cardEl(c, c === '??', false));
+      cards.appendChild(cardEl(c, c === '??', false, p.deck));
     }
 
     const box = document.createElement('div');
@@ -2362,10 +2467,12 @@ function renderChips(state) {
 
 // ---------------------------------------------------------------- bits
 
-function cardEl(card, hidden, highlight) {
+function cardEl(card, hidden, highlight, deck) {
   const el = document.createElement('div');
   if (!card || card === '??' || hidden) {
-    el.className = 'card back' + (hidden ? ' small' : '');
+    // Whose cards these are decides what the back looks like, so the design
+    // is a class on the card rather than a setting on the page.
+    el.className = `card back deck-${packs.safeDeck(deck)}` + (hidden ? ' small' : '');
     return el;
   }
   const rank = card[0] === 'T' ? '10' : card[0];

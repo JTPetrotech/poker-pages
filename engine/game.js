@@ -1,5 +1,5 @@
-import { makeDeck, shuffle } from './cards.js?v=mvri0yrc';
-import { bestHand, compareScores } from './hand.js?v=mvri0yrc';
+import { makeDeck, shuffle } from './cards.js?v=mvrihxl5';
+import { bestHand, compareScores } from './hand.js?v=mvrihxl5';
 
 export const STAGES = ['idle', 'preflop', 'flop', 'turn', 'river', 'showdown', 'handover'];
 
@@ -83,6 +83,9 @@ export class Table {
       seat,
       bot: !!opts.bot,
       botStyle: opts.botStyle || null,
+      // The card back the other players see on this player's cards. The host
+      // checks it against the catalogue before it reaches here.
+      deck: opts.deck || 'classic',
       chips: buyIn,
       cards: [],
       bet: 0,
@@ -106,6 +109,14 @@ export class Table {
     };
     this.pushLog(`${name} sat down in seat ${seat + 1} with ${buyIn}.`);
     return this.seats[seat];
+  }
+
+  /** Change the card back others see. Safe mid-hand: it is only a picture. */
+  setDeck(id, deck) {
+    const p = this.playerById(id);
+    if (!p) return false;
+    p.deck = deck;
+    return true;
   }
 
   stand(id) {
@@ -849,6 +860,7 @@ export class Table {
           inHand: p.inHand,
           sitOut: p.sitOut,
           bot: !!p.bot,
+          deck: p.deck || 'classic',
           disconnected: p.disconnected,
           lastAction: p.lastAction,
           handsPlayed: p.handsPlayed,

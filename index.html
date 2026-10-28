@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mvri0yrc" />
+<link rel="stylesheet" href="style.css?v=mvrihxl5" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
@@ -401,11 +401,15 @@
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="decksTitle">
     <button id="decksClose" class="modal-x" aria-label="Close">&times;</button>
     <h2 id="decksTitle">Card backs</h2>
-    <p class="modal-sub">Pick the pack you want to look at.</p>
+    <p class="modal-sub">
+      Vault: <strong id="decksChips">0</strong> chips.
+      A pack costs 1,000 and always gives you one you don't have.
+    </p>
 
-    <div class="decks" id="decksPicker"></div>
+    <p id="decksPull" class="deck-pull" hidden></p>
+    <div id="decksPicker"></div>
     <p class="rank-foot">
-      Only you see your pack &mdash; everyone at the table picks their own.
+      Everyone at the table sees the back you are wearing on your cards.
     </p>
   </div>
 </div>
@@ -450,8 +454,7 @@
     </div>
 
     <label class="field"><span>Card backs</span></label>
-    <div class="decks" id="decks"></div>
-    <p class="deck-note">Only you see your pack &mdash; everyone picks their own.</p>
+    <p class="deck-note">Bought in packs, from the Cards button.</p>
 
     <div class="install">
       <label class="field"><span>Open on your phone</span></label>
@@ -572,6 +575,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvri0yrc"></script>
+<script type="module" src="app.js?v=mvrihxl5"></script>
 </body>
 </html>
