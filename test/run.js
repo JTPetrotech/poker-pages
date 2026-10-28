@@ -1278,12 +1278,14 @@ test('computer players do not copy a back already at the table', () => {
   assert(free.length === packs.DECKS.length - 1, 'and only that one');
 });
 
-test('every pack has exactly one ultra rare, and it is a picture', () => {
+test('every themed pack has exactly one ultra rare', () => {
+  // Limited is not a themed pack: it holds two ultras at one percent each,
+  // which is the whole shape of it.
   for (const pack of packs.PACKS) {
+    if (pack.stated) continue;
     const ultras = packs.packContents(pack.id).filter((d) => d.rarity === 'ultra');
     eq(ultras.length, 1, `${pack.id} has one`);
   }
-  eq(packs.DECKS.filter((d) => d.rarity === 'ultra').length, packs.PACKS.length);
 });
 
 test('every rarity in the catalogue is one the tiles can show', () => {
@@ -1340,47 +1342,56 @@ test('a code written at the old width still reads', () => {
   eq(vault.decks()[0], packs.DECK_IDS[1], 'and the bit means the same design');
 });
 
-test('All or Nothing gives nothing about half the time', () => {
-  let nothing = 0;
-  for (let i = 0; i < 1000; i++) {
-    // Sweep the flip across its whole range; the draw roll is held still.
-    if (!packs.openGamble([], i / 1000, 0.5)) nothing++;
-  }
-  const share = nothing / 1000;
-  assert(Math.abs(share - packs.GAMBLE_ODDS) < 0.02, `gave nothing ${share} of the time`);
-});
+// ------------------------------------------------------------------ limited
 
-test('All or Nothing can reach any pack, including the ultra rares', () => {
-  const seen = new Set();
-  for (let i = 0; i < 4000; i++) {
-    const got = packs.openGamble([], 0, i / 4000);
-    if (got) seen.add(got.id);
+test('Limited draws on the odds it advertises', () => {
+  const contents = packs.packContents('limited');
+  const total = contents.reduce((sum, d) => sum + d.odds, 0);
+  assert(Math.abs(total - 1) < 1e-9, `the odds add up to ${total}`);
+
+  const counts = {};
+  for (let i = 0; i < 10000; i++) {
+    const got = packs.drawStated('limited', i / 10000);
+    counts[got.id] = (counts[got.id] || 0) + 1;
   }
-  for (const d of packs.DECKS) {
-    if (d.id === packs.FREE_DECK) continue;
-    assert(seen.has(d.id), `${d.id} is reachable`);
+  for (const d of contents) {
+    const share = counts[d.id] / 10000;
+    assert(Math.abs(share - d.odds) < 0.005, `${d.id} came up ${share}, wants ${d.odds}`);
   }
 });
 
-test('All or Nothing never hands back something you own', () => {
-  const owned = packs.DECKS.map((d) => d.id).filter((id) => id !== 'jackpot');
-  for (let i = 0; i < 200; i++) {
-    const got = packs.openGamble(owned, 0, i / 200);
-    if (got) eq(got.id, 'jackpot', 'only the one thing left');
+test('Limited repeats what you already own, by design', () => {
+  // A themed pack would skip Bad once you had it; this one must not, or the
+  // 98 stops meaning 98.
+  let bad = 0;
+  for (let i = 0; i < 100; i++) {
+    if (packs.drawStated('limited', i / 100).id === 'bad') bad++;
   }
-  // Owning everything leaves nothing to win, whatever the flip says.
-  const all = packs.DECKS.map((d) => d.id);
-  eq(packs.openGamble(all, 0, 0), null);
-  eq(packs.missing(all).length, 0);
+  eq(bad, 98, 'Bad every time the roll says Bad, owned or not');
 });
 
-test('Jackpot comes from the gamble and nowhere else', () => {
+test('Bad is the common one and the other two are not', () => {
+  eq(packs.deckById('bad').rarity, 'common');
+  eq(packs.deckById('milk').rarity, 'ultra');
+  eq(packs.deckById('supra').rarity, 'ultra');
+  eq(packs.deckById('bad').pack, 'limited');
+});
+
+test('the retired Jackpot is in no pack but keeps its place', () => {
   for (const pack of packs.PACKS) {
-    if (pack.gamble) continue;
     const ids = packs.packContents(pack.id).map((d) => d.id);
-    assert(!ids.includes('jackpot'), `${pack.id} does not hold it`);
+    assert(!ids.includes('jackpot'), `${pack.id} does not sell it`);
   }
-  eq(packs.deckById('jackpot').pack, 'gamble');
+  // Its position is its bit in a backup code, so it must not have moved.
+  eq(packs.DECK_IDS.indexOf('jackpot'), 21);
+  assert(packs.deckById('jackpot'), 'and it is still a real skin');
+});
+
+test('the catalogue still fits the backup code', () => {
+  // A skin past this point would be silently dropped from every code, so
+  // adding one means widening the field and minting a new code letter.
+  assert(packs.DECK_IDS.length <= vault.CODED_DECK_LIMIT,
+    `${packs.DECK_IDS.length} skins, room for ${vault.CODED_DECK_LIMIT}`);
 });
 
 // ------------------------------------------------------------------ flipping chips

@@ -486,6 +486,25 @@ input { font: inherit; }
   --deck-edge: #f5cf6a;
   --deck-glyph: "";
 }
+.deck-milk {
+  --deck-bg: url("backs/milk.png") center / cover no-repeat;
+  --deck-edge: #eef3fb;
+  --deck-glyph: "";
+}
+.deck-supra {
+  --deck-bg: url("backs/supra.png") center / cover no-repeat;
+  --deck-edge: #ff8a3d;
+  --deck-glyph: "";
+}
+
+/* Bad is meant to look like the thing you did not want. */
+.deck-bad {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.3) 0 34%, transparent 62%),
+    repeating-linear-gradient(45deg, #7c7a63 0 7px, #6e6c58 7px 14px);
+  --deck-edge: #9a9780;
+  --deck-glyph: "\1F44E";
+}
 .card.small { width: 32px; height: 45px; border-radius: 5px; }
 .card.small .r { font-size: 14px; }
 .card.small .s { font-size: 11px; }
@@ -1617,6 +1636,9 @@ input { font: inherit; }
   box-shadow: 0 0 0 2px rgba(193, 49, 111, 0.22);
 }
 .deck-opt .card { box-shadow: none; cursor: inherit; }
+/* A pack that advertises odds puts each share on its own tile. */
+.deck-opt .odds { display: block; font-size: 10px; font-weight: 700; color: var(--chip); }
+.deck-opt.locked .odds { color: var(--muted); }
 
 /* A design you have not pulled yet: shown, but plainly not yours. */
 .deck-opt.locked { cursor: default; opacity: 0.4; filter: grayscale(0.7); }

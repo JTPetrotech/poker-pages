@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvrk03te';
-import { TableHost } from './host.js?v=mvrk03te';
-import * as vault from './vault.js?v=mvrk03te';
-import * as friends from './friends.js?v=mvrk03te';
-import * as packs from './decks.js?v=mvrk03te';
-import * as cloud from './cloud.js?v=mvrk03te';
-import { bestHand } from './engine/hand.js?v=mvrk03te';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrk03te';
+import { HostNet, GuestNet } from './net.js?v=mvrkhs90';
+import { TableHost } from './host.js?v=mvrkhs90';
+import * as vault from './vault.js?v=mvrkhs90';
+import * as friends from './friends.js?v=mvrkhs90';
+import * as packs from './decks.js?v=mvrkhs90';
+import * as cloud from './cloud.js?v=mvrkhs90';
+import { bestHand } from './engine/hand.js?v=mvrkhs90';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrkhs90';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 52;
+const BUILD = 53;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -435,32 +435,24 @@ function wearDeck(id) {
 
 /** True when there is nothing left for this pack to give you. */
 function packEmptyFor(pack, owned) {
-  return pack.gamble
-    ? packs.missing(owned).length === 0
-    : packs.packContents(pack.id).every((d) => owned.includes(d.id));
+  return packs.packContents(pack.id).every((d) => owned.includes(d.id));
 }
 
 /**
  * Buy one pack. The chips leave the vault first and the skin is drawn
  * second, so a draw can never happen without having been paid for.
  *
- * A themed pack never hands over something you already have, so every
- * purchase is a skin you did not have before. All or Nothing is the
- * exception and the whole point of it: half the time it gives nothing, and
- * the dialog says so before you press the button.
+ * There are two kinds. A themed pack never hands over something you already
+ * have. Limited draws on its own stated odds and can repeat what you own,
+ * because 98 in 100 only means 98 in 100 if it is allowed to.
  *
- * Either way, once a pack has nothing left to give it refuses the sale
- * instead of taking the chips for nothing.
+ * Both refuse the sale once there is nothing left they could give you,
+ * rather than taking chips they cannot pay out on.
  */
 function buyPack(pack) {
   const owned = vault.decks();
   if (packEmptyFor(pack, owned)) {
-    return {
-      ok: false,
-      why: pack.gamble
-        ? 'You already have every skin in the game.'
-        : 'You already have every skin in this pack.',
-    };
+    return { ok: false, why: 'You already have every skin in this pack.' };
   }
   if (vault.balance() < packs.PACK_PRICE) {
     return { ok: false, why: `A pack costs ${fmt(packs.PACK_PRICE)} chips and your vault has ${fmt(vault.balance())}.` };
@@ -470,11 +462,14 @@ function buyPack(pack) {
   }
   paintVault();
 
-  const pulled = pack.gamble
-    ? packs.openGamble(owned)
-    : packs.drawFromPack(pack.id, owned);
-  if (!pulled) return { ok: true, pulled: null };   // the gamble lost
+  if (pack.stated) {
+    const rolled = packs.drawStated(pack.id);
+    const already = owned.includes(rolled.id);
+    if (!already) vault.grantDeck(rolled.id);
+    return { ok: true, pulled: rolled, duplicate: already };
+  }
 
+  const pulled = packs.drawFromPack(pack.id, owned);
   vault.grantDeck(pulled.id);
   return { ok: true, pulled };
 }
@@ -490,7 +485,11 @@ function deckTile(d, ownedList) {
   b.dataset.deck = d.id;
   // Even a locked tile says how rare it is — that is half of wanting it.
   b.title = owned ? `${d.name} — ${d.rarity}` : `${d.rarity}, not yours yet`;
-  b.innerHTML = `<span class="card back small"></span><span>${owned ? d.name : '???'}</span>`;
+  // Where a pack advertises its odds, every tile shows its own share, so the
+  // 98 and the two 1s are on screen next to the thing they apply to.
+  const chance = d.odds ? `<span class="odds">${Math.round(d.odds * 100)}%</span>` : '';
+  b.innerHTML = `<span class="card back small"></span>`
+    + `<span>${owned || d.odds ? d.name : '???'}${chance}</span>`;
   if (owned) b.addEventListener('click', () => { wearDeck(d.id); paintDecks(); });
   return b;
 }
@@ -507,9 +506,12 @@ function paintDecks() {
   $('decksChips').textContent = fmt(vault.balance());
 
   const note = $('decksPull');
-  note.classList.toggle('lost', lastPull === 'nothing');
-  if (lastPull === 'nothing') {
-    note.innerHTML = '<strong>Nothing.</strong> That is the deal — try again.';
+  note.classList.toggle('lost', !!(lastPull && lastPull.again));
+  if (lastPull && lastPull.again) {
+    // A repeat is a real outcome of a stated-odds pack, so it says so rather
+    // than quietly looking like a win.
+    note.innerHTML = `<strong>${lastPull.name}</strong> again — you already `
+      + `have it. ${Math.round((lastPull.odds || 0) * 100)} opens in 100 are.`;
     show(note, true);
   } else if (lastPull) {
     note.innerHTML = `You pulled <strong>${lastPull.name}</strong> `
@@ -537,15 +539,14 @@ function paintDecks() {
     const done = packEmptyFor(pack, owned);
 
     const row = document.createElement('div');
-    row.className = `pack${pack.gamble ? ' gamble' : ''}`;
+    row.className = `pack${pack.stated ? ' gamble' : ''}`;
 
     const head = document.createElement('div');
     head.className = 'pack-head';
-    // A themed pack counts towards filling it. The gamble has nothing to
-    // fill, so it says what it is instead.
-    const count = pack.gamble
-      ? 'any skin, or nothing'
-      : `${contents.filter((d) => owned.includes(d.id)).length} of ${contents.length}`;
+    // A themed pack counts towards filling it. The two gambles have nothing
+    // to fill, so each says what it is instead.
+    const count = `${contents.filter((d) => owned.includes(d.id)).length}`
+      + ` of ${contents.length}`;
     head.innerHTML = `<div><strong>${pack.name}</strong> `
       + `<span class="pack-count">${count}</span></div>`;
 
@@ -561,15 +562,15 @@ function paintDecks() {
         paintDecks();
         return;
       }
-      // A lost gamble is a real outcome, not a failure: the banner says so.
-      lastPull = result.pulled || 'nothing';
-      if (result.pulled) wearDeck(result.pulled.id);   // wear what you pulled
+      // A repeat is a real outcome, not a failure: the banner says so.
+      lastPull = { ...result.pulled, again: !!result.duplicate };
+      if (!result.duplicate) wearDeck(result.pulled.id);   // wear what you pulled
       paintDecks();
     });
     head.appendChild(buy);
     row.appendChild(head);
 
-    if (pack.blurb && pack.gamble) {
+    if (pack.blurb && pack.stated) {
       const why = document.createElement('p');
       why.className = 'pack-blurb';
       why.textContent = pack.blurb;
@@ -1993,10 +1994,9 @@ function paintTableFacts() {
   note(`Shop sells card skins. A pack costs ${fmt(packs.PACK_PRICE)} chips `
     + 'and always gives you one you do not already have. Everyone at the table '
     + 'sees the skin you are wearing.');
-  note('All or Nothing is the exception: half the time it gives nothing at '
-    + 'all, and the other half it can hand you anything in the game. The '
-    + 'Chips tab flips your own chips on the same idea: double the stake, '
-    + 'or lose it.');
+  note('Limited is the exception: it draws on fixed odds and does not skip '
+    + 'what you already own, so most opens repeat. The Chips tab is a '
+    + 'separate thing — a coin flip on your own chips, double or lose it.');
   note('The gear opens Settings, for the background and the light or dark '
     + 'look. Those two are yours alone — nobody else sees them.');
   if (app.isHost) {

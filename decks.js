@@ -19,17 +19,16 @@ export const PACKS = [
   { id: 'food', name: 'Food', blurb: 'Worth the trip.' },
   { id: 'sport', name: 'Sport', blurb: 'Game day.' },
   {
-    id: 'gamble',
-    name: 'All or Nothing',
-    blurb: 'A coin flip. Half the time the chips are simply gone; the rest of '
-      + 'the time it can hand you anything in the game, ultra rares included — '
-      + 'and Jackpot comes from nowhere else.',
-    gamble: true,
+    id: 'limited',
+    name: 'Limited',
+    stated: true,
+    blurb: 'Fixed odds, and they are harsh. 98 opens in 100 are Bad. Milk and '
+      + 'the Supra are 1 in 100 each, and this pack does not skip what you '
+      + 'already own — so once you have Bad, and you will almost at once, '
+      + 'those 98 opens give you a duplicate and nothing else. Reckon on '
+      + 'around 50,000 chips before either rare one turns up.',
   },
 ];
-
-/** How often All or Nothing pays out at all. The rest of the time: nothing. */
-export const GAMBLE_ODDS = 0.5;
 
 /**
  * Order matters: a design's position here is its bit in the backup code, so
@@ -65,7 +64,17 @@ export const DECKS = [
   { id: 'melon', name: 'Watermelon', pack: 'food', rarity: 'ultra' },
   { id: 'stadium', name: 'Floodlights', pack: 'sport', rarity: 'ultra' },
 
-  { id: 'jackpot', name: 'Jackpot', pack: 'gamble', rarity: 'ultra' },
+  // Retired with the pack it came in. It stays in the list because a skin's
+  // place here is its bit in the backup code, and pulling one out would
+  // shift every skin after it and make older codes read back as the wrong
+  // ones. Anyone who pulled it keeps it, and admin can still hand it out.
+  { id: 'jackpot', name: 'Jackpot', pack: null, rarity: 'ultra' },
+
+  // Limited draws on stated odds rather than on what you are missing, so
+  // these three carry their own chances and they must add up to one.
+  { id: 'bad', name: 'Bad', pack: 'limited', rarity: 'common', odds: 0.98 },
+  { id: 'milk', name: 'Milk', pack: 'limited', rarity: 'ultra', odds: 0.01 },
+  { id: 'supra', name: 'Supra MK4', pack: 'limited', rarity: 'ultra', odds: 0.01 },
 ];
 
 /** Shown on the tiles, brightest last. */
@@ -123,25 +132,21 @@ function pick(pool, roll) {
   return pool[pool.length - 1];
 }
 
-/** Everything still missing from a collection, Classic aside. */
-export function missing(owned) {
-  return DECKS.filter((d) => d.id !== FREE_DECK && !owned.includes(d.id));
+/**
+ * Draw from a pack that advertises its own odds.
+ *
+ * Unlike the themed packs this does not skip what you already own: 98 in 100
+ * really is 98 in 100, every single time, which is the only way those numbers
+ * can mean what they say. A repeat is a possible outcome, and the dialog
+ * warns about it before you press anything.
+ */
+export function drawStated(packId, roll = Math.random()) {
+  const pool = packContents(packId);
+  let mark = Math.min(Math.max(roll, 0), 0.999999);
+  for (const d of pool) {
+    mark -= d.odds || 0;
+    if (mark < 0) return d;
+  }
+  return pool[pool.length - 1];
 }
 
-/**
- * Open All or Nothing.
- *
- * Half the time it gives nothing at all and the chips are gone — that is the
- * deal, and the dialog says so before you press it. The other half it draws
- * from the whole catalogue rather than one pack, so it is the only place an
- * ultra rare can turn up without working through its pack first.
- *
- * Both rolls are passed in so the outcome can be tested exactly rather than
- * hoped for.
- */
-export function openGamble(owned, flip = Math.random(), roll = Math.random()) {
-  const pool = missing(owned);
-  if (!pool.length) return null;
-  if (flip >= GAMBLE_ODDS) return null;
-  return pick(pool, roll);
-}

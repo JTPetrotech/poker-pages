@@ -7,7 +7,7 @@
  * you cash out.
  */
 
-import { DECK_IDS } from './decks.js?v=mvrk03te';
+import { DECK_IDS } from './decks.js?v=mvrkhs90';
 
 const KEY = 'pn.profile.v1';
 
@@ -310,6 +310,13 @@ const MAX_CODED_HANDS = 32 ** 3 - 1;
  */
 const DECK_FIELD = { C: 4, D: 5 };
 const DECK_VERSION = 'D';
+
+/**
+ * How many skins the current code width can carry. A skin past this point
+ * would be dropped from every code without a word, so the tests check the
+ * catalogue against it — going over means a wider field and a new letter.
+ */
+export const CODED_DECK_LIMIT = DECK_FIELD[DECK_VERSION] * 5;
 
 function encodeDecks(list) {
   const width = DECK_FIELD[DECK_VERSION];

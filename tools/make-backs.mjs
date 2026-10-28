@@ -394,10 +394,178 @@ function jackpot() {
   return c.bytes();
 }
 
+// ------------------------------------------------------------------- milk
+
+/** A glass of milk, lit from the left. One of the two rare ones in Limited. */
+function milk() {
+  const c = canvas();
+  const topY = H * 0.2;
+  const botY = H * 0.88;
+  const topHalf = W * 0.27;
+  const botHalf = W * 0.2;     // tapered, the way a tumbler is
+  const level = H * 0.3;       // where the milk starts
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const t = y / H;
+      c.set(x, y, mix(74, 40, t), mix(96, 58, t), mix(126, 84, t));
+    }
+  }
+
+  for (let y = Math.floor(topY); y < botY; y++) {
+    const t = (y - topY) / (botY - topY);
+    const half = mix(topHalf, botHalf, t);
+    for (let x = Math.round(W / 2 - half); x < W / 2 + half; x++) {
+      if (x < 0 || x >= W) continue;
+      const edge = Math.abs(x - W / 2) / half;
+      if (y < level) {
+        // Empty glass above the milk: just the walls catching the light.
+        const wall = edge > 0.88 ? 0.75 : 0.12;
+        c.blend(x, y, 232, 240, 250, wall);
+      } else {
+        // Milk, shaded round so it reads as liquid in a cylinder.
+        const lit = 1 - Math.abs(x - (W / 2 - half * 0.3)) / (half * 1.9);
+        const v = mix(214, 255, Math.max(0, lit));
+        c.blend(x, y, v, v, mix(v - 10, 252, 0.5), 1);
+        if (edge > 0.9) c.blend(x, y, 196, 202, 214, 0.5);
+      }
+    }
+  }
+
+  // The surface of the milk, and a highlight down the left wall.
+  for (let x = Math.round(W / 2 - topHalf * 0.93); x < W / 2 + topHalf * 0.93; x++) {
+    for (let d = -2; d <= 2; d++) {
+      c.blend(x, Math.round(level + d), 255, 255, 252, 0.6 - Math.abs(d) * 0.2);
+    }
+  }
+  for (let y = Math.floor(topY + 6); y < botY - 8; y++) {
+    const t = (y - topY) / (botY - topY);
+    const half = mix(topHalf, botHalf, t);
+    for (let d = 0; d < 3; d++) {
+      c.blend(Math.round(W / 2 - half + 4 + d), y, 255, 255, 255, 0.4);
+    }
+  }
+  return c.bytes();
+}
+
+// ------------------------------------------------------------------ supra
+
+/**
+ * The back of a modded MK4 Supra: round quad lights and that wing.
+ *
+ * Drawn from the rear because that is the view the car is known for, and
+ * because round lights and a straight wing are shapes this can actually
+ * draw convincingly at the size a card is.
+ */
+function supra() {
+  const c = canvas();
+  const groundY = H * 0.82;
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (y < groundY) {
+        const t = y / groundY;
+        c.set(x, y, mix(18, 56, t), mix(16, 26, t), mix(34, 44, t));
+      } else {
+        const t = (y - groundY) / (H - groundY);
+        c.set(x, y, mix(32, 12, t), mix(20, 9, t), mix(28, 14, t));
+      }
+    }
+  }
+
+  const cx = W / 2;
+  const roofY = H * 0.27;      // top of the rear glass
+  const shoulderY = H * 0.45;  // where glass meets bodywork
+  const bumperY = H * 0.665;
+  const sillY = H * 0.79;
+  // Bright enough to read as Supra orange rather than brown at card size.
+  const paint = (lit) => [
+    mix(214, 255, Math.max(0, lit)),
+    mix(92, 206, Math.max(0, lit)),
+    mix(26, 148, Math.max(0, lit)),
+  ];
+
+  // The rear glass: a trapezoid narrowing to the roof, pale enough to read
+  // as glass catching the sky rather than a hole in the picture.
+  for (let y = Math.round(roofY); y < shoulderY; y++) {
+    const t = (y - roofY) / (shoulderY - roofY);
+    const half = W * mix(0.24, 0.33, t);
+    for (let x = Math.round(cx - half); x < cx + half; x++) {
+      if (x < 0 || x >= W) continue;
+      const across = (x - (cx - half)) / (half * 2);
+      const sheen = Math.max(0, 1 - Math.abs(across - 0.3) * 2.6);
+      c.blend(x, y,
+        mix(86, 196, sheen * (1 - t * 0.4)),
+        mix(102, 214, sheen * (1 - t * 0.4)),
+        mix(126, 238, sheen * (1 - t * 0.4)), 1);
+    }
+  }
+
+  // Bodywork: shoulders down to the sill, squared off with soft corners.
+  for (let y = Math.round(shoulderY); y < sillY; y++) {
+    const t = (y - shoulderY) / (sillY - shoulderY);
+    const half = W * mix(0.36, 0.45, Math.min(1, t * 2.4));
+    for (let x = Math.round(cx - half); x < cx + half; x++) {
+      if (x < 0 || x >= W) continue;
+      const corner = Math.abs(x - cx) / half;
+      if (t < 0.1 && corner > 0.94) continue;          // rounded top corners
+      const lit = 1 - Math.abs(x - (cx - half * 0.4)) / (half * 2.1) - t * 0.25;
+      const [r, g, b] = paint(lit);
+      // The bumper sits lower and catches less light; the arches fall away.
+      const dark = (y > bumperY ? 0.68 : 1) * (corner > 0.86 ? 0.66 : 1);
+      c.blend(x, y, r * dark, g * dark, b * dark, 1);
+    }
+  }
+
+  // The four round lights that say which car this is.
+  const ly = shoulderY + (bumperY - shoulderY) * 0.42;
+  for (const lx of [cx - W * 0.27, cx - W * 0.12, cx + W * 0.12, cx + W * 0.27]) {
+    const r = W * 0.058;
+    for (let y = Math.round(ly - r - 1); y <= ly + r + 1; y++) {
+      for (let x = Math.round(lx - r - 1); x <= lx + r + 1; x++) {
+        const d = Math.hypot(x - lx, y - ly) / r;
+        if (d > 1.18) continue;
+        if (d > 1) c.blend(x, y, 28, 14, 10, 1);                    // surround
+        else if (d > 0.74) c.blend(x, y, 150, 22, 24, 1);           // lens rim
+        else c.blend(x, y, mix(255, 206, d), mix(120, 26, d), mix(110, 26, d), 1);
+      }
+    }
+    glow(c, Math.round(lx), Math.round(ly), r * 2.6, 255, 60, 44, 0.4);
+  }
+
+  // The wing: two uprights off the bootlid and a deck across the top.
+  const wingY = roofY - H * 0.11;
+  for (const ux of [cx - W * 0.21, cx + W * 0.21]) {
+    for (let y = Math.round(wingY + 5); y < shoulderY + 4; y++) {
+      for (let x = Math.round(ux - 3); x <= ux + 3; x++) c.blend(x, y, 38, 17, 10, 1);
+    }
+  }
+  for (let y = Math.round(wingY); y < wingY + 8; y++) {
+    const lit = 1 - (y - wingY) / 10;
+    for (let x = Math.round(cx - W * 0.46); x < cx + W * 0.46; x++) {
+      if (x < 0 || x >= W) continue;
+      const [r, g, b] = paint(lit * 0.9);
+      c.blend(x, y, r, g, b, 1);
+    }
+  }
+
+  // Twin exhausts, and the light they throw on the road.
+  for (const ex of [cx - W * 0.13, cx + W * 0.13]) {
+    for (let y = Math.round(sillY - 9); y < sillY - 1; y++) {
+      for (let x = Math.round(ex - 8); x <= ex + 8; x++) {
+        if ((x - ex) ** 2 / 64 + (y - (sillY - 5)) ** 2 / 16 > 1) continue;
+        c.blend(x, y, 188, 196, 206, 1);
+      }
+    }
+  }
+  glow(c, Math.round(cx), Math.round(groundY + 10), W * 0.55, 255, 120, 50, 0.32);
+  return c.bytes();
+}
+
 // ------------------------------------------------------------------ write
 
 fs.mkdirSync(outDir, { recursive: true });
-const pictures = { galaxy, strip, melon, stadium, jackpot };
+const pictures = { galaxy, strip, melon, stadium, jackpot, milk, supra };
 for (const [name, draw] of Object.entries(pictures)) {
   const file = path.join(outDir, `${name}.png`);
   fs.writeFileSync(file, png(W, H, draw()));
