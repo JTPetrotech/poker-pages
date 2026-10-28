@@ -329,7 +329,9 @@ input { font: inherit; }
 :root[data-deck="sport"], .deck-sport {
   --deck-bg:
     radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.34) 0 34%, transparent 62%),
-    repeating-linear-gradient(90deg, #1f8a4c 0 7px, #1a7742 7px 14px);
+    /* Deliberately darker than the felt: a pitch green close to the table's
+       own green left the backs almost invisible against it. */
+    repeating-linear-gradient(90deg, #11512f 0 7px, #0b3c22 7px 14px);
   --deck-edge: #fff;
   --deck-glyph: "\26BD";
 }

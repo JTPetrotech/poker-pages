@@ -1,10 +1,10 @@
-import { HostNet, GuestNet } from './net.js?v=mvrhrdnf';
-import { TableHost } from './host.js?v=mvrhrdnf';
-import * as vault from './vault.js?v=mvrhrdnf';
-import * as friends from './friends.js?v=mvrhrdnf';
-import * as cloud from './cloud.js?v=mvrhrdnf';
-import { bestHand } from './engine/hand.js?v=mvrhrdnf';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrhrdnf';
+import { HostNet, GuestNet } from './net.js?v=mvrhvvsl';
+import { TableHost } from './host.js?v=mvrhvvsl';
+import * as vault from './vault.js?v=mvrhvvsl';
+import * as friends from './friends.js?v=mvrhvvsl';
+import * as cloud from './cloud.js?v=mvrhvvsl';
+import { bestHand } from './engine/hand.js?v=mvrhvvsl';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrhvvsl';
 
 const $ = (id) => document.getElementById(id);
 
