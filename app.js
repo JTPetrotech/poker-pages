@@ -1,10 +1,10 @@
-import { HostNet, GuestNet } from './net.js?v=mvo978pk';
-import { TableHost } from './host.js?v=mvo978pk';
-import * as vault from './vault.js?v=mvo978pk';
-import * as friends from './friends.js?v=mvo978pk';
-import * as cloud from './cloud.js?v=mvo978pk';
-import { bestHand } from './engine/hand.js?v=mvo978pk';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvo978pk';
+import { HostNet, GuestNet } from './net.js?v=mvrhrdnf';
+import { TableHost } from './host.js?v=mvrhrdnf';
+import * as vault from './vault.js?v=mvrhrdnf';
+import * as friends from './friends.js?v=mvrhrdnf';
+import * as cloud from './cloud.js?v=mvrhrdnf';
+import { bestHand } from './engine/hand.js?v=mvrhrdnf';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrhrdnf';
 
 const $ = (id) => document.getElementById(id);
 
@@ -22,7 +22,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 45;
+const BUILD = 46;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -275,6 +275,21 @@ const BACKGROUNDS = [
   { id: 'charcoal', name: 'Charcoal', css: 'radial-gradient(90% 70% at 50% 35%, #3a4249 0%, #262c32 55%, #15191d 100%)' },
 ];
 
+/**
+ * Card back packs. The artwork itself lives in the stylesheet — each id has a
+ * matching `.deck-<id>` rule — so a pack is nothing but a name here.
+ *
+ * The pack is yours alone, like the theme: the host deals the cards, but what
+ * the backs look like is decided by whoever is looking at them.
+ */
+const DECKS = [
+  { id: 'classic', name: 'Classic' },
+  { id: 'cosmic', name: 'Cosmic' },
+  { id: 'car', name: 'Cars' },
+  { id: 'food', name: 'Food' },
+  { id: 'sport', name: 'Sport' },
+];
+
 const LOOK_KEY = 'pn.look.v1';
 
 const BG_IMAGE_KEY = 'pn.bgimage.v1';
@@ -354,9 +369,9 @@ async function chooseImage(file) {
 function readLook() {
   try {
     const raw = localStorage.getItem(LOOK_KEY);
-    if (raw) return { theme: 'light', bg: 'felt', custom: null, ...JSON.parse(raw) };
+    if (raw) return { theme: 'light', bg: 'felt', deck: 'classic', custom: null, ...JSON.parse(raw) };
   } catch { /* unreadable storage falls back to the defaults */ }
-  return { theme: 'light', bg: 'felt', custom: null };
+  return { theme: 'light', bg: 'felt', deck: 'classic', custom: null };
 }
 
 function writeLook(look) {
@@ -367,6 +382,10 @@ function writeLook(look) {
 
 function applyLook(look) {
   document.documentElement.dataset.theme = look.theme === 'dark' ? 'dark' : 'light';
+  // An unknown pack — an older choice, or a damaged setting — falls back to
+  // the plain blue rather than leaving the backs unpainted.
+  const deck = DECKS.some((d) => d.id === look.deck) ? look.deck : 'classic';
+  document.documentElement.dataset.deck = deck;
   const preset = BACKGROUNDS.find((b) => b.id === look.bg);
   let css = preset && preset.css;
   if (look.bg === 'custom' && look.custom) css = look.custom;
@@ -388,6 +407,9 @@ function paintSettings() {
   });
   document.querySelectorAll('.swatch').forEach((b) => {
     b.classList.toggle('active', b.dataset.bg === look.bg);
+  });
+  document.querySelectorAll('.deck-opt').forEach((b) => {
+    b.classList.toggle('active', b.dataset.deck === document.documentElement.dataset.deck);
   });
   if (look.custom) $('customBg').value = look.custom;
 
@@ -424,6 +446,20 @@ function initSettings() {
     b.innerHTML = `<span>${bg.name}</span>`;
     b.addEventListener('click', () => updateLook({ bg: bg.id }));
     host.appendChild(b);
+  }
+
+  const deckHost = $('decks');
+  for (const d of DECKS) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    // The pack's own class paints the preview, so each tile shows its real
+    // back rather than a picture of one.
+    b.className = `deck-opt deck-${d.id}`;
+    b.dataset.deck = d.id;
+    b.title = d.name;
+    b.innerHTML = `<span class="card back small"></span><span>${d.name}</span>`;
+    b.addEventListener('click', () => updateLook({ deck: d.id }));
+    deckHost.appendChild(b);
   }
 
   const photo = document.createElement('button');
@@ -1679,6 +1715,9 @@ function paintTableFacts() {
 
   note('Tap the Vault chip to move chips between your vault and the table, '
     + 'either way. Tap another seat to send chips to that player.');
+  note('The gear opens Settings, where you can change the card backs, the '
+    + 'background and the light or dark look. Those are yours alone — nobody '
+    + 'else at the table sees them.');
   if (app.isHost) {
     note('You are hosting, so this tab is the table. Closing it ends the game '
       + 'for everyone.');

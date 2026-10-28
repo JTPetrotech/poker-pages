@@ -270,10 +270,68 @@ input { font: inherit; }
 .card .r { font-size: 20px; }
 .card .s { font-size: 15px; margin-top: -2px; }
 .card.red { color: var(--red); }
+/* The back design comes from whichever pack is chosen in Settings. Each pack
+   is a handful of custom properties, so the same rule paints a real card and
+   the little preview in the settings dialog. */
 .card.back {
-  background:
-    repeating-linear-gradient(45deg, #3f6ea8 0 6px, #335c90 6px 12px);
-  border: 2px solid #fff;
+  background: var(--deck-bg);
+  border: 2px solid var(--deck-edge);
+}
+.card.back::after {
+  content: var(--deck-glyph, "");
+  font-size: 21px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+.card.small.back::after { font-size: 15px; }
+
+/* ---------------------------------------------------------- card packs */
+
+/* Each pack dims its own middle so the motif stays readable over whatever
+   pattern sits behind it. */
+:root, .deck-classic {
+  --deck-bg: repeating-linear-gradient(45deg, #3f6ea8 0 6px, #335c90 6px 12px);
+  --deck-edge: #fff;
+  --deck-glyph: "";
+}
+
+:root[data-deck="cosmic"], .deck-cosmic {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.38) 0 34%, transparent 62%),
+    radial-gradient(1.4px 1.4px at 18% 22%, #fff 50%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 74% 16%, #e7ecff 50%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 32% 78%, #fff 50%, transparent 51%),
+    radial-gradient(1.6px 1.6px at 82% 72%, #ffe6a8 50%, transparent 51%),
+    radial-gradient(1px 1px at 60% 36%, #cbd8ff 50%, transparent 51%),
+    linear-gradient(155deg, #3a1f78 0%, #5a2f9e 44%, #140f36 100%);
+  --deck-edge: #ded3ff;
+  --deck-glyph: "\1FA90";
+}
+
+:root[data-deck="car"], .deck-car {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.5) 0 34%, transparent 64%),
+    conic-gradient(#20252b 0 25%, #eef1f4 0 50%, #20252b 0 75%, #eef1f4 0) 0 0 / 11px 11px;
+  --deck-edge: #d1343f;
+  --deck-glyph: "\1F697";
+}
+
+:root[data-deck="food"], .deck-food {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 248, 236, 0.86) 0 32%, transparent 60%),
+    repeating-linear-gradient(0deg, rgba(206, 58, 58, 0.5) 0 5px, transparent 5px 10px),
+    repeating-linear-gradient(90deg, rgba(206, 58, 58, 0.5) 0 5px, transparent 5px 10px),
+    #fff6ea;
+  --deck-edge: #b5332f;
+  --deck-glyph: "\1F355";
+}
+
+:root[data-deck="sport"], .deck-sport {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.34) 0 34%, transparent 62%),
+    repeating-linear-gradient(90deg, #1f8a4c 0 7px, #1a7742 7px 14px);
+  --deck-edge: #fff;
+  --deck-glyph: "\26BD";
 }
 .card.small { width: 32px; height: 45px; border-radius: 5px; }
 .card.small .r { font-size: 14px; }
@@ -1382,6 +1440,30 @@ input { font: inherit; }
   color: #fff;
   letter-spacing: 0.03em;
 }
+
+.decks { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.deck-note { margin: 0 0 14px; font-size: 11.5px; line-height: 1.5; color: var(--muted); }
+.deck-opt {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 8px 9px 6px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.deck-opt:hover { border-color: #9fb0bd; }
+.deck-opt.active {
+  border-color: var(--chip);
+  color: var(--text);
+  font-weight: 650;
+  box-shadow: 0 0 0 2px rgba(193, 49, 111, 0.22);
+}
+.deck-opt .card { box-shadow: none; cursor: inherit; }
 
 .custom-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
 .custom-row input[type="color"] {
