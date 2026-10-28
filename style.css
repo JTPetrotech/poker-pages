@@ -2279,12 +2279,12 @@ kbd {
   --tok-spin: tok-spin 5s linear infinite;
 }
 
-/* Bucket: the red and white stripes of a chicken bucket. */
+/* Bucket: upright red and white stripes, so it does not read as a pinwheel
+   the way the conic version did next to Candy. */
 .chipskin-bucket {
-  --tok-bg: conic-gradient(#d9342b 0 12.5%, #fff 0 25%, #d9342b 0 37.5%, #fff 0 50%,
-                           #d9342b 0 62.5%, #fff 0 75%, #d9342b 0 87.5%, #fff 0);
-  --tok-edge: #fff;
-  --tok-face: radial-gradient(circle, #f3e3c8 0 40%, transparent 42%);
+  --tok-bg: repeating-linear-gradient(90deg, #d9342b 0 4px, #fff 4px 8px);
+  --tok-edge: #d9342b;
+  --tok-face: radial-gradient(circle, rgba(243, 227, 200, 0.95) 0 34%, transparent 36%);
   --tok-inset: 0;
   --tok-spin: none;
 }
