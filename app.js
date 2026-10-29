@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvtlshay';
-import { TableHost } from './host.js?v=mvtlshay';
-import * as vault from './vault.js?v=mvtlshay';
-import * as friends from './friends.js?v=mvtlshay';
-import * as packs from './decks.js?v=mvtlshay';
-import * as cloud from './cloud.js?v=mvtlshay';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvtlshay';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvtlshay';
+import { HostNet, GuestNet } from './net.js?v=mvtm9gjr';
+import { TableHost } from './host.js?v=mvtm9gjr';
+import * as vault from './vault.js?v=mvtm9gjr';
+import * as friends from './friends.js?v=mvtm9gjr';
+import * as packs from './decks.js?v=mvtm9gjr';
+import * as cloud from './cloud.js?v=mvtm9gjr';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvtm9gjr';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvtm9gjr';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 63;
+const BUILD = 64;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -560,26 +560,17 @@ function byRarity(a, b) {
   return packs.RARITIES.indexOf(a.rarity) - packs.RARITIES.indexOf(b.rarity);
 }
 
-function packEmptyFor(pack, owned) {
-  return packs.packContents(pack.id).every((d) => owned.includes(d.id));
-}
-
 /**
  * Buy one pack. The chips leave the vault first and the skin is drawn
  * second, so a draw can never happen without having been paid for.
  *
- * There are two kinds. A themed pack never hands over something you already
- * have. Limited draws on its own stated odds and can repeat what you own,
- * because 98 in 100 only means 98 in 100 if it is allowed to.
- *
- * Both refuse the sale once there is nothing left they could give you,
- * rather than taking chips they cannot pay out on.
+ * Every pack draws from everything it holds, so it can hand over something
+ * that is already yours. That copy is a spare rather than nothing: the
+ * Collection sells one back for SPARE_PRICE. Limited works the same way, on
+ * its own announced odds, because 98 in 100 only means 98 in 100 if it is
+ * allowed to repeat.
  */
 function buyPack(pack) {
-  const owned = vault.decks();
-  if (packEmptyFor(pack, owned)) {
-    return { ok: false, why: 'You already have every skin in this pack.' };
-  }
   if (vault.balance() < packs.PACK_PRICE) {
     return { ok: false, why: `A pack costs ${fmt(packs.PACK_PRICE)} chips and your vault has ${fmt(vault.balance())}.` };
   }
@@ -587,28 +578,13 @@ function buyPack(pack) {
     return { ok: false, why: 'Those chips are not in your vault any more.' };
   }
   paintVault();
-
-  if (pack.stated) {
-    const rolled = packs.drawStated(pack.id);
-    const already = owned.includes(rolled.id);
-    if (!already) vault.grantDeck(rolled.id);
-    return { ok: true, pulled: rolled, duplicate: already };
-  }
-
-  const pulled = packs.drawFromPack(pack.id, owned);
-  vault.grantDeck(pulled.id);
-  return { ok: true, pulled };
+  const pulled = pack.stated ? packs.drawStated(pack.id) : packs.drawFromPack(pack.id);
+  const fresh = vault.addDeck(pulled.id);
+  return { ok: true, pulled, duplicate: !fresh };
 }
 
-/**
- * Buy the chip pack. Same rules as a themed card pack: the chips leave the
- * vault first, and it never hands over one you already have.
- */
+/** Buy the chip pack. Exactly the same deal, on the other collection. */
 function buyChipPack() {
-  const owned = vault.chipSkins();
-  if (!packs.drawChip(owned, 0)) {
-    return { ok: false, why: 'You already have every chip skin.' };
-  }
   if (vault.balance() < packs.PACK_PRICE) {
     return { ok: false, why: `A pack costs ${fmt(packs.PACK_PRICE)} chips and your vault has ${fmt(vault.balance())}.` };
   }
@@ -616,9 +592,15 @@ function buyChipPack() {
     return { ok: false, why: 'Those chips are not in your vault any more.' };
   }
   paintVault();
-  const pulled = packs.drawChip(owned);
-  vault.grantChip(pulled.id);
-  return { ok: true, pulled };
+  const pulled = packs.drawChip();
+  const fresh = vault.addChip(pulled.id);
+  return { ok: true, pulled, duplicate: !fresh };
+}
+
+/** What the banner says when a pack hands over a copy you already had. */
+function spareLine(name) {
+  return `<strong>${name}</strong> again — a spare. `
+    + `Collection sells it for ${fmt(packs.SPARE_PRICE)}.`;
 }
 
 function chipTile(c, ownedList) {
@@ -649,7 +631,11 @@ function paintChipShop() {
   $('decksChips').textContent = fmt(vault.balance());
 
   const note = $('chipPull');
-  if (lastChip) {
+  note.classList.toggle('lost', !!(lastChip && lastChip.again));
+  if (lastChip && lastChip.again) {
+    note.innerHTML = spareLine(lastChip.name);
+    show(note, true);
+  } else if (lastChip) {
     note.innerHTML = `You pulled <strong>${lastChip.name}</strong> `
       + `<span class="rarity ${lastChip.rarity}">${lastChip.rarity}</span>`;
     show(note, true);
@@ -659,7 +645,6 @@ function paintChipShop() {
 
   const contents = packs.chipPackContents();
   const have = contents.filter((c) => owned.includes(c.id)).length;
-  const done = have === contents.length;
 
   const row = document.createElement('div');
   row.className = 'pack';
@@ -671,8 +656,7 @@ function paintChipShop() {
 
   const buy = document.createElement('button');
   buy.className = 'pack-buy';
-  buy.textContent = done ? 'Complete' : `Open — ${fmt(packs.PACK_PRICE)}`;
-  buy.disabled = done;
+  buy.textContent = `Open — ${fmt(packs.PACK_PRICE)}`;
   buy.addEventListener('click', () => {
     const result = buyChipPack();
     if (!result.ok) {
@@ -681,8 +665,8 @@ function paintChipShop() {
       paintChipShop();
       return;
     }
-    lastChip = result.pulled;
-    wearChip(result.pulled.id);
+    lastChip = { ...result.pulled, again: !!result.duplicate };
+    if (!result.duplicate) wearChip(result.pulled.id);
     paintChipShop();
   });
   head.appendChild(buy);
@@ -749,10 +733,9 @@ function paintDecks() {
   const note = $('decksPull');
   note.classList.toggle('lost', !!(lastPull && lastPull.again));
   if (lastPull && lastPull.again) {
-    // A repeat is a real outcome of a stated-odds pack, so it says so rather
-    // than quietly looking like a win.
-    note.innerHTML = `<strong>${lastPull.name}</strong> again — you already `
-      + `have it. ${Math.round((lastPull.odds || 0) * 100)} opens in 100 are.`;
+    // A repeat is a real outcome, and it is worth something, so it says what
+    // rather than quietly looking like a win or like nothing at all.
+    note.innerHTML = spareLine(lastPull.name);
     show(note, true);
   } else if (lastPull) {
     note.innerHTML = `You pulled <strong>${lastPull.name}</strong> `
@@ -777,7 +760,6 @@ function paintDecks() {
 
   for (const pack of packs.PACKS) {
     const contents = packs.packContents(pack.id);
-    const done = packEmptyFor(pack, owned);
 
     const row = document.createElement('div');
     row.className = `pack${pack.stated ? ' gamble' : ''}`;
@@ -793,8 +775,7 @@ function paintDecks() {
 
     const buy = document.createElement('button');
     buy.className = 'pack-buy';
-    buy.textContent = done ? 'Complete' : `Open — ${fmt(packs.PACK_PRICE)}`;
-    buy.disabled = done;
+    buy.textContent = `Open — ${fmt(packs.PACK_PRICE)}`;
     buy.addEventListener('click', () => {
       const result = buyPack(pack);
       if (!result.ok) {
@@ -849,20 +830,57 @@ function ownedTile(item, kind, worn) {
     + ` rar-${item.rarity}`;
   b.classList.toggle('active', item.id === worn);
   b.classList.toggle('picked', !!ownedPick && ownedPick.kind === kind && ownedPick.id === item.id);
-  b.title = `${item.name} — ${item.rarity}. Double-click to wear it.`;
-  b.innerHTML = `${face}<span>${item.name}</span>`;
+  const spare = vault.spareCount(kind, item.id);
+  b.title = spare
+    ? `${item.name} — ${item.rarity}, and ${spare} spare. Double-click to wear it.`
+    : `${item.name} — ${item.rarity}. Double-click to wear it.`;
+  b.innerHTML = `${face}<span>${item.name}`
+    + `${spare ? `<span class="spare-tag">+${spare}</span>` : ''}</span>`;
 
-  b.addEventListener('click', () => {
-    ownedPick = { kind, id: item.id, name: item.name, rarity: item.rarity };
+  const pick = (extra) => {
+    ownedPick = { kind, id: item.id, name: item.name, rarity: item.rarity, ...extra };
     paintOwned();
-  });
+  };
+  b.addEventListener('click', () => pick({}));
   b.addEventListener('dblclick', () => {
     if (kind === 'deck') wearDeck(item.id);
     else wearChip(item.id);
-    ownedPick = { kind, id: item.id, name: item.name, rarity: item.rarity, justWorn: true };
-    paintOwned();
+    pick({ justWorn: true });
   });
   return b;
+}
+
+/**
+ * The sell buttons under a picked skin.
+ *
+ * Only spares are ever on offer. The copy in your collection is not for
+ * sale, so nothing you tap in here can cost you a skin.
+ */
+function sellRow(host) {
+  const spare = vault.spareCount(ownedPick.kind, ownedPick.id);
+  if (!spare) return;
+
+  const row = document.createElement('span');
+  row.className = 'sell-row';
+
+  const sell = (howMany, label) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'sell-btn';
+    b.textContent = label;
+    b.addEventListener('click', () => {
+      const done = vault.sellSpares(ownedPick.kind, ownedPick.id, howMany);
+      if (!done) return;
+      paintVault();
+      ownedPick = { ...ownedPick, justWorn: false, sold: done };
+      paintOwned();
+    });
+    row.appendChild(b);
+  };
+
+  sell(1, `Sell one — ${fmt(packs.SPARE_PRICE)}`);
+  if (spare > 1) sell(spare, `Sell all ${spare} — ${fmt(spare * packs.SPARE_PRICE)}`);
+  host.appendChild(row);
 }
 
 function ownedSection(host, title, items, kind, worn, total) {
@@ -896,11 +914,20 @@ function paintOwned() {
 
   const note = $('ownedPick');
   if (ownedPick) {
-    note.innerHTML = ownedPick.justWorn
-      ? `Wearing <strong>${ownedPick.name}</strong>.`
-      : `<strong>${ownedPick.name}</strong> `
-        + `<span class="rarity ${ownedPick.rarity}">${ownedPick.rarity}</span>`
-        + ' — double-click it to wear it.';
+    const spare = vault.spareCount(ownedPick.kind, ownedPick.id);
+    const tail = spare
+      ? ` — ${spare} spare${spare === 1 ? '' : 's'}.`
+      : ' — double-click it to wear it.';
+    if (ownedPick.sold) {
+      note.innerHTML = `Sold ${ownedPick.sold.sold} `
+        + `<strong>${ownedPick.name}</strong> for ${fmt(ownedPick.sold.paid)}.`;
+    } else if (ownedPick.justWorn) {
+      note.innerHTML = `Wearing <strong>${ownedPick.name}</strong>.`;
+    } else {
+      note.innerHTML = `<strong>${ownedPick.name}</strong> `
+        + `<span class="rarity ${ownedPick.rarity}">${ownedPick.rarity}</span>${tail}`;
+    }
+    sellRow(note);
     show(note, true);
   } else {
     show(note, false);
@@ -913,6 +940,16 @@ function paintOwned() {
   const myChips = vault.chipSkins();
   const chips = packs.CHIP_SKINS.filter((c) => c.id === packs.FREE_CHIP || myChips.includes(c.id));
   ownedSection(host, 'Chip skins', chips, 'chip', myChip(), packs.CHIP_SKINS.length);
+
+  const spare = vault.spareTotal();
+  const foot = $('ownedFoot');
+  if (foot) {
+    foot.textContent = spare
+      ? `${spare} spare cop${spare === 1 ? 'y' : 'ies'} in hand, worth `
+        + `${fmt(spare * packs.SPARE_PRICE)}. Tap a skin marked with a + to sell one.`
+      : 'Only what is yours is here. The Shop is where the rest of it is. '
+        + `A pack that repeats itself leaves a spare, and a spare sells for ${fmt(packs.SPARE_PRICE)}.`;
+  }
 }
 
 function openOwned() {
@@ -2388,14 +2425,15 @@ function paintTableFacts() {
   note('Tap the Vault chip to move chips between your vault and the table, '
     + 'either way. Tap another seat to send chips to that player.');
   note(`Shop sells card skins. A pack costs ${fmt(packs.PACK_PRICE)} chips `
-    + 'and always gives you one you do not already have. Everyone at the table '
-    + 'sees the skin you are wearing.');
-  note('Every pack holds an ultra rare at roughly 1 in 300 and a milk skin '
-    + 'rarer still, at a flat 1 in 1,000. The chip pack works the same way, '
+    + 'and draws from everything in it, so it can repeat one that is already '
+    + `yours. That copy is a spare, and Collection sells one for ${fmt(packs.SPARE_PRICE)}. `
+    + 'Everyone at the table sees the skin you are wearing.');
+  note('Every pack holds an ultra rare at roughly 1 in 190 and a milk skin '
+    + 'rarer still, at a flat 1 in 250. The chip pack works the same way, '
     + 'and your chip travels to the other players just as your cards do.');
-  note('Limited is the exception: it draws on fixed odds and does not skip '
-    + 'what you already own, so most opens repeat. The Chips tab is a '
-    + 'separate thing — a coin flip on your own chips, double or lose it.');
+  note('Limited is the exception: it runs on announced odds rather than '
+    + 'weights, and 98 opens in 100 are Bad. The Chips tab is a separate '
+    + 'thing — a coin flip on your own chips, double or lose it.');
   note('The gear opens Settings, for the background and the light or dark '
     + 'look. Those two are yours alone — nobody else sees them.');
   if (app.isHost) {

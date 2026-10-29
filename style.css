@@ -2303,7 +2303,7 @@ kbd {
   --tok-spin: tok-spin 6s linear infinite;
 }
 
-/* Milk: the top tier. Every pack holds one at a flat 1 in 1,000, which is
+/* Milk: the top tier. Every pack holds one at a flat 1 in 250, which is
    rarer than the ultra rare drawn out of what is left. */
 .rarity.milk {
   background: linear-gradient(90deg, #ffffff, #e6edf8);
@@ -2777,3 +2777,31 @@ kbd {
   --tok-inset: -1px;
   --tok-spin: tok-spin 9s linear infinite;
 }
+
+/* ------------------------------------------------------------- spares */
+
+/* How many spare copies of a skin are in hand, on its collection tile. */
+.spare-tag {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 4px;
+  border-radius: 7px;
+  background: var(--chip);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  vertical-align: 1px;
+}
+
+.sell-row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.sell-btn {
+  border: 1px solid var(--green);
+  background: #fff;
+  color: var(--green);
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sell-btn:hover { background: var(--green); color: #fff; }

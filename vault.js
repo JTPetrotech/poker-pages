@@ -7,7 +7,7 @@
  * you cash out.
  */
 
-import { DECK_IDS, CHIP_IDS } from './decks.js?v=mvtlshay';
+import { DECK_IDS, CHIP_IDS, SPARE_PRICE } from './decks.js?v=mvtm9gjr';
 
 const KEY = 'pn.profile.v1';
 
@@ -36,8 +36,18 @@ const BLANK = {
   // Chip skins, in a list of their own so neither kind can shift the
   // other's place in a backup code. Pink is free and never listed.
   chipSkins: [],
+  // Spare copies: how many extra of each skin a pack has handed over since
+  // the first one. These are what the shop buys back. They are kept apart
+  // from the collections above because a backup code carries one bit per
+  // skin and has no room for a count — and a spare is for selling here
+  // rather than for moving to another device.
+  deckSpares: {},
+  chipSpares: {},
   created: null,
 };
+
+/** Past this a count is meaningless, and it keeps the arithmetic small. */
+const MAX_SPARES = 99_999;
 
 let cache = null;
 let remote = null;        // { uid, save(profile) } once signed in
@@ -51,6 +61,17 @@ function tidyIds(list, allowed) {
 
 const tidyDecks = (list) => tidyIds(list, DECK_IDS);
 
+/** Keep only real ids with a real count — storage is editable by hand. */
+function tidySpares(map, allowed) {
+  const out = {};
+  if (!map || typeof map !== 'object') return out;
+  for (const [id, raw] of Object.entries(map)) {
+    const count = Math.floor(Number(raw));
+    if (allowed.includes(id) && count > 0) out[id] = Math.min(MAX_SPARES, count);
+  }
+  return out;
+}
+
 function readStored() {
   try {
     const raw = localStorage.getItem(storageKey);
@@ -61,6 +82,8 @@ function readStored() {
     profile.vault = Math.min(MAX_VAULT, Math.max(0, Math.floor(Number(profile.vault) || 0)));
     profile.decks = tidyDecks(profile.decks);
     profile.chipSkins = tidyIds(profile.chipSkins, CHIP_IDS);
+    profile.deckSpares = tidySpares(profile.deckSpares, DECK_IDS);
+    profile.chipSpares = tidySpares(profile.chipSpares, CHIP_IDS);
     return profile;
   } catch {
     return { ...BLANK, created: Date.now() };
@@ -177,6 +200,79 @@ export function grantDeck(id) {
   p.decks = [...p.decks, id];
   write(p);
   return true;
+}
+
+// ---------------------------------------------------------------- spares
+
+const SPARE_KEY = { deck: 'deckSpares', chip: 'chipSpares' };
+
+/** Every spare of one kind, as { id: count }. */
+export function spares(kind) {
+  return { ...read()[SPARE_KEY[kind]] };
+}
+
+export function spareCount(kind, id) {
+  return read()[SPARE_KEY[kind]][id] || 0;
+}
+
+/** Spare copies in hand, both kinds together. */
+export function spareTotal() {
+  const p = read();
+  const sum = (map) => Object.values(map).reduce((a, b) => a + b, 0);
+  return sum(p.deckSpares) + sum(p.chipSpares);
+}
+
+/**
+ * Take delivery of a skin a pack just handed over.
+ *
+ * The first copy joins the collection; every one after it is a spare. The
+ * return value says which happened, so the shop can tell you whether it has
+ * given you something new or something to sell.
+ */
+function take(kind, id, catalogue, listKey) {
+  if (!catalogue.includes(id)) return false;
+  const p = read();
+  if (!p[listKey].includes(id)) {
+    p[listKey] = [...p[listKey], id];
+    write(p);
+    return true;
+  }
+  const key = SPARE_KEY[kind];
+  p[key] = { ...p[key], [id]: Math.min(MAX_SPARES, (p[key][id] || 0) + 1) };
+  write(p);
+  return false;
+}
+
+/** Returns true when it was new, false when it became a spare. */
+export function addDeck(id) {
+  return take('deck', id, DECK_IDS, 'decks');
+}
+
+export function addChip(id) {
+  return take('chip', id, CHIP_IDS, 'chipSkins');
+}
+
+/**
+ * Sell spare copies back to the shop.
+ *
+ * Only spares are ever sold: the copy that is in your collection stays
+ * there, so no tap can cost you a skin. Returns what was sold and the new
+ * balance, or null when there was no spare to sell.
+ */
+export function sellSpares(kind, id, howMany = 1) {
+  const key = SPARE_KEY[kind];
+  if (!key) return null;
+  const p = read();
+  const have = p[key][id] || 0;
+  const sold = Math.min(have, Math.max(0, Math.floor(howMany)));
+  if (sold <= 0) return null;
+  const next = { ...p[key] };
+  if (sold === have) delete next[id];
+  else next[id] = have - sold;
+  p[key] = next;
+  p.vault = Math.min(MAX_VAULT, p.vault + sold * SPARE_PRICE);
+  write(p);
+  return { sold, paid: sold * SPARE_PRICE, balance: p.vault };
 }
 
 /** How often a chip flip comes up heads. A fair coin, by design. */

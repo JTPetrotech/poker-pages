@@ -13,6 +13,15 @@
 
 export const PACK_PRICE = 5000;
 
+/**
+ * What the shop pays for a spare.
+ *
+ * A pack can hand you something you already have, and the second copy and
+ * every one after it is a spare rather than nothing. Twenty of them buy a
+ * pack, so an open is never entirely wasted even when it repeats.
+ */
+export const SPARE_PRICE = 250;
+
 export const PACKS = [
   { id: 'cosmic', name: 'Cosmic', blurb: 'Deep space.' },
   { id: 'car', name: 'Cars', blurb: 'Things that go.' },
@@ -26,11 +35,11 @@ export const PACKS = [
     id: 'limited',
     name: 'Limited',
     stated: true,
-    blurb: 'Fixed odds, and they are harsh. 98 opens in 100 are Bad. Milk and '
-      + 'the Supra are 1 in 100 each, and this pack does not skip what you '
-      + 'already own — so once you have Bad, and you will almost at once, '
-      + 'those 98 opens give you a duplicate and nothing else. Reckon on '
-      + 'around 250,000 chips before either rare one turns up.',
+    blurb: 'Fixed odds, and they are harsh. 98 opens in 100 are Bad, and Milk '
+      + 'and the Supra are 1 in 100 each — announced numbers rather than the '
+      + 'weights the themed packs use, which is what makes this one its own '
+      + 'thing. Reckon on around 250,000 chips before either rare one turns '
+      + 'up, and on a pile of spare Bads to sell along the way.',
   },
 ];
 
@@ -121,9 +130,10 @@ export const DECKS = [
 /**
  * Shown on the tiles, rarest last.
  *
- * Milk is the top tier: one open in a thousand, against roughly one in three
- * hundred for an ultra rare. The order here is what the tiles are sorted by,
- * so it has to match the real chances rather than the other way about.
+ * Milk is the top tier: one open in two hundred and fifty, against roughly
+ * one in a hundred and ninety for an ultra rare. The order here is what the
+ * tiles are sorted by, so it has to match the real chances rather than the
+ * other way about.
  *
  * Limited is the exception, as it is to everything else: its three carry
  * their own announced odds and Milk is one in a hundred there.
@@ -144,7 +154,7 @@ export const CHIP_PACK = {
   blurb: 'What your chips look like, on your bets and on every other screen '
     + 'at the table. Most of them move; every one of them holds still for '
     + 'anyone whose device asks for less motion. Eclipse is the ultra rare at '
-    + 'about 1 in 300, and Cream is the milk tier above it, at 1 in 1,000.',
+    + 'about 1 in 190, and Cream is the milk tier above it, at 1 in 250.',
 };
 
 export const CHIP_SKINS = [
@@ -216,9 +226,9 @@ export function chipPackContents() {
   return CHIP_SKINS.filter((c) => c.id !== FREE_CHIP && !c.claim);
 }
 
-/** Draw a chip skin you do not have, the way a themed pack does. */
-export function drawChip(owned, roll = Math.random()) {
-  return drawWithMilk(chipPackContents().filter((c) => !owned.includes(c.id)), roll);
+/** Draw a chip skin, the way a themed pack does. */
+export function drawChip(roll = Math.random()) {
+  return drawWithMilk(chipPackContents(), roll);
 }
 
 /**
@@ -265,34 +275,34 @@ export function safeDeck(id) {
 /**
  * How often each rarity comes up.
  *
- * A themed pack never hands over a design you already have, so these decide
- * the order you collect a pack in rather than whether a purchase is wasted.
- * Skewed hard towards the commons: an ultra rare is about one open in three
- * hundred, where it used to be one in ninety-four, so it is now very nearly
- * always the last thing a pack gives up.
+ * A pack draws from everything it holds, whether or not you have it already,
+ * so these are the real chances of every open rather than an ordering.
+ * Skewed hard towards the commons: an ultra rare is about one open in a
+ * hundred and ninety, twice as hard as the one in ninety-four it started at.
+ * It cannot go further without passing the milk skin above it, which is a
+ * flat one in two hundred and fifty.
  */
 // Milk is taken off the top by MILK_CHANCE and never reaches these weights,
 // but one is kept here so a pool that somehow holds a milk skin still draws.
-const WEIGHT = { common: 40, rare: 10, legendary: 3, ultra: 0.3, milk: 0.3 };
+const WEIGHT = { common: 40, rare: 10, legendary: 3, ultra: 0.5, milk: 0.5 };
 
 /**
  * The chance of the milk tier, per open, in every pack and in the chip pack.
  *
- * A flat one in a thousand rather than a weight, so it means the same thing
- * whether the pack is full or nearly finished. Everything else shares the
- * remainder by weight, which is where the ultra rare comes from at about one
- * in three hundred — so milk is the rarest thing in any pack, which is what
- * the tier is for. Limited keeps its own announced odds and is untouched.
+ * A flat one in two hundred and fifty rather than a weight, so it means the
+ * same thing on every open. Everything else shares the remainder by weight,
+ * which is where the ultra rare comes from at about one in a hundred and
+ * ninety — so milk stays the rarest thing in any pack, which is what the
+ * tier is for. Limited keeps its own announced odds and is untouched.
  */
-export const MILK_CHANCE = 0.001;
+export const MILK_CHANCE = 0.004;
 
 /**
  * Draw from a pool where the milk tier gets its flat chance off the top.
  *
  * `roll` is rescaled rather than re-rolled, so one number still decides the
  * whole draw and the odds can be checked exactly. A pool with no milk skin
- * left in it, because you already pulled it, hands the whole hundred back to
- * the rest, so chips are never spent on nothing.
+ * in it at all gives the whole chance back to the rest.
  */
 function drawWithMilk(pool, roll) {
   if (!pool.length) return null;
@@ -308,12 +318,13 @@ function drawWithMilk(pool, roll) {
 /**
  * Pull one design out of a pack.
  *
- * `owned` is what you already have, and `roll` is a number in [0, 1) so the
- * draw can be tested without hoping a random one goes the right way. Returns
- * null when the pack holds nothing new.
+ * Every open draws from the whole pack, so it can hand you something you
+ * already have — that copy becomes a spare the shop will buy back. `roll` is
+ * a number in [0, 1) so a draw can be tested without hoping a random one
+ * goes the right way.
  */
-export function drawFromPack(packId, owned, roll = Math.random()) {
-  return drawWithMilk(packContents(packId).filter((d) => !owned.includes(d.id)), roll);
+export function drawFromPack(packId, roll = Math.random()) {
+  return drawWithMilk(packContents(packId), roll);
 }
 
 /** Weighted choice from a pool that is already known to be non-empty. */

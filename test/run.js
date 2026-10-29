@@ -1163,24 +1163,23 @@ test('the same person under different capitals is one entry', () => {
 
 // ------------------------------------------------------------------ card packs
 
-test('a pack only ever hands over something you do not have', () => {
-  const all = packs.packContents('cosmic').map((d) => d.id);
-  // Draw the whole pack, one at a time, always taking what comes back.
-  const owned = [];
-  for (let i = 0; i < all.length; i++) {
-    const pulled = packs.drawFromPack('cosmic', owned, i / all.length);
-    assert(pulled, 'the pack still had something in it');
-    assert(!owned.includes(pulled.id), 'never a repeat');
-    owned.push(pulled.id);
+test('a pack draws from everything it holds, over and over', () => {
+  // It never runs dry and never refuses: a repeat is a real outcome, and
+  // what makes it worth buying is that the repeat sells.
+  const seen = {};
+  for (let i = 0; i < 200; i++) {
+    const pulled = packs.drawFromPack('cosmic', i / 200);
+    assert(pulled, 'the pack always has something');
+    seen[pulled.id] = (seen[pulled.id] || 0) + 1;
   }
-  eq(owned.length, all.length, 'the pack empties exactly');
-  eq(packs.drawFromPack('cosmic', owned, 0.5), null, 'and then gives nothing');
+  const repeated = Object.values(seen).filter((n) => n > 1);
+  assert(repeated.length, 'and it repeats itself');
 });
 
 test('a draw stays inside its own pack', () => {
   for (const pack of packs.PACKS) {
     for (const roll of [0, 0.25, 0.5, 0.75, 0.999]) {
-      const pulled = packs.drawFromPack(pack.id, [], roll);
+      const pulled = packs.drawFromPack(pack.id, roll);
       eq(pulled.pack, pack.id, `${pack.id} at ${roll}`);
     }
   }
@@ -1304,7 +1303,7 @@ test('an ultra rare tends to come last out of its pack', () => {
   // first pull by a wide margin — that is the whole point of the tier.
   const counts = {};
   for (let i = 0; i < 1000; i++) {
-    const first = packs.drawFromPack('cosmic', [], i / 1000);
+    const first = packs.drawFromPack('cosmic', i / 1000);
     counts[first.rarity] = (counts[first.rarity] || 0) + 1;
   }
   assert(counts.ultra > 0, 'but it is still reachable');
@@ -1449,17 +1448,13 @@ test('betting the lot is allowed, and losing it empties the vault', () => {
 
 // ------------------------------------------------------------------ chip skins
 
-test('the chip pack never hands over one you have', () => {
-  const all = packs.chipPackContents().map((c) => c.id);
-  const owned = [];
-  for (let i = 0; i < all.length; i++) {
-    const got = packs.drawChip(owned, i / all.length);
-    assert(got, 'the pack still had something');
-    assert(!owned.includes(got.id), 'never a repeat');
-    owned.push(got.id);
+test('the chip pack draws from everything it sells, over and over', () => {
+  const sold = new Set(packs.chipPackContents().map((c) => c.id));
+  for (let i = 0; i < 200; i++) {
+    const got = packs.drawChip(i / 200);
+    assert(got, 'the pack always has something');
+    assert(sold.has(got.id), `${got.id} is one it sells`);
   }
-  eq(owned.length, all.length);
-  eq(packs.drawChip(owned, 0.5), null, 'and then nothing');
 });
 
 test('Pink is free and never sold', () => {
@@ -1544,13 +1539,10 @@ test('a claim-only skin is in no pack at any price', () => {
       eq(packs.chipById(id).claim, true, `${id} is marked claim-only`);
     }
   }
-  // Drawing the whole pack must never turn one up either.
-  const owned = [];
-  for (;;) {
-    const got = packs.drawChip(owned, Math.random());
-    if (!got) break;
+  // Nor does the pack ever turn one up, however long it is opened for.
+  for (let i = 0; i < 2000; i++) {
+    const got = packs.drawChip(Math.random());
     assert(!got.claim, `the pack gave up ${got.id}`);
-    owned.push(got.id);
   }
 });
 
@@ -1600,29 +1592,21 @@ test('every themed pack sells exactly one milk skin', () => {
   eq(chipMilk[0].id, 'cream');
 });
 
-test('the milk tier is a flat one in a thousand, full pack or nearly empty', () => {
-  eq(packs.MILK_CHANCE, 0.001);
-  // Over a thousand evenly spread rolls of a fresh pack, exactly one is milk.
+test('the milk tier is a flat one in two hundred and fifty', () => {
+  eq(packs.MILK_CHANCE, 0.004);
+  // Over a thousand evenly spread rolls, exactly four are milk.
   let milk = 0;
   for (let i = 0; i < 1000; i++) {
-    if (packs.drawFromPack('cosmic', [], i / 1000).rarity === 'milk') milk++;
+    if (packs.drawFromPack('cosmic', i / 1000).rarity === 'milk') milk++;
   }
-  eq(milk, 1, 'one open in a thousand');
-
-  // The same with only two left, so the chance does not drift as a pack fills.
-  const nearlyDone = ['planet', 'nebula', 'comet', 'rocket'];
-  milk = 0;
-  for (let i = 0; i < 1000; i++) {
-    if (packs.drawFromPack('cosmic', nearlyDone, i / 1000).rarity === 'milk') milk++;
-  }
-  eq(milk, 1, 'still one in a thousand');
+  eq(milk, 4, 'four opens in a thousand');
 
   // And the chip pack works the same way.
   milk = 0;
   for (let i = 0; i < 1000; i++) {
-    if (packs.drawChip([], i / 1000).rarity === 'milk') milk++;
+    if (packs.drawChip(i / 1000).rarity === 'milk') milk++;
   }
-  eq(milk, 1, 'the chip pack too');
+  eq(milk, 4, 'the chip pack too');
 });
 
 test('the milk skin is rarer than the ultra rare beside it', () => {
@@ -1631,24 +1615,87 @@ test('the milk skin is rarer than the ultra rare beside it', () => {
   let ultra = 0;
   let milk = 0;
   for (let i = 0; i < 10_000; i++) {
-    const r = packs.drawFromPack('cosmic', [], i / 10_000).rarity;
+    const r = packs.drawFromPack('cosmic', i / 10_000).rarity;
     if (r === 'ultra') ultra++;
     if (r === 'milk') milk++;
   }
-  eq(milk, 10, 'milk is 1 in 1,000');
+  eq(milk, 40, 'milk is 1 in 250');
   assert(ultra > milk, `ultra ${ultra} must be commoner than milk ${milk}`);
-  // And the ultra is still harder than it was: it used to be one open in 94.
+  // And the ultra is still harder than it was: it used to be one open in 94,
+  // and it cannot go much past this without overtaking the milk skin.
   assert(ultra < 10_000 / 94, `${ultra} in 10,000 is harder than 1 in 94`);
 });
 
-test('the last milk skin that was pulled is not offered again', () => {
-  // Once the milk skin is yours its hundredth goes back to the rest, rather
-  // than one open in a hundred buying you nothing.
-  const owned = ['milkyway'];
-  for (let i = 0; i < 100; i++) {
-    const got = packs.drawFromPack('cosmic', owned, i / 100);
-    assert(got.rarity !== 'milk', `roll ${i} gave ${got.id}`);
-  }
+// ---------------------------------------------------------------- spares
+
+test('a second copy is a spare, and the collection is not doubled', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  eq(vault.addDeck('rocket'), true, 'the first one is new');
+  eq(vault.addDeck('rocket'), false, 'the second is a spare');
+  eq(vault.addDeck('rocket'), false, 'and so is the third');
+  eq(vault.decks().join(), 'rocket', 'owned once, however many turn up');
+  eq(vault.spareCount('deck', 'rocket'), 2, 'two spares in hand');
+  eq(vault.spareCount('deck', 'galaxy'), 0, 'and none of anything else');
+});
+
+test('chip spares are counted apart from card spares', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  vault.addDeck('rocket');
+  vault.addDeck('rocket');
+  vault.addChip('prism');
+  vault.addChip('prism');
+  vault.addChip('prism');
+  eq(vault.spareCount('deck', 'rocket'), 1);
+  eq(vault.spareCount('chip', 'prism'), 2);
+  eq(vault.spareTotal(), 3, 'three spare copies between them');
+});
+
+test('a spare sells for its price, and the skin itself never does', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  const start = vault.balance();
+  vault.addDeck('rocket');
+  vault.addDeck('rocket');
+
+  const sale = vault.sellSpares('deck', 'rocket');
+  eq(sale.sold, 1);
+  eq(sale.paid, packs.SPARE_PRICE);
+  eq(vault.balance(), start + packs.SPARE_PRICE, 'the chips arrived');
+  eq(vault.spareCount('deck', 'rocket'), 0, 'the spare is gone');
+
+  eq(vault.sellSpares('deck', 'rocket'), null, 'and there is nothing left to sell');
+  assert(vault.ownsDeck('rocket'), 'the skin is still yours');
+  eq(vault.balance(), start + packs.SPARE_PRICE, 'and nothing moved on the refusal');
+});
+
+test('selling several spares at once pays for all of them', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  const start = vault.balance();
+  for (let i = 0; i < 6; i++) vault.addChip('prism');   // one real, five spare
+  eq(vault.spareCount('chip', 'prism'), 5);
+
+  const sale = vault.sellSpares('chip', 'prism', 99);
+  eq(sale.sold, 5, 'it sells what is there and no more');
+  eq(sale.paid, 5 * packs.SPARE_PRICE);
+  eq(vault.balance(), start + 5 * packs.SPARE_PRICE);
+  assert(vault.ownsChip('prism'), 'and the skin stays');
+});
+
+test('a spare of something that is not a skin cannot be made or sold', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  eq(vault.addDeck('not-a-deck'), false);
+  eq(vault.spareCount('deck', 'not-a-deck'), 0);
+  eq(vault.sellSpares('deck', 'not-a-deck'), null);
+  eq(vault.sellSpares('nonsense', 'rocket'), null);
+});
+
+test('twenty spares buy a pack', () => {
+  eq(packs.SPARE_PRICE, 250);
+  eq(packs.PACK_PRICE / packs.SPARE_PRICE, 20);
 });
 
 test('there is no Milk chip, and the code is about cards alone', () => {
