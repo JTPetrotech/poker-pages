@@ -33,6 +33,8 @@ export const PACKS = [
   { id: 'mythic', name: 'Mythic', blurb: 'Old stories.' },
   { id: 'casino', name: 'Casino', blurb: 'The room itself.' },
   { id: 'music', name: 'Music', blurb: 'Turn it up.' },
+  { id: 'wild', name: 'Wild', blurb: 'Things with their own ideas.' },
+  { id: 'pirate', name: 'Pirate', blurb: 'Below the waterline.' },
   {
     id: 'limited',
     name: 'Limited',
@@ -143,6 +145,20 @@ export const DECKS = [
   { id: 'guitar', name: 'Guitar', pack: 'music', rarity: 'legendary' },
   { id: 'encore', name: 'Encore', pack: 'music', rarity: 'ultra' },
   { id: 'milkvinyl', name: 'Milk Mix', pack: 'music', rarity: 'milk' },
+
+  { id: 'paw', name: 'Paw', pack: 'wild', rarity: 'common' },
+  { id: 'feather', name: 'Feather', pack: 'wild', rarity: 'common' },
+  { id: 'fox', name: 'Fox', pack: 'wild', rarity: 'rare' },
+  { id: 'wolf', name: 'Wolf', pack: 'wild', rarity: 'legendary' },
+  { id: 'peacock', name: 'Plume', pack: 'wild', rarity: 'ultra' },
+  { id: 'milkswan', name: 'Milk Swan', pack: 'wild', rarity: 'milk' },
+
+  { id: 'compass', name: 'Compass', pack: 'pirate', rarity: 'common' },
+  { id: 'anchor', name: 'Anchor', pack: 'pirate', rarity: 'common' },
+  { id: 'skull', name: 'Jolly Roger', pack: 'pirate', rarity: 'rare' },
+  { id: 'galleon', name: 'Galleon', pack: 'pirate', rarity: 'legendary' },
+  { id: 'kraken', name: 'Kraken', pack: 'pirate', rarity: 'ultra' },
+  { id: 'milkkey', name: 'Milk Key', pack: 'pirate', rarity: 'milk' },
 ];
 
 /**
@@ -219,6 +235,16 @@ export const CHIP_SKINS = [
   { id: 'tiger', name: 'Tiger', rarity: 'legendary' },
   { id: 'quasar', name: 'Quasar', rarity: 'ultra' },
   { id: 'mirror', name: 'Mirror', rarity: 'ultra' },
+  { id: 'rust', name: 'Rust', rarity: 'common' },
+  { id: 'linen', name: 'Linen', rarity: 'common' },
+  { id: 'bronze', name: 'Bronze', rarity: 'common' },
+  { id: 'slate', name: 'Slate', rarity: 'common' },
+  { id: 'coral', name: 'Coral', rarity: 'rare' },
+  { id: 'amber', name: 'Amber', rarity: 'rare' },
+  { id: 'venom', name: 'Venom', rarity: 'legendary' },
+  { id: 'solar', name: 'Solar', rarity: 'legendary' },
+  { id: 'horizon', name: 'Horizon', rarity: 'ultra' },
+  { id: 'aurora', name: 'Aurora', rarity: 'ultra' },
 ];
 
 /**

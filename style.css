@@ -3012,3 +3012,205 @@ kbd {
   --tok-inset: 0;
   --tok-spin: tok-spin 5.5s linear infinite;
 }
+
+/* ---------------------------------------------------------------- wild */
+
+.deck-paw {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.36) 0 32%, transparent 60%),
+    radial-gradient(circle at 24% 26%, rgba(120, 86, 56, 0.4) 0 12%, transparent 14%),
+    radial-gradient(circle at 76% 72%, rgba(120, 86, 56, 0.4) 0 12%, transparent 14%),
+    linear-gradient(165deg, #c9a271 0%, #8a6038 100%);
+  --deck-edge: #3f2a16;
+  --deck-glyph: "\1F43E";
+}
+.deck-feather {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(246, 250, 252, 0.88) 0 32%, transparent 60%),
+    repeating-linear-gradient(72deg, rgba(90, 140, 160, 0.3) 0 1px, transparent 1px 6px),
+    linear-gradient(165deg, #dff0f4 0%, #a8cdd8 100%);
+  --deck-edge: #5f8e9c;
+  --deck-glyph: "\1FAB6";
+}
+.deck-fox {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.38) 0 32%, transparent 60%),
+    radial-gradient(80% 50% at 50% 100%, rgba(255, 244, 232, 0.5), transparent 68%),
+    linear-gradient(165deg, #e2702a 0%, #8f3410 100%);
+  --deck-edge: #ffd0a8;
+  --deck-glyph: "\1F98A";
+}
+.deck-wolf {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.46) 0 32%, transparent 60%),
+    radial-gradient(circle at 76% 20%, rgba(236, 244, 255, 0.85) 0 9%, transparent 11%),
+    linear-gradient(170deg, #4a5566 0%, #1b2330 100%);
+  --deck-edge: #cdd8e6;
+  --deck-glyph: "\1F43A";
+}
+.deck-peacock {
+  --deck-bg: url("backs/peacock.png") center / cover no-repeat;
+  --deck-edge: #3fd09a;
+  --deck-glyph: "";
+}
+.deck-milkswan {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92) 0 30%, transparent 58%),
+    radial-gradient(110% 55% at 26% 96%, rgba(130, 170, 215, 0.4), transparent 72%),
+    linear-gradient(160deg, #ffffff 0%, #e2ebf6 100%);
+  --deck-edge: #a9c2de;
+  --deck-glyph: "\1F9A2";
+}
+
+/* -------------------------------------------------------------- pirate */
+
+.deck-compass {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 248, 226, 0.84) 0 32%, transparent 60%),
+    repeating-linear-gradient(45deg, rgba(150, 112, 60, 0.16) 0 1px, transparent 1px 10px),
+    repeating-linear-gradient(-45deg, rgba(150, 112, 60, 0.16) 0 1px, transparent 1px 10px),
+    linear-gradient(165deg, #eedfb6 0%, #c8a670 100%);
+  --deck-edge: #7a5a28;
+  --deck-glyph: "\1F9ED";
+}
+.deck-anchor {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.4) 0 32%, transparent 60%),
+    repeating-linear-gradient(0deg, rgba(190, 220, 240, 0.14) 0 2px, transparent 2px 9px),
+    linear-gradient(170deg, #27516e 0%, #0f2639 100%);
+  --deck-edge: #bcd9ec;
+  --deck-glyph: "\2693";
+}
+.deck-skull {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.52) 0 32%, transparent 60%),
+    linear-gradient(170deg, #22242b 0%, #0a0b0f 100%);
+  --deck-edge: #f2efe6;
+  --deck-glyph: "\1F480";
+}
+.deck-galleon {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.4) 0 32%, transparent 60%),
+    radial-gradient(circle at 74% 18%, rgba(255, 228, 160, 0.7) 0 8%, transparent 10%),
+    linear-gradient(170deg, #5b3a1c 0%, #231308 100%);
+  --deck-edge: #e0b672;
+  --deck-glyph: "\26F5";
+}
+.deck-kraken {
+  --deck-bg: url("backs/kraken.png") center / cover no-repeat;
+  --deck-edge: #9a6fc0;
+  --deck-glyph: "";
+}
+.deck-milkkey {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.9) 0 30%, transparent 58%),
+    repeating-linear-gradient(45deg, rgba(190, 158, 86, 0.2) 0 3px, transparent 3px 10px),
+    linear-gradient(160deg, #fffdf6 0%, #efe4c9 100%);
+  --deck-edge: #d6bd84;
+  --deck-glyph: "\1F511";
+}
+
+/* ---------------------------------------------------- chips, fifth batch */
+
+.chipskin-rust {
+  --tok-bg:
+    radial-gradient(circle at 28% 32%, rgba(70, 30, 12, 0.5) 0 18%, transparent 20%),
+    radial-gradient(circle at 70% 64%, rgba(70, 30, 12, 0.45) 0 16%, transparent 18%),
+    radial-gradient(circle at 36% 30%, #c9743a, #7a3a16 76%);
+  --tok-edge: #4a2410;
+  --tok-face: none;
+  --tok-inset: 0;
+  --tok-spin: none;
+}
+.chipskin-linen {
+  --tok-bg:
+    repeating-linear-gradient(90deg, rgba(190, 180, 160, 0.3) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(0deg, rgba(190, 180, 160, 0.3) 0 1px, transparent 1px 3px),
+    radial-gradient(circle at 36% 30%, #faf6ec, #ddd3bd 78%);
+  --tok-edge: #b3a68c;
+  --tok-face: radial-gradient(circle, rgba(255, 255, 255, 0.7) 0 26%, transparent 28%);
+  --tok-inset: 0;
+  --tok-spin: none;
+}
+.chipskin-bronze {
+  --tok-bg: radial-gradient(circle at 34% 28%, #e4b878, #7d4f1c 76%);
+  --tok-edge: #3f2708;
+  --tok-face: conic-gradient(rgba(255, 236, 190, 0.5) 0 12%, transparent 12% 25%,
+                             rgba(255, 236, 190, 0.5) 25% 37%, transparent 37% 50%,
+                             rgba(255, 236, 190, 0.5) 50% 62%, transparent 62% 75%,
+                             rgba(255, 236, 190, 0.5) 75% 87%, transparent 87%);
+  --tok-inset: 2px;
+  --tok-spin: none;
+}
+.chipskin-slate {
+  --tok-bg: radial-gradient(circle at 36% 30%, #7b8792, #333c46 78%);
+  --tok-edge: #cfd8e0;
+  --tok-face: radial-gradient(circle, transparent 0 40%, rgba(207, 216, 224, 0.75) 42% 50%, transparent 52%);
+  --tok-inset: 0;
+  --tok-spin: none;
+}
+/* Coral: a branching thing, which at this size is a rough edge of colour. */
+.chipskin-coral {
+  --tok-bg: radial-gradient(circle at 36% 30%, #ff9a86, #c2334f 78%);
+  --tok-edge: #ffd9cf;
+  --tok-face:
+    repeating-conic-gradient(from 0deg, rgba(255, 220, 206, 0.8) 0 5deg,
+                             rgba(255, 220, 206, 0) 5deg 18deg);
+  --tok-inset: 3px;
+  --tok-spin: none;
+}
+.chipskin-amber {
+  --tok-bg: radial-gradient(circle at 38% 32%, #ffcf63, #a85a06 80%);
+  --tok-edge: #ffe9b0;
+  --tok-glow: 0 0 7px rgba(255, 186, 60, 0.55);
+  --tok-face: radial-gradient(circle at 56% 60%, rgba(90, 44, 0, 0.6) 0 14%, transparent 17%);
+  --tok-inset: 0;
+  --tok-spin: none;
+}
+/* Venom: something in the chip, moving. */
+.chipskin-venom {
+  --tok-bg: radial-gradient(circle at 40% 34%, #7bff7a 0 16%, #1d7a2c 54%, #04210a 100%);
+  --tok-edge: #b9ffb0;
+  --tok-glow: 0 0 9px rgba(110, 255, 110, 0.7);
+  --tok-face: radial-gradient(circle, rgba(200, 255, 190, 0.85) 0 42%, transparent 46%);
+  --tok-inset: 1px;
+  --tok-spin: tok-pulse 2.3s ease-in-out infinite;
+}
+/* Solar: the surface of something far too hot, turning. */
+.chipskin-solar {
+  --tok-bg: radial-gradient(circle, #fff6cf 0 18%, #ffae2b 48%, #c43c06 82%, #4a1200 100%);
+  --tok-edge: #ffd98f;
+  --tok-glow: 0 0 10px rgba(255, 170, 50, 0.8);
+  --tok-face:
+    repeating-conic-gradient(from 0deg, rgba(255, 240, 200, 0.55) 0 4deg,
+                             rgba(255, 240, 200, 0) 4deg 15deg);
+  --tok-inset: 2px;
+  --tok-spin: tok-spin 12s linear infinite;
+}
+/* Horizon: light bending round something you cannot see. */
+.chipskin-horizon {
+  --tok-bg: radial-gradient(circle, #000 0 38%, #ff9c3c 42% 47%, #2a1230 62%, #000 100%);
+  --tok-edge: #ffbe74;
+  --tok-glow: 0 0 12px rgba(255, 150, 60, 0.85);
+  --tok-face:
+    conic-gradient(from 0deg, rgba(255, 190, 116, 0) 0 36%, rgba(255, 214, 160, 0.95) 48%,
+                   rgba(255, 190, 116, 0) 60%);
+  --tok-inset: -3px;
+  --tok-spin: tok-spin 6.5s linear infinite;
+}
+/* Aurora: the sky doing that thing, on a chip. */
+.chipskin-aurora {
+  --tok-bg: radial-gradient(circle at 50% 80%, #0c2a3a 0 40%, #061522 100%);
+  --tok-edge: #8fffcb;
+  --tok-glow: 0 0 10px rgba(110, 255, 190, 0.7);
+  --tok-face:
+    conic-gradient(from 0deg, rgba(120, 255, 190, 0) 0 12%, rgba(120, 255, 190, 0.85) 24%,
+                   rgba(180, 140, 255, 0.8) 36%, rgba(120, 255, 190, 0) 48%,
+                   rgba(120, 255, 190, 0) 72%, rgba(255, 150, 220, 0.7) 84%,
+                   rgba(120, 255, 190, 0) 96%);
+  --tok-inset: 1px;
+  --tok-spin: tok-spin 7.5s linear infinite;
+}
+
+/* The one admin button that does the lot. */
+.admin-all { margin: 0 0 10px; }

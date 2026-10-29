@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvu4f2qq';
-import { TableHost } from './host.js?v=mvu4f2qq';
-import * as vault from './vault.js?v=mvu4f2qq';
-import * as friends from './friends.js?v=mvu4f2qq';
-import * as packs from './decks.js?v=mvu4f2qq';
-import * as cloud from './cloud.js?v=mvu4f2qq';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvu4f2qq';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvu4f2qq';
+import { HostNet, GuestNet } from './net.js?v=mvu4ub1o';
+import { TableHost } from './host.js?v=mvu4ub1o';
+import * as vault from './vault.js?v=mvu4ub1o';
+import * as friends from './friends.js?v=mvu4ub1o';
+import * as packs from './decks.js?v=mvu4ub1o';
+import * as cloud from './cloud.js?v=mvu4ub1o';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvu4ub1o';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvu4ub1o';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 67;
+const BUILD = 68;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -1376,6 +1376,18 @@ function initAdmin() {
       $('milkLink').select();
       adminMsg('Copy the link from the box.', true);
     }
+  });
+
+  // The whole catalogue in one press. These are grants rather than pack
+  // pulls, so nothing here turns into a spare to sell.
+  $('adminAll').addEventListener('click', () => {
+    let added = 0;
+    for (const d of packs.DECKS) if (vault.grantDeck(d.id)) added++;
+    for (const c of packs.CHIP_SKINS) if (vault.grantChip(c.id)) added++;
+    adminMsg(added
+      ? `Added ${added} skin${added === 1 ? '' : 's'}. Every one of them is yours.`
+      : 'You already had every skin.', true);
+    paintAdminSkins();
   });
 
   $('adminOff').addEventListener('click', () => {

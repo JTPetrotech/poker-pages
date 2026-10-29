@@ -937,10 +937,11 @@ test('a backup code is short and carries chips and hands', () => {
   for (let i = 0; i < 42; i++) vault.recordHand({ pot: 100 });
   const code = vault.backupCode();
   // It was twelve characters when it carried only chips. The two
-  // collections cost twenty-one between them, one bit per skin, which is
-  // what a code that restores everything costs. The QR in Settings carries the
+  // collections cost twenty-six between them, one bit per skin, which is
+  // what a code that restores everything costs. Scanning the QR is the way
+  // to move a profile; typing one this long is the fallback. The QR in Settings carries the
   // same code, so typing it is the fallback rather than the usual way.
-  assert(code.length <= 42, `code should stay typable, got ${code.length}: ${code}`);
+  assert(code.length <= 48, `code should stay typable, got ${code.length}: ${code}`);
   assert(/^[0-9A-Z-]+$/.test(code), 'uppercase and dashes only');
 
   freshVault();
@@ -1858,7 +1859,7 @@ test('the two new packs are six each, one ultra apiece', () => {
 });
 
 test('the newest packs are six each, one ultra apiece', () => {
-  for (const id of ['ocean', 'mythic', 'casino', 'music']) {
+  for (const id of ['ocean', 'mythic', 'casino', 'music', 'wild', 'pirate']) {
     const contents = packs.packContents(id);
     eq(contents.length, 6, `${id} has six`);
     eq(contents.filter((d) => d.rarity === 'ultra').length, 1, `${id} has one ultra`);

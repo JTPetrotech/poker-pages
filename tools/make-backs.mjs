@@ -966,12 +966,186 @@ function encore() {
   return c.bytes();
 }
 
+// --------------------------------------------------------------- peacock
+
+/** The eye of a peacock feather, barbs and all. */
+function peacock() {
+  const c = canvas();
+  const cx = W / 2;
+  const eyeY = H * 0.44;
+  const quillY = H * 1.08;
+  const rnd = rand(20260402);
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const d = Math.hypot((x - cx) / (W * 0.7), (y - eyeY) / (H * 0.8));
+      c.set(x, y, mix(10, 4, d), mix(58, 24, d), mix(46, 26, d));
+    }
+  }
+
+  // Barbs, fanning up and out of the quill below the card.
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const dx = x - cx;
+      const dy = y - quillY;
+      const theta = Math.atan2(dy, dx);
+      const r = Math.hypot(dx, dy);
+      // Each barb is one period of this, and they wander a little.
+      const barb = Math.sin(theta * 86 + Math.sin(theta * 13) * 1.6);
+      const edge = Math.max(0, 1 - Math.abs(theta + Math.PI / 2) / 0.72);
+      const a = Math.max(0, barb) ** 2 * edge * 0.55 * Math.min(1, r / 60);
+      c.blend(x, y, 92, 214, 150, a * 0.7);
+      c.blend(x, y, 226, 196, 92, Math.max(0, -barb) ** 3 * edge * 0.3);
+    }
+  }
+
+  // The eye: bronze, then green, then the blue-black heart.
+  const rings = [
+    { rx: 34, ry: 41, col: [188, 132, 44] },
+    { rx: 27, ry: 33, col: [36, 124, 86] },
+    { rx: 19, ry: 24, col: [22, 60, 132] },
+    { rx: 12, ry: 15, col: [86, 44, 150] },
+    { rx: 7, ry: 9, col: [12, 10, 26] },
+  ];
+  for (const ring of rings) {
+    for (let y = Math.floor(eyeY - ring.ry - 1); y <= Math.ceil(eyeY + ring.ry + 1); y++) {
+      for (let x = Math.floor(cx - ring.rx - 1); x <= Math.ceil(cx + ring.rx + 1); x++) {
+        const d = Math.hypot((x - cx) / ring.rx, (y - eyeY) / ring.ry);
+        if (d > 1) continue;
+        const lift = (1 - d) * 0.25;
+        c.blend(x, y, ring.col[0] * (1 + lift), ring.col[1] * (1 + lift),
+          ring.col[2] * (1 + lift), Math.min(1, (1 - d) * 7));
+      }
+    }
+  }
+  glow(c, Math.round(cx), Math.round(eyeY - 4), 11, 180, 200, 255, 0.5);
+
+  for (let i = 0; i < 24; i++) {
+    const x = Math.floor(rnd() * W);
+    const y = Math.floor(rnd() * H);
+    c.blend(x, y, 240, 255, 230, rnd() * 0.4);
+  }
+  return c.bytes();
+}
+
+// ---------------------------------------------------------------- kraken
+
+/** Something large, below, with more arms than you would like. */
+function kraken() {
+  const c = canvas();
+  const cx = W / 2;
+  const rnd = rand(20260418);
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const t = y / H;
+      c.set(x, y, mix(18, 2, t), mix(72, 14, t), mix(96, 34, t));
+    }
+  }
+
+  // Light coming down through the water.
+  for (const shaft of [24, 60, 100]) {
+    for (let y = 0; y < H * 0.8; y++) {
+      const half = 3.5 + y * 0.08;
+      const axis = shaft + y * 0.11;
+      for (let x = Math.floor(axis - half); x <= Math.ceil(axis + half); x++) {
+        const off = Math.abs(x - axis) / half;
+        if (off > 1) continue;
+        c.blend(x, y, 190, 240, 255, (1 - off) ** 2 * (1 - y / (H * 0.85)) * 0.32);
+      }
+    }
+  }
+
+  // Four arms, thick at the water line and curling as they rise. Each is a
+  // run of discs, which is what makes them taper rather than just narrow.
+  const arms = [
+    { x: 14, len: 0.78, amp: 30, freq: 3.4, phase: 0.3, r0: 17 },
+    { x: 44, len: 0.88, amp: 20, freq: 4.3, phase: 2.0, r0: 14 },
+    { x: 90, len: 0.86, amp: -22, freq: 4.0, phase: 1.2, r0: 14.5 },
+    { x: 120, len: 0.74, amp: -32, freq: 3.1, phase: 2.7, r0: 17 },
+  ];
+  // Two passes per arm: the whole arm, then its suckers. In one pass each
+  // disc painted over the suckers the step before had just put down.
+  const along = (arm, step) => {
+    const s = step / 300;
+    return {
+      s,
+      ax: arm.x + arm.amp * Math.sin(s * arm.freq + arm.phase) * s,
+      ay: H * 0.86 - s * H * arm.len,
+      r: arm.r0 * (1 - s * 0.9),
+    };
+  };
+  for (const arm of arms) {
+    for (let step = 0; step <= 300; step++) {
+      const { ax, ay, r } = along(arm, step);
+      for (let y = Math.floor(ay - r); y <= Math.ceil(ay + r); y++) {
+        for (let x = Math.floor(ax - r); x <= Math.ceil(ax + r); x++) {
+          const d = Math.hypot(x - ax, y - ay) / r;
+          if (d > 1) continue;
+          // Lit along the left edge, where the shafts are.
+          const lit = Math.max(0, 0.75 - d) * (x < ax ? 1.5 : 0.25);
+          c.blend(x, y, 46 + lit * 180, 18 + lit * 110, 62 + lit * 150, 1);
+        }
+      }
+    }
+    for (let step = 0; step <= 300; step += 16) {
+      const { s, ax, ay, r } = along(arm, step);
+      if (s > 0.82) break;
+      const sx = ax - r * 0.38;
+      const sr = Math.max(1.3, r * 0.32);
+      for (let y = Math.floor(ay - sr); y <= Math.ceil(ay + sr); y++) {
+        for (let x = Math.floor(sx - sr); x <= Math.ceil(sx + sr); x++) {
+          const d = Math.hypot(x - sx, y - ay) / sr;
+          if (d > 1) continue;
+          c.blend(x, y, 236, 192, 204, 0.92 - d * 0.35);
+        }
+      }
+    }
+  }
+
+  // The body the arms come off, with its back catching what light there is.
+  const bodyY = H * 1.04;
+  const bodyRx = W * 0.8;
+  const bodyRy = H * 0.34;
+  for (let y = Math.round(H * 0.62); y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const d = Math.hypot((x - cx) / bodyRx, (y - bodyY) / bodyRy);
+      if (d > 1) continue;
+      c.blend(x, y, 34, 12, 46, 1);
+      // A rim along the dome, so it reads as a mass and not as darkness.
+      if (d > 0.965) c.blend(x, y, 150, 96, 180, (d - 0.965) / 0.035 * 0.85);
+    }
+  }
+
+  // The one eye that is open.
+  const eyeX = cx - 2;
+  const eyeY = H * 0.88;
+  glow(c, Math.round(eyeX), Math.round(eyeY), 26, 255, 198, 70, 0.85);
+  for (let y = Math.round(eyeY - 11); y <= Math.round(eyeY + 11); y++) {
+    for (let x = Math.round(eyeX - 20); x <= Math.round(eyeX + 20); x++) {
+      const d = Math.hypot((x - eyeX) / 16, (y - eyeY) / 8);
+      if (d > 1) continue;
+      c.blend(x, y, mix(255, 214, d), mix(234, 150, d), mix(150, 40, d), 1);
+      // The slit, wide in the middle and closing at the corners.
+      const slit = 3.1 * (1 - ((y - eyeY) / 8.2) ** 2);
+      if (Math.abs(x - eyeX) < slit) c.blend(x, y, 18, 8, 6, 1);
+    }
+  }
+
+  for (let i = 0; i < 70; i++) {
+    const x = Math.floor(rnd() * W);
+    const y = Math.floor(rnd() * H);
+    c.blend(x, y, 220, 250, 255, rnd() * 0.35);
+  }
+  return c.bytes();
+}
+
 // ------------------------------------------------------------------ write
 
 fs.mkdirSync(outDir, { recursive: true });
 const pictures = {
   galaxy, strip, melon, stadium, jackpot, milk, supra, aurora, invader, deep, dragoneye,
-  highroller, encore,
+  highroller, encore, peacock, kraken,
 };
 for (const [name, draw] of Object.entries(pictures)) {
   const file = path.join(outDir, `${name}.png`);
