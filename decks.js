@@ -148,8 +148,8 @@ export const DECKS = [
 /**
  * Shown on the tiles, rarest last.
  *
- * Milk is the top tier: one open in two hundred and fifty, against roughly
- * one in two hundred and fifteen for an ultra rare. The order here is what the
+ * Milk is the top tier by a distance: one open in a thousand, against
+ * roughly one in a hundred and fifty for an ultra rare. The order here is what the
  * tiles are sorted by, so it has to match the real chances rather than the
  * other way about.
  *
@@ -172,7 +172,7 @@ export const CHIP_PACK = {
   blurb: 'What your chips look like, on your bets and on every other screen '
     + 'at the table. Most of them move; every one of them holds still for '
     + 'anyone whose device asks for less motion. The ultra rares are about '
-    + '1 in 215 and Cream, the milk tier, is 1 in 250.',
+    + '1 in 150 and Cream, the milk tier, is 1 in 1,000.',
 };
 
 export const CHIP_SKINS = [
@@ -310,26 +310,28 @@ export function safeDeck(id) {
  *   common     about 19 opens in 20
  *   rare       1 in 20
  *   legendary  1 in 90
- *   ultra      1 in 215
- *   milk       1 in 250, which is MILK_CHANCE rather than a weight
+ *   ultra      1 in 150
+ *   milk       1 in 1,000, which is MILK_CHANCE rather than a weight
  *
- * The ultra rare cannot be pushed much past this without overtaking the milk
- * skin above it, and the order the tiers are listed in has to stay true.
+ * Milk sits well clear of the ultra rare rather than a hair above it, which
+ * is what gives the two top tiers room to feel like different things. The
+ * ultra cannot be pushed past milk without breaking the order the tiers are
+ * listed in, so milk is the one that has to move first.
  */
 // Milk is taken off the top by MILK_CHANCE and never reaches these weights,
 // but one is kept here so a pool that somehow holds a milk skin still draws.
-const WEIGHT = { common: 100, rare: 11, legendary: 2.4, ultra: 1, milk: 1 };
+const WEIGHT = { common: 100, rare: 11, legendary: 2.4, ultra: 1.45, milk: 1.45 };
 
 /**
  * The chance of the milk tier, per open, in every pack and in the chip pack.
  *
- * A flat one in two hundred and fifty rather than a weight, so it means the
- * same thing on every open. Everything else shares the remainder by weight,
- * which is where the ultra rare comes from at about one in two hundred and
- * fifteen — so milk stays the rarest thing in any pack, which is what the
- * tier is for. Limited keeps its own announced odds and is untouched.
+ * A flat one in a thousand rather than a weight, so it means the same thing
+ * on every open. Everything else shares the remainder by weight, which is
+ * where the ultra rare comes from at about one in a hundred and fifty — so
+ * milk is not merely the rarest thing in a pack but several times rarer than
+ * anything else in it. Limited keeps its own announced odds and is untouched.
  */
-export const MILK_CHANCE = 0.004;
+export const MILK_CHANCE = 0.001;
 
 /**
  * Draw from a pool where the milk tier gets its flat chance off the top.

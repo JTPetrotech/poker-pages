@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvu4b8du';
-import { TableHost } from './host.js?v=mvu4b8du';
-import * as vault from './vault.js?v=mvu4b8du';
-import * as friends from './friends.js?v=mvu4b8du';
-import * as packs from './decks.js?v=mvu4b8du';
-import * as cloud from './cloud.js?v=mvu4b8du';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvu4b8du';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvu4b8du';
+import { HostNet, GuestNet } from './net.js?v=mvu4f2qq';
+import { TableHost } from './host.js?v=mvu4f2qq';
+import * as vault from './vault.js?v=mvu4f2qq';
+import * as friends from './friends.js?v=mvu4f2qq';
+import * as packs from './decks.js?v=mvu4f2qq';
+import * as cloud from './cloud.js?v=mvu4f2qq';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvu4f2qq';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvu4f2qq';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 66;
+const BUILD = 67;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -724,7 +724,8 @@ function deckTile(d, ownedList) {
   b.title = owned ? `${d.name} — ${d.rarity}` : `${d.rarity}, not yours yet`;
   // Where a pack advertises its odds, every tile shows its own share, so the
   // 98 and the two 1s are on screen next to the thing they apply to.
-  // Milk is a flat one in a thousand in every pack, so its tiles say so too.
+  // Milk is a flat one in a thousand in every pack, so its tiles say so too
+  // — and at 0.1% that is the only tier whose number needs the decimal.
   // Anything under a percent keeps a decimal place, or it would round to a
   // flat 0% and read as impossible rather than rare.
   const odds = d.odds || (d.rarity === 'milk' ? packs.MILK_CHANCE : 0);
@@ -2450,8 +2451,8 @@ function paintTableFacts() {
     + 'and draws from everything in it, so it can repeat one that is already '
     + `yours. That copy is a spare, and Collection sells one for ${fmt(packs.SPARE_PRICE)}. `
     + 'Everyone at the table sees the skin you are wearing.');
-  note('Roughly 1 in 20 opens is a rare, 1 in 90 a legendary, 1 in 215 an '
-    + 'ultra rare and 1 in 250 the milk skin. The chip pack works the same '
+  note('Roughly 1 in 20 opens is a rare, 1 in 90 a legendary, 1 in 150 an '
+    + 'ultra rare and 1 in 1,000 the milk skin. The chip pack works the same '
     + 'way, and your chip travels to the other players as your cards do.');
   note('Limited is the exception: it runs on announced odds rather than '
     + 'weights, and 98 opens in 100 are Bad. The Chips tab is a separate '

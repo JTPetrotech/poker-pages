@@ -2303,8 +2303,8 @@ kbd {
   --tok-spin: tok-spin 6s linear infinite;
 }
 
-/* Milk: the top tier. Every pack holds one at a flat 1 in 250, which is
-   rarer than the ultra rare drawn out of what is left. */
+/* Milk: the top tier. Every pack holds one at a flat 1 in 1,000, several
+   times rarer than the ultra rare drawn out of what is left. */
 .rarity.milk {
   background: linear-gradient(90deg, #ffffff, #e6edf8);
   color: #4d5f7d;

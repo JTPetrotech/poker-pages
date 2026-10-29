@@ -1592,21 +1592,21 @@ test('every themed pack sells exactly one milk skin', () => {
   eq(chipMilk[0].id, 'cream');
 });
 
-test('the milk tier is a flat one in two hundred and fifty', () => {
-  eq(packs.MILK_CHANCE, 0.004);
-  // Over a thousand evenly spread rolls, exactly four are milk.
+test('the milk tier is a flat one in a thousand', () => {
+  eq(packs.MILK_CHANCE, 0.001);
+  // Over a thousand evenly spread rolls, exactly one is milk.
   let milk = 0;
   for (let i = 0; i < 1000; i++) {
     if (packs.drawFromPack('cosmic', i / 1000).rarity === 'milk') milk++;
   }
-  eq(milk, 4, 'four opens in a thousand');
+  eq(milk, 1, 'one open in a thousand');
 
   // And the chip pack works the same way.
   milk = 0;
   for (let i = 0; i < 1000; i++) {
     if (packs.drawChip(i / 1000).rarity === 'milk') milk++;
   }
-  eq(milk, 4, 'the chip pack too');
+  eq(milk, 1, 'the chip pack too');
 });
 
 test('every tier is harder to pull than the one below it', () => {
@@ -1640,8 +1640,10 @@ test('the milk skin is rarer than the ultra rare beside it', () => {
     if (r === 'ultra') ultra++;
     if (r === 'milk') milk++;
   }
-  eq(milk, 40, 'milk is 1 in 250');
+  eq(milk, 10, 'milk is 1 in 1,000');
   assert(ultra > milk, `ultra ${ultra} must be commoner than milk ${milk}`);
+  // Clear of it, rather than a hair above: that gap is the point of the tier.
+  assert(ultra > milk * 4, `ultra ${ultra} should sit well clear of milk ${milk}`);
   // And the ultra is still harder than it was: it used to be one open in 94,
   // and it cannot go much past this without overtaking the milk skin.
   assert(ultra < 10_000 / 94, `${ultra} in 10,000 is harder than 1 in 94`);
