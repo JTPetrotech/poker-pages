@@ -52,6 +52,8 @@ export const PACKS = [
   { id: 'music', name: 'Music', blurb: 'Turn it up.' },
   { id: 'wild', name: 'Wild', blurb: 'Things with their own ideas.' },
   { id: 'pirate', name: 'Pirate', blurb: 'Below the waterline.' },
+  { id: 'garden', name: 'Garden', blurb: 'Things that grow.' },
+  { id: 'frost', name: 'Frost', blurb: 'Cold enough to see your breath.' },
   {
     id: 'limited',
     name: 'Limited',
@@ -176,6 +178,20 @@ export const DECKS = [
   { id: 'galleon', name: 'Galleon', pack: 'pirate', rarity: 'legendary' },
   { id: 'kraken', name: 'Kraken', pack: 'pirate', rarity: 'ultra' },
   { id: 'milkkey', name: 'Milk Key', pack: 'pirate', rarity: 'milk' },
+
+  { id: 'seed', name: 'Seedling', pack: 'garden', rarity: 'common' },
+  { id: 'leaf', name: 'Leaf', pack: 'garden', rarity: 'common' },
+  { id: 'bee', name: 'Bee', pack: 'garden', rarity: 'rare' },
+  { id: 'rose', name: 'Rose', pack: 'garden', rarity: 'legendary' },
+  { id: 'bloom', name: 'Bloom', pack: 'garden', rarity: 'ultra' },
+  { id: 'milkpetal', name: 'Milk Petal', pack: 'garden', rarity: 'milk' },
+
+  { id: 'icicle', name: 'Icicle', pack: 'frost', rarity: 'common' },
+  { id: 'mitten', name: 'Mittens', pack: 'frost', rarity: 'common' },
+  { id: 'cocoa', name: 'Cocoa', pack: 'frost', rarity: 'rare' },
+  { id: 'snowman', name: 'Snowman', pack: 'frost', rarity: 'legendary' },
+  { id: 'crystal', name: 'Crystal', pack: 'frost', rarity: 'ultra' },
+  { id: 'milkfrost', name: 'Milk Frost', pack: 'frost', rarity: 'milk' },
 ];
 
 /**
@@ -262,6 +278,16 @@ export const CHIP_SKINS = [
   { id: 'solar', name: 'Solar', rarity: 'legendary' },
   { id: 'horizon', name: 'Horizon', rarity: 'ultra' },
   { id: 'aurora', name: 'Aurora', rarity: 'ultra' },
+  { id: 'moss', name: 'Moss', rarity: 'common' },
+  { id: 'clay', name: 'Clay', rarity: 'common' },
+  { id: 'chalk', name: 'Chalk', rarity: 'common' },
+  { id: 'peach', name: 'Peach', rarity: 'common' },
+  { id: 'lagoon', name: 'Lagoon', rarity: 'rare' },
+  { id: 'ruby', name: 'Ruby', rarity: 'rare' },
+  { id: 'thunder', name: 'Thunder', rarity: 'legendary' },
+  { id: 'comet', name: 'Comet', rarity: 'legendary' },
+  { id: 'pulsar', name: 'Pulsar', rarity: 'ultra' },
+  { id: 'obsidian', name: 'Obsidian', rarity: 'ultra' },
 ];
 
 /**

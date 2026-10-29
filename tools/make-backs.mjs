@@ -1140,12 +1140,157 @@ function kraken() {
   return c.bytes();
 }
 
+// ----------------------------------------------------------------- bloom
+
+/** A flower head on: petals in two turns, then the heart of it. */
+function bloom() {
+  const c = canvas();
+  const cx = W / 2;
+  const cy = H * 0.46;
+  const rnd = rand(20260506);
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const d = Math.hypot((x - cx) / (W * 0.72), (y - cy) / (H * 0.78));
+      c.set(x, y, mix(18, 5, d), mix(54, 20, d), mix(30, 14, d));
+    }
+  }
+
+  // Leaves behind, so the flower is sitting on something.
+  for (const lean of [-1, 1]) {
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const lx = (x - cx) * lean;
+        const ly = y - cy;
+        const d = Math.hypot(lx / 52, (ly - 34) / 17);
+        if (d > 1 || lx < 0) continue;
+        const lit = (1 - d) * 0.8;
+        c.blend(x, y, 34 + lit * 60, 96 + lit * 90, 44 + lit * 50, 1);
+        if (Math.abs(ly - 34 - lx * 0.1) < 0.9) c.blend(x, y, 150, 200, 120, 0.5);
+      }
+    }
+  }
+
+  // Two rings of petals, the back one turned so it shows between the front.
+  const rings = [
+    { n: 9, R: 56, turn: Math.PI / 9, inner: [196, 60, 120], outer: [255, 170, 210] },
+    { n: 7, R: 38, turn: 0, inner: [236, 92, 140], outer: [255, 206, 226] },
+  ];
+  for (const ring of rings) {
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const dx = x - cx;
+        const dy = (y - cy) * 1.06;
+        const r = Math.hypot(dx, dy);
+        if (r > ring.R) continue;
+        const theta = Math.atan2(dy, dx) + ring.turn;
+        // A rose curve: the petal edge moves in and out with the angle.
+        const edge = ring.R * (0.42 + 0.58 * Math.abs(Math.cos(ring.n * theta / 2)));
+        if (r > edge) continue;
+        const t = r / edge;                       // 0 at the middle, 1 at the tip
+        const seam = Math.abs(Math.cos(ring.n * theta / 2)) < 0.12 ? 0.55 : 0;
+        const col = [
+          mix(ring.inner[0], ring.outer[0], t),
+          mix(ring.inner[1], ring.outer[1], t),
+          mix(ring.inner[2], ring.outer[2], t),
+        ];
+        c.blend(x, y, col[0] * (1 - seam * 0.4), col[1] * (1 - seam * 0.4),
+          col[2] * (1 - seam * 0.4), 1);
+      }
+    }
+  }
+
+  // The heart: a disc of pollen with stamens standing out of it.
+  for (let y = Math.floor(cy - 15); y <= Math.ceil(cy + 15); y++) {
+    for (let x = Math.floor(cx - 15); x <= Math.ceil(cx + 15); x++) {
+      const d = Math.hypot(x - cx, y - cy) / 14;
+      if (d > 1) continue;
+      c.blend(x, y, mix(255, 206, d), mix(214, 140, d), mix(92, 30, d), 1);
+    }
+  }
+  for (let i = 0; i < 34; i++) {
+    const a = rnd() * Math.PI * 2;
+    const r = 4 + rnd() * 9;
+    const x = Math.round(cx + Math.cos(a) * r);
+    const y = Math.round(cy + Math.sin(a) * r);
+    c.blend(x, y, 120, 70, 16, 0.8);
+    c.blend(x, y - 1, 255, 244, 190, 0.9);
+  }
+  glow(c, Math.round(cx), Math.round(cy), 46, 255, 220, 190, 0.2);
+  return c.bytes();
+}
+
+// --------------------------------------------------------------- crystal
+
+/** One snowflake, six ways, which is the only way a snowflake comes. */
+function crystal() {
+  const c = canvas();
+  const cx = W / 2;
+  const cy = H / 2;
+  const rnd = rand(20260521);
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const d = Math.hypot((x - cx) / (W * 0.8), (y - cy) / (H * 0.8));
+      c.set(x, y, mix(16, 4, d), mix(40, 12, d), mix(78, 30, d));
+    }
+  }
+  for (let i = 0; i < 90; i++) {
+    const x = Math.floor(rnd() * W);
+    const y = Math.floor(rnd() * H);
+    c.blend(x, y, 220, 240, 255, rnd() * 0.5);
+  }
+
+  const R = 74;
+  const SECTOR = Math.PI / 3;
+  const branches = [
+    { at: 20, len: 15 },
+    { at: 36, len: 19 },
+    { at: 52, len: 14 },
+    { at: 64, len: 8 },
+  ];
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const dx = x - cx;
+      const dy = y - cy;
+      const r = Math.hypot(dx, dy);
+      if (r > R) continue;
+      // Fold the whole circle into one sixth, then mirror it: six arms, each
+      // the same as the last, which is what makes it read as a snowflake.
+      let a = Math.atan2(dy, dx);
+      a = ((a % SECTOR) + SECTOR) % SECTOR;
+      a = Math.abs(a - SECTOR / 2);
+      const across = r * Math.sin(a);
+      const along = r * Math.cos(a);
+
+      let on = across < 2.6 - along / R * 1.1 && along < R;
+      if (!on) {
+        for (const b of branches) {
+          const t = along - b.at;
+          if (t < 0 || t > b.len) continue;
+          if (Math.abs(across - t * 0.72) < 1.7) { on = true; break; }
+        }
+      }
+      if (!on && r < 11) on = true;               // the hub
+      if (!on) continue;
+
+      const fade = 1 - (r / R) * 0.45;
+      c.blend(x, y, 236 * fade + 19, 248 * fade + 7, 255, 1);
+    }
+  }
+
+  glow(c, Math.round(cx), Math.round(cy), 58, 170, 225, 255, 0.4);
+  glow(c, Math.round(cx), Math.round(cy), 15, 255, 255, 255, 0.7);
+  return c.bytes();
+}
+
 // ------------------------------------------------------------------ write
 
 fs.mkdirSync(outDir, { recursive: true });
 const pictures = {
   galaxy, strip, melon, stadium, jackpot, milk, supra, aurora, invader, deep, dragoneye,
-  highroller, encore, peacock, kraken,
+  highroller, encore, peacock, kraken, bloom, crystal,
 };
 for (const [name, draw] of Object.entries(pictures)) {
   const file = path.join(outDir, `${name}.png`);

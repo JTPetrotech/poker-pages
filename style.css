@@ -3267,3 +3267,236 @@ kbd {
 .gift-chips { margin: 0 0 12px; }
 .gift-who { display: flex; gap: 6px; flex-wrap: wrap; }
 .sell-btn.bulk-btn { width: 100%; padding: 9px 11px; font-size: 12px; }
+
+/* -------------------------------------------------------------- garden */
+
+.deck-seed {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 252, 238, 0.82) 0 32%, transparent 60%),
+    linear-gradient(170deg, #cfe6a8 0%, #7fa857 100%);
+  --deck-edge: #4c6b2c;
+  --deck-glyph: "\1F331";
+}
+.deck-leaf {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.3) 0 32%, transparent 60%),
+    repeating-linear-gradient(62deg, rgba(220, 245, 210, 0.22) 0 1px, transparent 1px 8px),
+    linear-gradient(170deg, #3f8f45 0%, #1c4a25 100%);
+  --deck-edge: #bdf0b4;
+  --deck-glyph: "\1F343";
+}
+.deck-bee {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.3) 0 32%, transparent 60%),
+    repeating-linear-gradient(0deg, #f2c53c 0 7px, #26231c 7px 14px);
+  --deck-edge: #2a2620;
+  --deck-glyph: "\1F41D";
+}
+.deck-rose {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.36) 0 32%, transparent 60%),
+    repeating-conic-gradient(from 0deg, rgba(255, 190, 210, 0.22) 0 7deg, transparent 7deg 15deg),
+    linear-gradient(170deg, #a11b40 0%, #470a1d 100%);
+  --deck-edge: #ffb9cd;
+  --deck-glyph: "\1F339";
+}
+.deck-bloom {
+  --deck-bg: url("backs/bloom.png") center / cover no-repeat;
+  --deck-edge: #ff9ec4;
+  --deck-glyph: "";
+}
+.deck-milkpetal {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92) 0 30%, transparent 58%),
+    radial-gradient(90% 55% at 78% 92%, rgba(236, 150, 190, 0.4), transparent 72%),
+    linear-gradient(160deg, #fffafc 0%, #f6e2ec 100%);
+  --deck-edge: #eeb6ce;
+  --deck-glyph: "\1F338";
+}
+
+/* --------------------------------------------------------------- frost */
+
+.deck-icicle {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(235, 250, 255, 0.82) 0 32%, transparent 60%),
+    repeating-linear-gradient(90deg, rgba(120, 190, 225, 0.35) 0 2px, transparent 2px 9px),
+    linear-gradient(170deg, #d6f1fb 0%, #86bcd8 100%);
+  --deck-edge: #4e8aa8;
+  --deck-glyph: "\1F9CA";
+}
+.deck-mitten {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.3) 0 32%, transparent 60%),
+    repeating-linear-gradient(0deg, rgba(255, 240, 230, 0.26) 0 3px, transparent 3px 10px),
+    linear-gradient(170deg, #c0392f 0%, #6d1a14 100%);
+  --deck-edge: #ffe6dc;
+  --deck-glyph: "\1F9E4";
+}
+.deck-cocoa {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.34) 0 32%, transparent 60%),
+    radial-gradient(70% 40% at 50% 14%, rgba(255, 240, 220, 0.5), transparent 70%),
+    linear-gradient(170deg, #6b3b23 0%, #2d1810 100%);
+  --deck-edge: #e8c4a0;
+  --deck-glyph: "\2615";
+}
+.deck-snowman {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 20, 40, 0.28) 0 32%, transparent 60%),
+    radial-gradient(1.6px 1.6px at 20% 22%, #fff 50%, transparent 51%),
+    radial-gradient(1.4px 1.4px at 78% 30%, #fff 50%, transparent 51%),
+    radial-gradient(1.6px 1.6px at 32% 74%, #fff 50%, transparent 51%),
+    linear-gradient(170deg, #2b4a73 0%, #122540 100%);
+  --deck-edge: #e8f4ff;
+  --deck-glyph: "\26C4";
+}
+.deck-crystal {
+  --deck-bg: url("backs/crystal.png") center / cover no-repeat;
+  --deck-edge: #b9d8ff;
+  --deck-glyph: "";
+}
+.deck-milkfrost {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92) 0 30%, transparent 58%),
+    repeating-linear-gradient(112deg, rgba(150, 190, 225, 0.2) 0 1px, transparent 1px 8px),
+    linear-gradient(160deg, #ffffff 0%, #e4eff8 100%);
+  --deck-edge: #add0e8;
+  --deck-glyph: "\1F328\FE0F";
+}
+
+/* ---------------------------------------------------- chips, sixth batch */
+
+.chipskin-moss {
+  --tok-bg:
+    radial-gradient(circle at 30% 30%, rgba(160, 200, 120, 0.45) 0 20%, transparent 22%),
+    radial-gradient(circle at 70% 66%, rgba(160, 200, 120, 0.35) 0 18%, transparent 20%),
+    radial-gradient(circle at 36% 30%, #6f9a4e, #2e4a20 78%);
+  --tok-edge: #1e3214;
+  --tok-face: none;
+  --tok-inset: 0;
+  --tok-spin: none;
+}
+.chipskin-clay {
+  --tok-bg: radial-gradient(circle at 36% 30%, #e0a07a, #96513a 78%);
+  --tok-edge: #5a2c1e;
+  --tok-face: radial-gradient(circle, transparent 0 42%, rgba(255, 220, 196, 0.6) 44% 54%, transparent 56%);
+  --tok-inset: 0;
+  --tok-spin: none;
+}
+.chipskin-chalk {
+  --tok-bg: radial-gradient(circle at 36% 30%, #fdfdfb, #d2cec4 80%);
+  --tok-edge: #8d8880;
+  --tok-face:
+    conic-gradient(rgba(140, 136, 128, 0.35) 0 9%, transparent 9% 25%,
+                   rgba(140, 136, 128, 0.35) 25% 34%, transparent 34% 50%,
+                   rgba(140, 136, 128, 0.35) 50% 59%, transparent 59% 75%,
+                   rgba(140, 136, 128, 0.35) 75% 84%, transparent 84%);
+  --tok-inset: -2px;
+  --tok-spin: none;
+}
+.chipskin-peach {
+  --tok-bg: radial-gradient(circle at 34% 28%, #ffd3a8, #e4705c 80%);
+  --tok-edge: #fff0e0;
+  --tok-face: radial-gradient(circle at 58% 62%, rgba(150, 50, 40, 0.45) 0 16%, transparent 19%);
+  --tok-inset: 0;
+  --tok-spin: none;
+}
+/* Lagoon: shallow water over sand, going round. */
+.chipskin-lagoon {
+  --tok-bg: radial-gradient(circle, #7ef0dc 0 30%, #159bab 64%, #0a4a62 100%);
+  --tok-edge: #d6fff8;
+  --tok-face:
+    conic-gradient(from 0deg, rgba(255,255,255,0) 0 20%, rgba(224,255,250,0.7) 32%,
+                   rgba(255,255,255,0) 44%, rgba(255,255,255,0) 70%,
+                   rgba(224,255,250,0.55) 82%, rgba(255,255,255,0) 94%);
+  --tok-inset: 2px;
+  --tok-spin: tok-spin 9s linear infinite;
+}
+.chipskin-ruby {
+  --tok-bg: radial-gradient(circle at 38% 30%, #ff7b8f 0 14%, #b00f33 58%, #4a0315 100%);
+  --tok-edge: #ffc2cd;
+  --tok-glow: 0 0 7px rgba(255, 60, 100, 0.55);
+  --tok-face:
+    repeating-conic-gradient(from 0deg, rgba(255, 200, 212, 0.4) 0 10deg,
+                             rgba(255, 200, 212, 0) 10deg 30deg);
+  --tok-inset: 2px;
+  --tok-spin: none;
+}
+/* Thunder: it goes off, then it waits. */
+.chipskin-thunder {
+  --tok-bg: radial-gradient(circle at 36% 30%, #4b5a70, #141b27 80%);
+  --tok-edge: #ffe169;
+  --tok-glow: 0 0 9px rgba(255, 220, 100, 0.65);
+  --tok-face: linear-gradient(#fff6c8, #ffd43c);
+  --tok-clip: polygon(56% 4%, 24% 56%, 46% 56%, 38% 96%, 76% 42%, 52% 42%);
+  --tok-radius: 0;
+  --tok-inset: 2px;
+  --tok-spin: tok-pulse 2.8s ease-in-out infinite;
+}
+/* Comet: a head and a tail, round and round. */
+.chipskin-comet {
+  --tok-bg: radial-gradient(circle, #0b1430 0 54%, #050a1c 100%);
+  --tok-edge: #a8d4ff;
+  --tok-glow: 0 0 9px rgba(140, 200, 255, 0.7);
+  --tok-face:
+    conic-gradient(from 0deg, rgba(255,255,255,0) 0 52%, rgba(170, 215, 255, 0.35) 70%,
+                   rgba(235, 248, 255, 0.95) 86%, #ffffff 92%, rgba(255,255,255,0) 95%);
+  --tok-inset: 1px;
+  --tok-spin: tok-spin 3.2s linear infinite;
+}
+/* Pulsar: a beam coming round, fast. */
+.chipskin-pulsar {
+  --tok-bg: radial-gradient(circle, #ffffff 0 10%, #8ab4ff 28%, #22307a 66%, #05081c 100%);
+  --tok-edge: #dce9ff;
+  --tok-glow: 0 0 12px rgba(150, 190, 255, 0.95);
+  --tok-face:
+    conic-gradient(from 0deg, rgba(255,255,255,0) 0 46%, rgba(255,255,255,0.95) 50%,
+                   rgba(255,255,255,0) 54%, rgba(255,255,255,0) 96%,
+                   rgba(255,255,255,0.95) 100%);
+  --tok-inset: -4px;
+  --tok-spin: tok-spin 1.4s linear infinite;
+}
+/* Obsidian: glass, with the light moving across it. */
+.chipskin-obsidian {
+  --tok-bg: radial-gradient(circle at 34% 28%, #3c4150, #07080c 78%);
+  --tok-edge: #6f7788;
+  --tok-glow: 0 0 8px rgba(120, 140, 180, 0.5);
+  --tok-face:
+    conic-gradient(from 0deg, rgba(190, 206, 236, 0) 0 30%, rgba(190, 206, 236, 0.75) 42%,
+                   rgba(190, 206, 236, 0) 52%, rgba(190, 206, 236, 0) 80%,
+                   rgba(160, 176, 210, 0.5) 90%, rgba(190, 206, 236, 0) 98%);
+  --tok-inset: 1px;
+  --tok-spin: tok-spin 5.8s linear infinite;
+}
+
+/* --------------------------------------------- seeing what you are buying */
+
+/* The pickers used to show a 32px card and a 26px chip, which is too small
+   to tell two patterns apart, let alone enjoy one. The table itself is not
+   touched: these only apply inside a tile. */
+.deck-opt .card.small { width: 46px; height: 65px; border-radius: 7px; }
+.deck-opt .card.small.back::after { font-size: 21px; }
+.deck-opt .token.big { width: 38px; height: 38px; border-width: 2.5px; }
+
+/* The one you have picked, shown at a size worth looking at. */
+.pick-row { display: flex; gap: 12px; align-items: center; text-align: left; }
+.pick-face { flex: none; display: flex; align-items: center; justify-content: center; }
+.pick-face .card.small { width: 72px; height: 101px; border-radius: 10px; }
+.pick-face .card.small.back::after { font-size: 34px; }
+.pick-face .token.big { width: 60px; height: 60px; border-width: 3px; }
+.pick-text { flex: 1; min-width: 0; }
+
+/* Narrowing the collection to one tier at a time. */
+.tier-row { display: flex; gap: 5px; flex-wrap: wrap; margin: 0 0 12px; }
+.tier-btn {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+.tier-btn.on { border-color: var(--accent); color: var(--accent); background: #f0f7ff; }

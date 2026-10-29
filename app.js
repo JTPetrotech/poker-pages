@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvu677ob';
-import { TableHost } from './host.js?v=mvu677ob';
-import * as vault from './vault.js?v=mvu677ob';
-import * as friends from './friends.js?v=mvu677ob';
-import * as packs from './decks.js?v=mvu677ob';
-import * as cloud from './cloud.js?v=mvu677ob';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvu677ob';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvu677ob';
+import { HostNet, GuestNet } from './net.js?v=mvu6fv1u';
+import { TableHost } from './host.js?v=mvu6fv1u';
+import * as vault from './vault.js?v=mvu6fv1u';
+import * as friends from './friends.js?v=mvu6fv1u';
+import * as packs from './decks.js?v=mvu6fv1u';
+import * as cloud from './cloud.js?v=mvu6fv1u';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvu6fv1u';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvu6fv1u';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 71;
+const BUILD = 72;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -836,6 +836,43 @@ function paintDecks() {
 /** What a single click has picked out, so its details can be shown. */
 let ownedPick = null;
 
+/** Which tier the collection is narrowed to, or null for all of them. */
+let ownedTier = null;
+
+/**
+ * One row of tiers across the top of the collection.
+ *
+ * Eighty-nine card skins is more than fits on a screen, and a tier is the
+ * thing you are usually looking for — the ultra rares you have, or whether
+ * the milk one you pulled is still there.
+ */
+function paintTiers() {
+  const host = $('ownedTiers');
+  if (!host) return;
+  host.innerHTML = '';
+  const mine = [...vault.decks(), ...vault.chipSkins()];
+  const held = new Set(
+    mine.map((id) => (packs.deckById(id) || packs.chipById(id) || {}).rarity),
+  );
+
+  const add = (tier, label) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = `tier-btn${ownedTier === tier ? ' on' : ''}`;
+    b.textContent = label;
+    b.addEventListener('click', () => {
+      ownedTier = ownedTier === tier ? null : tier;
+      paintOwned();
+    });
+    host.appendChild(b);
+  };
+
+  add(null, 'All');
+  // Only the tiers you actually hold, so the row does not fill up with
+  // buttons that would show you an empty shelf.
+  for (const tier of packs.RARITIES) if (held.has(tier)) add(tier, tier);
+}
+
 /**
  * One owned skin, in the collection rather than the shop.
  *
@@ -1005,13 +1042,16 @@ function ownedSection(host, title, items, kind, worn, total) {
   const head = document.createElement('div');
   head.className = 'pack-head';
   head.innerHTML = `<div><strong>${title}</strong> `
-    + `<span class="pack-count">${items.length} of ${total}</span></div>`;
+    + `<span class="pack-count">${items.length}`
+    + `${ownedTier ? ` ${ownedTier}` : ` of ${total}`}</span></div>`;
   row.appendChild(head);
 
   if (!items.length) {
     const none = document.createElement('p');
     none.className = 'pack-blurb';
-    none.textContent = 'Nothing here yet. Packs are in the Shop.';
+    none.textContent = ownedTier
+      ? `You have no ${ownedTier} ones of these yet.`
+      : 'Nothing here yet. Packs are in the Shop.';
     row.appendChild(none);
   } else {
     const tiles = document.createElement('div');
@@ -1033,28 +1073,39 @@ function paintOwned() {
     const tail = copies > 1
       ? ` — ${copies} copies, ${copies - 1} spare.`
       : ' — one copy. Double-click it to wear it.';
+    let text;
     if (ownedPick.sold) {
-      note.innerHTML = `Sold ${ownedPick.sold.sold} `
+      text = `Sold ${ownedPick.sold.sold} `
         + `<strong>${ownedPick.name}</strong> for ${fmt(ownedPick.sold.paid)}.`;
     } else if (ownedPick.justWorn) {
-      note.innerHTML = `Wearing <strong>${ownedPick.name}</strong>.`;
+      text = `Wearing <strong>${ownedPick.name}</strong>.`;
     } else {
-      note.innerHTML = `<strong>${ownedPick.name}</strong> `
+      text = `<strong>${ownedPick.name}</strong> `
         + `<span class="rarity ${ownedPick.rarity}">${ownedPick.rarity}</span>${tail}`;
     }
-    sellRow(note);
+    // The picked skin, big enough to actually look at. A 46px tile is fine
+    // for finding one; it is no good for seeing what you have got.
+    const face = ownedPick.kind === 'deck'
+      ? `<span class="card back small deck-${packs.safeDeck(ownedPick.id)}"></span>`
+      : `<span class="token big chipskin-${packs.safeChip(ownedPick.id)}"></span>`;
+    note.innerHTML = `<span class="pick-row"><span class="pick-face">${face}</span>`
+      + `<span class="pick-text">${text}</span></span>`;
+    sellRow(note.querySelector('.pick-text'));
     show(note, true);
   } else {
     show(note, false);
   }
 
+  paintTiers();
+  const tiered = (list) => (ownedTier ? list.filter((s) => s.rarity === ownedTier) : list);
+
   const myDecks = vault.decks();
   const cards = packs.DECKS.filter((d) => d.id === packs.FREE_DECK || myDecks.includes(d.id));
-  ownedSection(host, 'Card skins', cards, 'deck', myDeck(), packs.DECKS.length);
+  ownedSection(host, 'Card skins', tiered(cards), 'deck', myDeck(), packs.DECKS.length);
 
   const myChips = vault.chipSkins();
   const chips = packs.CHIP_SKINS.filter((c) => c.id === packs.FREE_CHIP || myChips.includes(c.id));
-  ownedSection(host, 'Chip skins', chips, 'chip', myChip(), packs.CHIP_SKINS.length);
+  ownedSection(host, 'Chip skins', tiered(chips), 'chip', myChip(), packs.CHIP_SKINS.length);
 
   paintGiftChips();
   paintBulk();
@@ -1076,6 +1127,7 @@ function paintOwned() {
 
 function openOwned() {
   ownedPick = null;
+  ownedTier = null;
   paintOwned();
   show($('ownedModal'), true);
 }
