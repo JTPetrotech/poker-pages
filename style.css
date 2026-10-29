@@ -2303,7 +2303,8 @@ kbd {
   --tok-spin: tok-spin 6s linear infinite;
 }
 
-/* Milk: the rarity above ultra, and the only one you cannot buy. */
+/* Milk: the tier above legendary. Every pack holds one at a flat 1 in 100,
+   and the ultra rare above it comes out of the other 99. */
 .rarity.milk {
   background: linear-gradient(90deg, #ffffff, #e6edf8);
   color: #4d5f7d;
@@ -2607,4 +2608,172 @@ kbd {
   --deck-bg: url("backs/dragoneye.png") center / cover no-repeat;
   --deck-edge: #ffae3d;
   --deck-glyph: "";
+}
+
+/* ----------------------------------------------------------- milk tier */
+
+/* One in every themed pack. They share the same creamy base and pale rim so
+   the tier is recognisable at a glance across the table; the accent colour
+   and the motif say which pack it came out of. */
+.deck-milkyway {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92) 0 30%, transparent 58%),
+    radial-gradient(130% 60% at 14% 8%, rgba(158, 126, 224, 0.5), transparent 72%),
+    linear-gradient(160deg, #fdfcf8 0%, #e8e1f7 100%);
+  --deck-edge: #c9b8ee;
+  --deck-glyph: "\1F30C";
+}
+.deck-milkfloat {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92) 0 30%, transparent 58%),
+    repeating-linear-gradient(90deg, rgba(120, 175, 220, 0.3) 0 5px, transparent 5px 14px),
+    linear-gradient(160deg, #fdfdf9 0%, #dceaf6 100%);
+  --deck-edge: #9fc8e8;
+  --deck-glyph: "\1F69B";
+}
+.deck-milkshake {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.9) 0 30%, transparent 58%),
+    radial-gradient(90% 60% at 80% 86%, rgba(238, 128, 164, 0.5), transparent 70%),
+    linear-gradient(160deg, #fffaf9 0%, #f8dde7 100%);
+  --deck-edge: #f2a8c0;
+  --deck-glyph: "\1F964";
+}
+.deck-victorymilk {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92) 0 30%, transparent 58%),
+    repeating-conic-gradient(from 0deg, rgba(214, 176, 82, 0.26) 0 7deg, transparent 7deg 14deg),
+    linear-gradient(160deg, #fffdf4 0%, #f2e5c2 100%);
+  --deck-edge: #e3c069;
+  --deck-glyph: "\1F95B";
+}
+.deck-milksky {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92) 0 30%, transparent 58%),
+    radial-gradient(100% 55% at 24% 90%, rgba(130, 190, 230, 0.45), transparent 72%),
+    linear-gradient(170deg, #f9fdff 0%, #d9ecf8 100%);
+  --deck-edge: #a9d4ef;
+  --deck-glyph: "\2601\FE0F";
+}
+.deck-milktoken {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.9) 0 30%, transparent 58%),
+    conic-gradient(rgba(210, 160, 90, 0.22) 0 25%, transparent 0 50%,
+                   rgba(210, 160, 90, 0.22) 0 75%, transparent 0) 0 0 / 9px 9px,
+    linear-gradient(160deg, #fffcf4 0%, #f0e2c8 100%);
+  --deck-edge: #e0b678;
+  --deck-glyph: "\1FA99";
+}
+.deck-milksea {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.9) 0 30%, transparent 58%),
+    radial-gradient(1.6px 1.6px at 24% 26%, #fff 50%, transparent 51%),
+    radial-gradient(1.4px 1.4px at 76% 34%, #fff 50%, transparent 51%),
+    radial-gradient(1.6px 1.6px at 34% 76%, #fff 50%, transparent 51%),
+    linear-gradient(170deg, #f7fdfc 0%, #d4efe9 100%);
+  --deck-edge: #8fd8cf;
+  --deck-glyph: "\2728";
+}
+.deck-moonmilk {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92) 0 30%, transparent 58%),
+    radial-gradient(70% 50% at 78% 18%, rgba(130, 142, 220, 0.45), transparent 72%),
+    linear-gradient(160deg, #fbfbff 0%, #dfe3f7 100%);
+  --deck-edge: #a8b6e8;
+  --deck-glyph: "\1F319";
+}
+
+/* ---------------------------------------------------- chips, third batch */
+
+.chipskin-copper {
+  --tok-bg: radial-gradient(circle at 34% 28%, #eca96f, #8d4a1d 74%);
+  --tok-edge: #5f3010;
+  --tok-face: radial-gradient(circle, transparent 0 46%, rgba(255, 216, 172, 0.8) 48% 58%, transparent 60%);
+  --tok-inset: 0;
+  --tok-spin: none;
+}
+.chipskin-mint {
+  --tok-bg: radial-gradient(circle at 36% 30%, #b9f2dc, #4fb594 76%);
+  --tok-edge: #fff;
+  --tok-face:
+    conic-gradient(#fff 0 6%, transparent 6% 25%, #fff 25% 31%, transparent 31% 50%,
+                   #fff 50% 56%, transparent 56% 75%, #fff 75% 81%, transparent 81%);
+  --tok-inset: -2px;
+  --tok-spin: none;
+}
+.chipskin-honey {
+  --tok-bg: repeating-linear-gradient(60deg, #f6c445 0 5px, #b4780a 5px 10px);
+  --tok-edge: #7a4f06;
+  --tok-face: radial-gradient(circle, rgba(255, 246, 214, 0.95) 0 26%, transparent 28%);
+  --tok-inset: 0;
+  --tok-spin: none;
+}
+.chipskin-cherry {
+  --tok-bg: radial-gradient(circle at 36% 28%, #ef5a6a, #8c1020 76%);
+  --tok-edge: #2f7a3e;
+  --tok-face: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.85) 0 15%, transparent 17%);
+  --tok-inset: 0;
+  --tok-spin: none;
+}
+/* Tide: a swell going round the rim. */
+.chipskin-tide {
+  --tok-bg: radial-gradient(circle, #1b7f9c 0 38%, #06394d 100%);
+  --tok-edge: #cdf3ff;
+  --tok-face:
+    conic-gradient(from 0deg, rgba(255,255,255,0) 0 18%, rgba(190,240,255,0.95) 32%,
+                   rgba(255,255,255,0) 46%, rgba(255,255,255,0) 68%,
+                   rgba(190,240,255,0.8) 82%, rgba(255,255,255,0) 96%);
+  --tok-inset: 1px;
+  --tok-spin: tok-spin 5s linear infinite;
+}
+/* Storm: a flash going off behind the rim. */
+.chipskin-storm {
+  --tok-bg: radial-gradient(circle at 36% 30%, #6c7a89, #2a323c 78%);
+  --tok-edge: #e7eef5;
+  --tok-face: radial-gradient(circle, #fdf6c9 0 45%, transparent 48%);
+  --tok-inset: 0;
+  --tok-spin: tok-pulse 1.4s ease-in-out infinite;
+}
+/* Ember: a coal breathing. */
+.chipskin-ember {
+  --tok-bg: radial-gradient(circle at 50% 60%, #ff9a3c 0 22%, #b03a0c 60%, #2a0d04 100%);
+  --tok-edge: #ffc98a;
+  --tok-glow: 0 0 8px rgba(255, 140, 50, 0.8);
+  --tok-face: radial-gradient(circle, rgba(255, 230, 180, 0.85) 0 40%, transparent 44%);
+  --tok-inset: 1px;
+  --tok-spin: tok-pulse 2.6s ease-in-out infinite;
+}
+/* Royal: gold spokes turning slowly on deep purple. */
+.chipskin-royal {
+  --tok-bg: #2c0f4f;
+  --tok-edge: #f3cf6b;
+  --tok-glow: 0 0 7px rgba(243, 207, 107, 0.55);
+  --tok-face:
+    conic-gradient(#f3cf6b 0 12%, #2c0f4f 12% 25%, #f3cf6b 25% 37%, #2c0f4f 37% 50%,
+                   #f3cf6b 50% 62%, #2c0f4f 62% 75%, #f3cf6b 75% 87%, #2c0f4f 87%);
+  --tok-inset: 2px;
+  --tok-spin: tok-spin 7s linear infinite;
+}
+/* Cream: the chip pack's milk tier, a slow swirl in the glass. */
+.chipskin-cream {
+  --tok-bg: radial-gradient(circle at 36% 28%, #ffffff, #dde6f4 80%);
+  --tok-edge: #c4d1e4;
+  --tok-glow: 0 0 7px rgba(255, 255, 255, 0.85);
+  --tok-face:
+    conic-gradient(from 0deg, rgba(255,255,255,0) 0 16%, rgba(160,190,232,0.9) 30%,
+                   rgba(255,255,255,0) 44%, rgba(255,255,255,0) 66%,
+                   rgba(176,202,238,0.8) 80%, rgba(255,255,255,0) 94%);
+  --tok-inset: 1px;
+  --tok-spin: tok-spin 6.5s linear infinite;
+}
+/* Eclipse: the chip pack's ultra rare. A corona creeping round a black disc. */
+.chipskin-eclipse {
+  --tok-bg: radial-gradient(circle, #05060a 0 46%, #ffd9a0 50% 56%, #1a1208 60%, #05060a 100%);
+  --tok-edge: #ffe6bd;
+  --tok-glow: 0 0 10px rgba(255, 214, 150, 0.85);
+  --tok-face:
+    conic-gradient(from 0deg, rgba(255,230,190,0) 0 40%, rgba(255,235,200,0.9) 50%,
+                   rgba(255,230,190,0) 60%);
+  --tok-inset: -1px;
+  --tok-spin: tok-spin 9s linear infinite;
 }

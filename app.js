@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvt0k3c9';
-import { TableHost } from './host.js?v=mvt0k3c9';
-import * as vault from './vault.js?v=mvt0k3c9';
-import * as friends from './friends.js?v=mvt0k3c9';
-import * as packs from './decks.js?v=mvt0k3c9';
-import * as cloud from './cloud.js?v=mvt0k3c9';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvt0k3c9';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvt0k3c9';
+import { HostNet, GuestNet } from './net.js?v=mvtllo4m';
+import { TableHost } from './host.js?v=mvtllo4m';
+import * as vault from './vault.js?v=mvtllo4m';
+import * as friends from './friends.js?v=mvtllo4m';
+import * as packs from './decks.js?v=mvtllo4m';
+import * as cloud from './cloud.js?v=mvtllo4m';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvtllo4m';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvtllo4m';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 61;
+const BUILD = 62;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -549,6 +549,17 @@ function wearDeck(id) {
 }
 
 /** True when there is nothing left for this pack to give you. */
+/**
+ * Rarest last, whatever order the catalogue is in.
+ *
+ * A skin's place in the catalogue is its bit in a backup code, so the milk
+ * tier had to be appended rather than slotted in beside the ultra rare it
+ * now outranks. The shop sorts for display instead.
+ */
+function byRarity(a, b) {
+  return packs.RARITIES.indexOf(a.rarity) - packs.RARITIES.indexOf(b.rarity);
+}
+
 function packEmptyFor(pack, owned) {
   return packs.packContents(pack.id).every((d) => owned.includes(d.id));
 }
@@ -685,7 +696,7 @@ function paintChipShop() {
   const tiles = document.createElement('div');
   tiles.className = 'decks';
   tiles.appendChild(chipTile(packs.chipById(packs.FREE_CHIP), owned));
-  for (const c of contents) tiles.appendChild(chipTile(c, owned));
+  for (const c of [...contents].sort(byRarity)) tiles.appendChild(chipTile(c, owned));
   // The claim-only ones sit at the end: no pack sells them, so they are not
   // part of the count above.
   for (const c of packs.CHIP_SKINS) {
@@ -709,7 +720,9 @@ function deckTile(d, ownedList) {
   b.title = owned ? `${d.name} — ${d.rarity}` : `${d.rarity}, not yours yet`;
   // Where a pack advertises its odds, every tile shows its own share, so the
   // 98 and the two 1s are on screen next to the thing they apply to.
-  const chance = d.odds ? `<span class="odds">${Math.round(d.odds * 100)}%</span>` : '';
+  // Milk is a flat one in a hundred in every pack, so its tiles say so too.
+  const odds = d.odds || (d.rarity === 'milk' ? packs.MILK_CHANCE : 0);
+  const chance = odds ? `<span class="odds">${Math.round(odds * 100)}%</span>` : '';
   const free = packs.claimable('decks').has(d.id) ? '<span class="free-tag">free</span>' : '';
   b.innerHTML = `<span class="card back small"></span>`
     + `<span>${owned || d.odds ? d.name : '???'}${chance}${free}</span>`;
@@ -802,7 +815,7 @@ function paintDecks() {
 
     const tiles = document.createElement('div');
     tiles.className = 'decks';
-    for (const d of contents) tiles.appendChild(deckTile(d, owned));
+    for (const d of [...contents].sort(byRarity)) tiles.appendChild(deckTile(d, owned));
     row.appendChild(tiles);
 
     host.appendChild(row);
@@ -2372,6 +2385,9 @@ function paintTableFacts() {
   note(`Shop sells card skins. A pack costs ${fmt(packs.PACK_PRICE)} chips `
     + 'and always gives you one you do not already have. Everyone at the table '
     + 'sees the skin you are wearing.');
+  note('Every pack holds a milk skin at a flat 1 in 100 and an ultra rare '
+    + 'rarer still, at roughly 1 in 300. The chip pack works the same way, '
+    + 'and your chip travels to the other players just as your cards do.');
   note('Limited is the exception: it draws on fixed odds and does not skip '
     + 'what you already own, so most opens repeat. The Chips tab is a '
     + 'separate thing — a coin flip on your own chips, double or lose it.');

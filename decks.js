@@ -103,10 +103,29 @@ export const DECKS = [
   { id: 'bad', name: 'Bad', pack: 'limited', rarity: 'common', odds: 0.98 },
   { id: 'milk', name: 'Milk', pack: 'limited', rarity: 'milk', odds: 0.01 },
   { id: 'supra', name: 'Supra MK4', pack: 'limited', rarity: 'ultra', odds: 0.01 },
+
+  // One milk skin in every themed pack, at a flat one in a hundred opens.
+  // They share a creamy look so the tier reads across the table, and each
+  // one says which pack it came out of.
+  { id: 'milkyway', name: 'Milky Way', pack: 'cosmic', rarity: 'milk' },
+  { id: 'milkfloat', name: 'Milk Float', pack: 'car', rarity: 'milk' },
+  { id: 'milkshake', name: 'Milkshake', pack: 'food', rarity: 'milk' },
+  { id: 'victorymilk', name: 'Victory Milk', pack: 'sport', rarity: 'milk' },
+  { id: 'milksky', name: 'Milk Sky', pack: 'weather', rarity: 'milk' },
+  { id: 'milktoken', name: 'Milk Token', pack: 'arcade', rarity: 'milk' },
+  { id: 'milksea', name: 'Milky Sea', pack: 'ocean', rarity: 'milk' },
+  { id: 'moonmilk', name: 'Moon Milk', pack: 'mythic', rarity: 'milk' },
 ];
 
-/** Shown on the tiles, rarest last. Milk is above ultra and is not sold. */
-export const RARITIES = ['common', 'rare', 'legendary', 'ultra', 'milk'];
+/**
+ * Shown on the tiles, rarest last.
+ *
+ * Milk sits above legendary at its flat one in a hundred, and the ultra rare
+ * is above milk because it is drawn out of the other ninety-nine and is now
+ * around one in three hundred. The order here is what the tiles are sorted
+ * by, so it has to match the real chances rather than the other way about.
+ */
+export const RARITIES = ['common', 'rare', 'legendary', 'milk', 'ultra'];
 
 /**
  * Chip skins: what the chips themselves look like, as opposed to the card
@@ -121,7 +140,8 @@ export const CHIP_PACK = {
   name: 'Chips',
   blurb: 'What your chips look like, on your bets and on every other screen '
     + 'at the table. Most of them move; every one of them holds still for '
-    + 'anyone whose device asks for less motion.',
+    + 'anyone whose device asks for less motion. Cream is the milk tier at a '
+    + 'flat 1 in 100, and Eclipse is the ultra rare, rarer still.',
 };
 
 export const CHIP_SKINS = [
@@ -145,6 +165,18 @@ export const CHIP_SKINS = [
   { id: 'steel', name: 'Steel', rarity: 'rare' },
   { id: 'nova', name: 'Nova', rarity: 'legendary' },
   { id: 'void', name: 'Void', rarity: 'ultra' },
+  { id: 'copper', name: 'Copper', rarity: 'common' },
+  { id: 'mint', name: 'Mint', rarity: 'common' },
+  { id: 'honey', name: 'Honey', rarity: 'common' },
+  { id: 'cherry', name: 'Cherry', rarity: 'common' },
+  { id: 'tide', name: 'Tide', rarity: 'rare' },
+  { id: 'storm', name: 'Storm', rarity: 'rare' },
+  { id: 'ember', name: 'Ember', rarity: 'legendary' },
+  { id: 'royal', name: 'Royal', rarity: 'legendary' },
+  // Cream is the chip pack's milk tier. It is not the Milk card skin and has
+  // nothing to do with the claim code: that one is about the cards alone.
+  { id: 'cream', name: 'Cream', rarity: 'milk' },
+  { id: 'eclipse', name: 'Eclipse', rarity: 'ultra' },
 ];
 
 /**
@@ -182,9 +214,7 @@ export function chipPackContents() {
 
 /** Draw a chip skin you do not have, the way a themed pack does. */
 export function drawChip(owned, roll = Math.random()) {
-  const pool = chipPackContents().filter((c) => !owned.includes(c.id));
-  if (!pool.length) return null;
-  return pick(pool, roll);
+  return drawWithMilk(chipPackContents().filter((c) => !owned.includes(c.id)), roll);
 }
 
 /**
@@ -233,12 +263,41 @@ export function safeDeck(id) {
  *
  * A themed pack never hands over a design you already have, so these decide
  * the order you collect a pack in rather than whether a purchase is wasted.
- * Skewed hard towards the commons, so the ultra rare is now almost always
- * the last thing a pack gives up instead of a lucky second open.
+ * Skewed hard towards the commons: an ultra rare is about one open in three
+ * hundred, where it used to be one in ninety-four, so it is now very nearly
+ * always the last thing a pack gives up.
  */
-// Milk is never drawn from a pack, but a weight keeps the sums honest if
-// one ever ends up in a pool by mistake.
-const WEIGHT = { common: 40, rare: 10, legendary: 3, ultra: 1, milk: 1 };
+// Milk is taken off the top by MILK_CHANCE and never reaches these weights,
+// but one is kept here so a pool that somehow holds a milk skin still draws.
+const WEIGHT = { common: 40, rare: 10, legendary: 3, ultra: 0.3, milk: 0.3 };
+
+/**
+ * The chance of the milk tier, per open, in every pack and in the chip pack.
+ *
+ * A flat one in a hundred rather than a weight, so it means the same thing
+ * whether the pack is full or nearly finished. Everything else shares the
+ * other ninety-nine by weight, which is where the ultra rare comes from.
+ */
+export const MILK_CHANCE = 0.01;
+
+/**
+ * Draw from a pool where the milk tier gets its flat chance off the top.
+ *
+ * `roll` is rescaled rather than re-rolled, so one number still decides the
+ * whole draw and the odds can be checked exactly. A pool with no milk skin
+ * left in it, because you already pulled it, hands the whole hundred back to
+ * the rest, so chips are never spent on nothing.
+ */
+function drawWithMilk(pool, roll) {
+  if (!pool.length) return null;
+  const milk = pool.filter((d) => d.rarity === 'milk');
+  const rest = pool.filter((d) => d.rarity !== 'milk');
+  const r = Math.min(Math.max(roll, 0), 0.999999);
+  if (!rest.length) return pick(milk, r);
+  if (!milk.length) return pick(rest, r);
+  if (r < MILK_CHANCE) return pick(milk, r / MILK_CHANCE);
+  return pick(rest, (r - MILK_CHANCE) / (1 - MILK_CHANCE));
+}
 
 /**
  * Pull one design out of a pack.
@@ -248,10 +307,7 @@ const WEIGHT = { common: 40, rare: 10, legendary: 3, ultra: 1, milk: 1 };
  * null when the pack holds nothing new.
  */
 export function drawFromPack(packId, owned, roll = Math.random()) {
-  const pool = packContents(packId).filter((d) => !owned.includes(d.id));
-  if (!pool.length) return null;
-
-  return pick(pool, roll);
+  return drawWithMilk(packContents(packId).filter((d) => !owned.includes(d.id)), roll);
 }
 
 /** Weighted choice from a pool that is already known to be non-empty. */

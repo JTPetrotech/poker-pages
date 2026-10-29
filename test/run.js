@@ -937,10 +937,10 @@ test('a backup code is short and carries chips and hands', () => {
   for (let i = 0; i < 42; i++) vault.recordHand({ pot: 100 });
   const code = vault.backupCode();
   // It was twelve characters when it carried only chips. The two
-  // collections cost thirteen between them, one bit per skin, which is what
+  // collections cost seventeen between them, one bit per skin, which is what
   // a code that restores everything costs. The QR in Settings carries the
   // same code, so typing it is the fallback rather than the usual way.
-  assert(code.length <= 32, `code should stay typable, got ${code.length}: ${code}`);
+  assert(code.length <= 36, `code should stay typable, got ${code.length}: ${code}`);
   assert(/^[0-9A-Z-]+$/.test(code), 'uppercase and dashes only');
 
   freshVault();
@@ -1581,13 +1581,77 @@ test('a card skin and a chip skin travel independently', () => {
   eq(t.snapshot('b').seats[0].chip, 'milk');
 });
 
-test('Milk is a rarity of its own, above ultra, and is never sold', () => {
+test('Milk is a tier of its own, under the ultra rare it used to top', () => {
   assert(packs.RARITIES.includes('milk'), 'the tier exists');
-  eq(packs.RARITIES[packs.RARITIES.length - 1], 'milk', 'and it is the top one');
+  // It was the top tier when nothing sold it. It is a flat 1 in 100 now, and
+  // the ultra rare comes out of the other 99 at about a third of that, so
+  // the order the tiles are sorted by has to put ultra last.
+  eq(packs.RARITIES[packs.RARITIES.length - 1], 'ultra', 'ultra is the top one');
+  eq(packs.RARITIES.indexOf('milk'), packs.RARITIES.length - 2, 'milk sits under it');
   eq(packs.deckById('milk').rarity, 'milk');
-  // One skin carries it, and it is a card skin.
-  eq(packs.DECKS.filter((d) => d.rarity === 'milk').length, 1);
-  eq(packs.CHIP_SKINS.filter((c) => c.rarity === 'milk').length, 0);
+});
+
+test('every themed pack sells exactly one milk skin', () => {
+  for (const pack of packs.PACKS) {
+    if (pack.stated) continue;
+    const milk = packs.packContents(pack.id).filter((d) => d.rarity === 'milk');
+    eq(milk.length, 1, `${pack.id} has one`);
+  }
+  // And the chip pack has one of its own.
+  const chipMilk = packs.chipPackContents().filter((c) => c.rarity === 'milk');
+  eq(chipMilk.length, 1, 'the chip pack too');
+  eq(chipMilk[0].id, 'cream');
+});
+
+test('the milk tier is a flat one in a hundred, full pack or nearly empty', () => {
+  eq(packs.MILK_CHANCE, 0.01);
+  // Over a hundred evenly spread rolls of a fresh pack, exactly one is milk.
+  let milk = 0;
+  for (let i = 0; i < 100; i++) {
+    if (packs.drawFromPack('cosmic', [], i / 100).rarity === 'milk') milk++;
+  }
+  eq(milk, 1, 'one open in a hundred');
+
+  // The same with only two left, so the chance does not drift as a pack fills.
+  const nearlyDone = ['planet', 'nebula', 'comet', 'rocket'];
+  milk = 0;
+  for (let i = 0; i < 100; i++) {
+    if (packs.drawFromPack('cosmic', nearlyDone, i / 100).rarity === 'milk') milk++;
+  }
+  eq(milk, 1, 'still one in a hundred');
+
+  // And the chip pack works the same way.
+  milk = 0;
+  for (let i = 0; i < 100; i++) {
+    if (packs.drawChip([], i / 100).rarity === 'milk') milk++;
+  }
+  eq(milk, 1, 'the chip pack too');
+});
+
+test('an ultra rare is rarer than the milk skin beside it', () => {
+  // Both are in the same pack, so this is the whole claim the shop makes.
+  let ultra = 0;
+  let milk = 0;
+  for (let i = 0; i < 10_000; i++) {
+    const r = packs.drawFromPack('cosmic', [], i / 10_000).rarity;
+    if (r === 'ultra') ultra++;
+    if (r === 'milk') milk++;
+  }
+  eq(milk, 100, 'milk is 1 in 100');
+  assert(ultra > 0, 'and the ultra is still reachable');
+  assert(ultra < milk, `ultra ${ultra} must be rarer than milk ${milk}`);
+  // Harder than it was: it used to be one open in 94.
+  assert(ultra < 10_000 / 94, `${ultra} in 10,000 is harder than 1 in 94`);
+});
+
+test('the last milk skin that was pulled is not offered again', () => {
+  // Once the milk skin is yours its hundredth goes back to the rest, rather
+  // than one open in a hundred buying you nothing.
+  const owned = ['milkyway'];
+  for (let i = 0; i < 100; i++) {
+    const got = packs.drawFromPack('cosmic', owned, i / 100);
+    assert(got.rarity !== 'milk', `roll ${i} gave ${got.id}`);
+  }
 });
 
 test('there is no Milk chip, and the code is about cards alone', () => {
@@ -1718,18 +1782,18 @@ test('the last skin in each catalogue survives a code', () => {
   eq(vault.chipSkins().length, 1);
 });
 
-test('the two new packs are five each, one ultra apiece', () => {
+test('the two new packs are six each, one ultra apiece', () => {
   for (const id of ['weather', 'arcade']) {
     const contents = packs.packContents(id);
-    eq(contents.length, 5, `${id} has five`);
+    eq(contents.length, 6, `${id} has six`);
     eq(contents.filter((d) => d.rarity === 'ultra').length, 1, `${id} has one ultra`);
   }
 });
 
-test('the two newest packs are five each, one ultra apiece', () => {
+test('the two newest packs are six each, one ultra apiece', () => {
   for (const id of ['ocean', 'mythic']) {
     const contents = packs.packContents(id);
-    eq(contents.length, 5, `${id} has five`);
+    eq(contents.length, 6, `${id} has six`);
     eq(contents.filter((d) => d.rarity === 'ultra').length, 1, `${id} has one ultra`);
   }
 });
