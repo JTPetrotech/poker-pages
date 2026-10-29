@@ -1,5 +1,5 @@
-import { makeDeck, shuffle } from './cards.js?v=mvu5hq9n';
-import { bestHand, compareScores } from './hand.js?v=mvu5hq9n';
+import { makeDeck, shuffle } from './cards.js?v=mvu677ob';
+import { bestHand, compareScores } from './hand.js?v=mvu677ob';
 
 export const STAGES = ['idle', 'preflop', 'flop', 'turn', 'river', 'showdown', 'handover'];
 
@@ -244,7 +244,7 @@ export class Table {
    * Asking mid-hand queues until the hand ends, for the same reason a top-up
    * does: stacks must not move while they are being bet.
    */
-  transferChips(fromId, toSeat, amount) {
+  transferChips(fromId, toSeat, amount, seized = false) {
     const from = this.playerById(fromId);
     const to = this.seats[toSeat];
     if (!from) throw new Error('You are not seated.');
@@ -256,17 +256,24 @@ export class Table {
 
     if (this.inHandStage()) {
       from.pendingTransfers = from.pendingTransfers || [];
-      from.pendingTransfers.push({ toSeat, amount: want });
-      this.pushLog(`${from.name} will send ${want} to ${to.name} after this hand.`);
-      this.events.push({ type: 'queued-send', id: from.id, amount: want, who: to.name });
+      from.pendingTransfers.push({ toSeat, amount: want, seized });
+      this.pushLog(seized
+        ? `${to.name} will take ${want} from ${from.name} after this hand.`
+        : `${from.name} will send ${want} to ${to.name} after this hand.`);
+      this.events.push({
+        type: seized ? 'queued-seize' : 'queued-send',
+        id: from.id,
+        amount: want,
+        who: to.name,
+      });
       return { queued: want };
     }
 
-    return { sent: this.settleTransfer(from, to, want) };
+    return { sent: this.settleTransfer(from, to, want, seized) };
   }
 
   /** The actual movement, clamped by what the sender has and the table cap. */
-  settleTransfer(from, to, amount) {
+  settleTransfer(from, to, amount, seized = false) {
     const room = Math.max(0, this.maxBuyIn - to.chips);
     const moved = Math.min(amount, from.chips, room);
     if (moved <= 0) {
@@ -280,8 +287,19 @@ export class Table {
     from.netResult -= moved;
     to.netResult += moved;
     to.sitOut = false;
-    this.pushLog(`${from.name} sends ${moved} chips to ${to.name}.`);
-    this.events.push({ type: 'sent', id: from.id, amount: moved, who: to.name });
+    // A seizure is not a gift, and the player it happened to should not be
+    // told they sent anything. Everyone sees which it was in the log, and
+    // the one it happened to gets their own notice rather than the bubble
+    // that means "you moved chips".
+    this.pushLog(seized
+      ? `${to.name} takes ${moved} chips from ${from.name}.`
+      : `${from.name} sends ${moved} chips to ${to.name}.`);
+    this.events.push({
+      type: seized ? 'seized' : 'sent',
+      id: from.id,
+      amount: moved,
+      who: to.name,
+    });
     this.events.push({ type: 'received', id: to.id, amount: moved, who: from.name });
     return moved;
   }
@@ -298,7 +316,7 @@ export class Table {
     if (!from) throw new Error('Nobody is sitting there.');
     if (from === to) throw new Error('That is your own seat.');
     const want = amount === 'all' ? from.chips : amount;
-    return this.transferChips(from.id, to.seat, want);
+    return this.transferChips(from.id, to.seat, want, true);
   }
 
   /** Release anything that was queued while a hand was running. */
@@ -307,11 +325,11 @@ export class Table {
       const queue = p.pendingTransfers;
       if (queue && queue.length) {
         p.pendingTransfers = [];
-        for (const { toSeat, amount } of queue) {
+        for (const { toSeat, amount, seized } of queue) {
           const to = this.seats[toSeat];
           if (!to || to === p) continue;
           try {
-            this.settleTransfer(p, to, amount);
+            this.settleTransfer(p, to, amount, seized);
           } catch {
             // They busted out or the seat filled up; nothing to move.
           }

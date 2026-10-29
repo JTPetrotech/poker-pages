@@ -3222,6 +3222,47 @@ kbd {
 /* Clearing out every double at once, above the collection itself. */
 .bulk-row { margin: 0 0 12px; }
 
+/* The notice you get when somebody helps themselves to your stack. */
+.irs-card {
+  max-width: 330px;
+  text-align: center;
+  background:
+    repeating-linear-gradient(0deg, rgba(120, 110, 80, 0.045) 0 1px, transparent 1px 5px),
+    #fbf8ef;
+  border: 1px solid #c9bfa0;
+}
+.irs-seal {
+  width: 56px;
+  height: 56px;
+  margin: 2px auto 10px;
+  border: 3px double #2f5d3a;
+  border-radius: 50%;
+  color: #2f5d3a;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 50px;
+  transform: rotate(-9deg);
+}
+.irs-card h2 { margin: 0; font-size: 19px; letter-spacing: 0.04em; text-transform: uppercase; }
+.irs-sub {
+  margin: 3px 0 14px;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a7f62;
+}
+.irs-amount {
+  margin: 0 0 12px;
+  padding: 9px 0;
+  border-top: 1px solid #ded3b6;
+  border-bottom: 1px solid #ded3b6;
+  font-size: 13px;
+  color: #6b6148;
+}
+.irs-amount strong { font-size: 26px; color: #8c2f2f; }
+.irs-body { margin: 0 0 16px; font-size: 12px; line-height: 1.6; color: #5d5542; }
+
 /* Sending chips rather than a skin: only up while you are at a table. */
 .gift-chips { margin: 0 0 12px; }
 .gift-who { display: flex; gap: 6px; flex-wrap: wrap; }

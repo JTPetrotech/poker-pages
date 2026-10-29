@@ -1852,6 +1852,59 @@ test('a spare is worth more the rarer it is, and milk is worth a lot', () => {
     'and nonsense falls back to the cheapest rather than to nothing');
 });
 
+test('chips taken are reported as taken, not as sent', () => {
+  // The player it happened to used to get the same event as somebody who
+  // had chosen to hand chips over, which read as though they had done it.
+  const t = new Table({ id: 'T', smallBlind: 5, bigBlind: 10, startingStack: 1000 });
+  t.sit('a', 'Ann', 0, { buyIn: 1000 });
+  t.sit('b', 'Bo', 1, { buyIn: 1000 });
+  t.events.length = 0;
+
+  t.seizeChips('a', 1, 400);
+  const victim = t.events.find((e) => e.id === 'b');
+  const taker = t.events.find((e) => e.id === 'a');
+  eq(victim.type, 'seized', 'Bo is told it was taken');
+  eq(victim.amount, 400);
+  eq(victim.who, 'Ann', 'and by whom');
+  eq(taker.type, 'received');
+  eq(t.seats[1].chips, 600);
+  eq(t.seats[0].chips, 1400);
+  assert(t.log.some((line) => /Ann takes 400 chips from Bo/.test(line.text)),
+    'and the whole table sees which it was');
+});
+
+test('chips handed over willingly are still reported as sent', () => {
+  const t = new Table({ id: 'T', smallBlind: 5, bigBlind: 10, startingStack: 1000 });
+  t.sit('a', 'Ann', 0, { buyIn: 1000 });
+  t.sit('b', 'Bo', 1, { buyIn: 1000 });
+  t.events.length = 0;
+
+  t.transferChips('a', 1, 250);
+  const giver = t.events.find((e) => e.id === 'a');
+  eq(giver.type, 'sent', 'a gift is not a seizure');
+  assert(!t.events.some((e) => e.type === 'seized'));
+});
+
+test('a seizure mid-hand says so when it is queued and when it lands', () => {
+  const t = new Table({ id: 'T', smallBlind: 5, bigBlind: 10, startingStack: 1000 });
+  t.sit('a', 'Ann', 0, { buyIn: 1000 });
+  t.sit('b', 'Bo', 1, { buyIn: 1000 });
+  t.startHand();
+  t.events.length = 0;
+
+  t.seizeChips('a', 1, 300);
+  const warned = t.events.find((e) => e.id === 'b');
+  eq(warned.type, 'queued-seize', 'warned while the hand runs');
+  eq(warned.amount, 300);
+
+  // Settle the hand and let the queue go through.
+  t.events.length = 0;
+  t.releaseQueuedChips();
+  const landed = t.events.find((e) => e.id === 'b');
+  eq(landed.type, 'seized', 'and it is still a seizure when it lands');
+  eq(landed.amount, 300);
+});
+
 test('a chip gift reaches the other player and tells the sender', () => {
   const sent = [];
   const host = new TableHost({

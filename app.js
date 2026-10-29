@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvu5hq9n';
-import { TableHost } from './host.js?v=mvu5hq9n';
-import * as vault from './vault.js?v=mvu5hq9n';
-import * as friends from './friends.js?v=mvu5hq9n';
-import * as packs from './decks.js?v=mvu5hq9n';
-import * as cloud from './cloud.js?v=mvu5hq9n';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvu5hq9n';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvu5hq9n';
+import { HostNet, GuestNet } from './net.js?v=mvu677ob';
+import { TableHost } from './host.js?v=mvu677ob';
+import * as vault from './vault.js?v=mvu677ob';
+import * as friends from './friends.js?v=mvu677ob';
+import * as packs from './decks.js?v=mvu677ob';
+import * as cloud from './cloud.js?v=mvu677ob';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvu677ob';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvu677ob';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 70;
+const BUILD = 71;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -1489,6 +1489,11 @@ function initAdmin() {
     paintAdminSkins();
   });
 
+  $('irsOk').addEventListener('click', () => show($('irsModal'), false));
+  $('irsModal').addEventListener('click', (e) => {
+    if (e.target === $('irsModal')) show($('irsModal'), false);
+  });
+
   $('adminOff').addEventListener('click', () => {
     setAdmin(false);
     show($('adminModal'), false);
@@ -1888,6 +1893,20 @@ function onMessage(msg) {
     }
     case 'sent': {
       bubbleAtMySeat(`−${fmt(msg.amount)} to ${msg.who}`);
+      break;
+    }
+    // Chips taken rather than given. The ordinary 'sent' bubble would read
+    // as though they had handed them over, which is the opposite of what
+    // happened, so this one says so plainly and stays on screen.
+    case 'seized': {
+      bubbleAtMySeat(`−${fmt(msg.amount)} seized`);
+      $('irsAmount').textContent = fmt(msg.amount);
+      $('irsAgent').textContent = msg.who || 'an agent';
+      show($('irsModal'), true);
+      break;
+    }
+    case 'queued-seize': {
+      toast(`The IRS will take ${fmt(msg.amount)} chips when this hand ends.`);
       break;
     }
     case 'received': {

@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mvu5hq9n" />
+<link rel="stylesheet" href="style.css?v=mvu677ob" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
@@ -577,6 +577,23 @@
 </div>
 
 <!-- ------------------------------------------------------------ admin -->
+<!-- ----------------------------------------------- somebody took your chips -->
+<div id="irsModal" class="modal" hidden>
+  <div class="modal-card irs-card" role="dialog" aria-modal="true" aria-labelledby="irsTitle">
+    <div class="irs-seal">IRS</div>
+    <h2 id="irsTitle">Notice of levy</h2>
+    <p class="irs-sub">Internal Revenue Service &middot; Side Pot field office</p>
+    <p class="irs-amount"><strong id="irsAmount">0</strong> chips</p>
+    <p class="irs-body">
+      The amount above has been seized from your stack by
+      <strong id="irsAgent">an agent</strong>. There is no appeal, there is no
+      form to fill in, and there is no refund. The IRS is not real and neither
+      are the chips, which is the only good news on this notice.
+    </p>
+    <button id="irsOk" class="primary" type="button">This seems unfair</button>
+  </div>
+</div>
+
 <div id="adminModal" class="modal" hidden>
   <div class="modal-card wide" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
     <button id="adminClose" class="modal-x" aria-label="Close">&times;</button>
@@ -695,6 +712,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvu5hq9n"></script>
+<script type="module" src="app.js?v=mvu677ob"></script>
 </body>
 </html>
