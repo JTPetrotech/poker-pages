@@ -7,7 +7,7 @@
  * you cash out.
  */
 
-import { DECK_IDS, CHIP_IDS } from './decks.js?v=mvt070g6';
+import { DECK_IDS, CHIP_IDS } from './decks.js?v=mvt0k3c9';
 
 const KEY = 'pn.profile.v1';
 
@@ -331,11 +331,11 @@ const MAX_CODED_HANDS = 32 ** 3 - 1;
  * catalogue outgrew the first width when the ultra rares were added. Codes
  * written at the old width keep reading at the old width.
  */
-const DECK_FIELD = { C: 4, D: 5, E: 5, F: 5, G: 7 };
+const DECK_FIELD = { C: 4, D: 5, E: 5, F: 5, G: 7, H: 9 };
 // E onwards carry chip skins. Each letter is a width, and a new one is
 // minted whenever a catalogue outgrows the field it was written into.
-const CHIP_FIELD = { E: 2, F: 4, G: 4 };
-const DECK_VERSION = 'G';
+const CHIP_FIELD = { E: 2, F: 4, G: 4, H: 4 };
+const DECK_VERSION = 'H';
 
 /**
  * How many skins the current code width can carry. A skin past this point

@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvt070g6';
-import { TableHost } from './host.js?v=mvt070g6';
-import * as vault from './vault.js?v=mvt070g6';
-import * as friends from './friends.js?v=mvt070g6';
-import * as packs from './decks.js?v=mvt070g6';
-import * as cloud from './cloud.js?v=mvt070g6';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvt070g6';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvt070g6';
+import { HostNet, GuestNet } from './net.js?v=mvt0k3c9';
+import { TableHost } from './host.js?v=mvt0k3c9';
+import * as vault from './vault.js?v=mvt0k3c9';
+import * as friends from './friends.js?v=mvt0k3c9';
+import * as packs from './decks.js?v=mvt0k3c9';
+import * as cloud from './cloud.js?v=mvt0k3c9';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvt0k3c9';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvt0k3c9';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 60;
+const BUILD = 61;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -121,8 +121,23 @@ function codeFromUrl() {
 
 const CLAIM_PREFIX = '#claim=';
 
+const RESTORE_PREFIX = '#restore=';
+
 function claimLink(code) {
   return `${location.origin}${location.pathname}${CLAIM_PREFIX}${code}`;
+}
+
+/**
+ * A link that carries this device's whole profile to another one.
+ *
+ * It is the backup code in the address, so there is one way of moving a
+ * profile rather than two. It copies rather than shares: the other device
+ * gets what you have now, and the two drift apart from there. The dialog
+ * says so, because "play on another device" could easily be read as the
+ * other thing.
+ */
+function accountLink() {
+  return `${location.origin}${location.pathname}${RESTORE_PREFIX}${vault.backupCode()}`;
 }
 
 /**
@@ -158,8 +173,24 @@ function applyClaim(text) {
  * second redemption and a screenshot of the tab does not carry it on.
  */
 function redeemFromUrl() {
-  if (!location.hash.startsWith(CLAIM_PREFIX)) return;
-  const code = decodeURIComponent(location.hash.slice(CLAIM_PREFIX.length));
+  const hash = location.hash;
+
+  if (hash.startsWith(RESTORE_PREFIX)) {
+    const code = decodeURIComponent(hash.slice(RESTORE_PREFIX.length));
+    history.replaceState(null, '', location.pathname + location.search);
+    const balance = vault.restoreCode(code);
+    if (balance === null) {
+      toast('That link is damaged — the code in it does not check out.');
+      return;
+    }
+    applyChip();
+    paintVault();
+    toast(`Restored. Your vault is ${fmt(balance)}.`);
+    return;
+  }
+
+  if (!hash.startsWith(CLAIM_PREFIX)) return;
+  const code = decodeURIComponent(hash.slice(CLAIM_PREFIX.length));
   history.replaceState(null, '', location.pathname + location.search);
   if (!applyClaim(code)) toast('That is not a code we know.');
 }
@@ -1007,6 +1038,8 @@ function initSettings() {
   const open = () => {
     paintSettings();
     drawQr($('installQr'), `${location.origin}${location.pathname}`);
+    // Redrawn every time, because the code changes with every chip won.
+    drawQr($('accountQr'), accountLink());
     show($('settingsModal'), true);
   };
   $('settingsBtn').addEventListener('click', open);

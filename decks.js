@@ -20,6 +20,8 @@ export const PACKS = [
   { id: 'sport', name: 'Sport', blurb: 'Game day.' },
   { id: 'weather', name: 'Weather', blurb: 'What the sky is doing.' },
   { id: 'arcade', name: 'Arcade', blurb: 'Quarters not included.' },
+  { id: 'ocean', name: 'Ocean', blurb: 'Down where the light stops.' },
+  { id: 'mythic', name: 'Mythic', blurb: 'Old stories.' },
   {
     id: 'limited',
     name: 'Limited',
@@ -83,6 +85,18 @@ export const DECKS = [
   { id: 'cart', name: 'Cartridge', pack: 'arcade', rarity: 'rare' },
   { id: 'boss', name: 'Boss Fight', pack: 'arcade', rarity: 'legendary' },
   { id: 'invader', name: 'Invader', pack: 'arcade', rarity: 'ultra' },
+
+  { id: 'wave', name: 'Wave', pack: 'ocean', rarity: 'common' },
+  { id: 'shell', name: 'Shell', pack: 'ocean', rarity: 'common' },
+  { id: 'reef', name: 'Reef', pack: 'ocean', rarity: 'rare' },
+  { id: 'shark', name: 'Shark', pack: 'ocean', rarity: 'legendary' },
+  { id: 'deep', name: 'The Deep', pack: 'ocean', rarity: 'ultra' },
+
+  { id: 'orb', name: 'Orb', pack: 'mythic', rarity: 'common' },
+  { id: 'potion', name: 'Potion', pack: 'mythic', rarity: 'common' },
+  { id: 'scroll', name: 'Scroll', pack: 'mythic', rarity: 'rare' },
+  { id: 'crown', name: 'Crown', pack: 'mythic', rarity: 'legendary' },
+  { id: 'dragoneye', name: 'Dragon Eye', pack: 'mythic', rarity: 'ultra' },
 
   // Limited draws on stated odds rather than on what you are missing, so
   // these three carry their own chances and they must add up to one.

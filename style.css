@@ -2530,3 +2530,81 @@ kbd {
   --tok-inset: 2px;
   --tok-spin: tok-spin 3.8s linear infinite;
 }
+
+/* --------------------------------------------------------------- ocean */
+
+.deck-wave {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.34) 0 32%, transparent 60%),
+    repeating-linear-gradient(0deg, #1f6ea8 0 6px, #19588a 6px 12px);
+  --deck-edge: #bfe6ff;
+  --deck-glyph: "\1F30A";
+}
+.deck-shell {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 246, 240, 0.85) 0 32%, transparent 60%),
+    repeating-conic-gradient(from 0deg, rgba(222, 150, 150, 0.35) 0 9deg, transparent 9deg 18deg),
+    linear-gradient(170deg, #ffd9c9 0%, #e3a089 100%);
+  --deck-edge: #fff0e6;
+  --deck-glyph: "\1F41A";
+}
+.deck-reef {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.3) 0 32%, transparent 60%),
+    radial-gradient(circle at 24% 72%, rgba(255, 140, 90, 0.55) 0 18%, transparent 22%),
+    radial-gradient(circle at 76% 30%, rgba(255, 210, 90, 0.5) 0 16%, transparent 20%),
+    linear-gradient(170deg, #17a3a0 0%, #0c6b74 100%);
+  --deck-edge: #8ff0e4;
+  --deck-glyph: "\1F420";
+}
+.deck-shark {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.44) 0 32%, transparent 60%),
+    linear-gradient(170deg, #5b6a76 0%, #2a343d 60%, #121820 100%);
+  --deck-edge: #cfdae3;
+  --deck-glyph: "\1F988";
+}
+.deck-deep {
+  --deck-bg: url("backs/deep.png") center / cover no-repeat;
+  --deck-edge: #9fd8ff;
+  --deck-glyph: "";
+}
+
+/* -------------------------------------------------------------- mythic */
+
+.deck-orb {
+  --deck-bg:
+    radial-gradient(circle at 42% 38%, rgba(255, 255, 255, 0.5) 0 12%, transparent 24%),
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.36) 0 34%, transparent 62%),
+    linear-gradient(170deg, #7b4fd0 0%, #33175e 100%);
+  --deck-edge: #d9c6ff;
+  --deck-glyph: "\1F52E";
+}
+.deck-potion {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.34) 0 32%, transparent 60%),
+    linear-gradient(170deg, #2f9e5f 0%, #14532d 100%);
+  --deck-edge: #aef0c6;
+  --deck-glyph: "\1F9EA";
+}
+.deck-scroll {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 248, 228, 0.86) 0 32%, transparent 60%),
+    repeating-linear-gradient(0deg, rgba(150, 118, 72, 0.3) 0 1px, transparent 1px 7px),
+    linear-gradient(170deg, #f1dfb5 0%, #cfb182 100%);
+  --deck-edge: #7a5c30;
+  --deck-glyph: "\1F4DC";
+}
+.deck-crown {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.4) 0 32%, transparent 60%),
+    repeating-conic-gradient(from 0deg, rgba(255, 216, 120, 0.2) 0 5deg, transparent 5deg 11deg),
+    linear-gradient(170deg, #5b2b7a 0%, #22103a 100%);
+  --deck-edge: #f3cf6b;
+  --deck-glyph: "\1F451";
+}
+.deck-dragoneye {
+  --deck-bg: url("backs/dragoneye.png") center / cover no-repeat;
+  --deck-edge: #ffae3d;
+  --deck-glyph: "";
+}

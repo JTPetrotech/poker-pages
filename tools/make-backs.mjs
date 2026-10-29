@@ -702,10 +702,115 @@ function invader() {
   return c.bytes();
 }
 
+// ------------------------------------------------------------------- deep
+
+/** Light coming down through deep water, and whatever is hanging in it. */
+function deep() {
+  const c = canvas();
+  const rnd = rand(90210);
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const t = (y / H) ** 0.75;
+      c.set(x, y, mix(24, 2, t), mix(96, 10, t), mix(140, 28, t));
+    }
+  }
+
+  // Shafts leaning in from the surface, fading as they go down.
+  for (let i = 0; i < 7; i++) {
+    const top = rnd() * W;
+    const lean = (rnd() - 0.5) * W * 0.5;
+    const half = 3 + rnd() * 7;
+    const reach = H * (0.4 + rnd() * 0.5);
+    for (let y = 0; y < reach; y++) {
+      const t = y / reach;
+      const cx = top + lean * t;
+      for (let x = Math.round(cx - half); x <= cx + half; x++) {
+        const edge = 1 - Math.abs(x - cx) / half;
+        c.blend(x, y, 190, 240, 255, edge * (1 - t) ** 1.6 * 0.3);
+      }
+    }
+  }
+
+  // Motes drifting, brighter near the top where the light still reaches.
+  for (let i = 0; i < 180; i++) {
+    const x = Math.floor(rnd() * W);
+    const y = Math.floor(rnd() * H);
+    c.blend(x, y, 220, 245, 255, (1 - y / H) * 0.6 * rnd());
+  }
+  return c.bytes();
+}
+
+// -------------------------------------------------------------- dragoneye
+
+/** One eye, filling the card: a slit pupil in a ring of fire. */
+function dragoneye() {
+  const c = canvas();
+  const cx = W / 2;
+  const cy = H / 2;
+  const eyeRx = W * 0.46;
+  const eyeRy = H * 0.26;
+  const irisR = Math.min(eyeRx, eyeRy) * 0.92;
+  const rnd = rand(7777);
+
+  // Scales around the eye.
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const row = Math.floor(y / 9);
+      const off = (row % 2) * 6;
+      const sx = ((x + off) % 12) / 12 - 0.5;
+      const sy = (y % 9) / 9 - 0.5;
+      const bump = 1 - Math.hypot(sx * 1.4, sy * 1.8) * 1.5;
+      const t = y / H;
+      const base = [mix(42, 18, t), mix(30, 12, t), mix(52, 24, t)];
+      const lift = Math.max(0, bump) * 38;
+      c.set(x, y, base[0] + lift, base[1] + lift * 0.7, base[2] + lift);
+    }
+  }
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const nx = (x - cx) / eyeRx;
+      const ny = (y - cy) / eyeRy;
+      const d = Math.hypot(nx, ny);
+      if (d > 1) continue;
+      // The lids: a lens shape rather than an ellipse.
+      const lid = Math.abs(y - cy) / (eyeRy * (1 - (Math.abs(x - cx) / eyeRx) ** 2) + 0.001);
+      if (lid > 1) continue;
+
+      const r = Math.hypot(x - cx, y - cy) / irisR;
+      if (r > 1.0) { c.blend(x, y, 250, 236, 206, 1); continue; }   // sclera
+
+      // Iris: fibres running out from the pupil, hot in the middle.
+      const theta = Math.atan2(y - cy, x - cx);
+      const fibre = 0.78 + 0.22 * Math.sin(theta * 34 + Math.sin(theta * 7) * 2);
+      const heat = (1 - r) * fibre;
+      c.blend(x, y,
+        mix(196, 255, heat), mix(104, 214, heat), mix(14, 70, heat), 1);
+
+      // The slit.
+      const slitW = irisR * 0.17 * (1 - (Math.abs(y - cy) / (irisR * 1.02)) ** 2);
+      if (Math.abs(x - cx) < slitW) c.blend(x, y, 12, 8, 6, 1);
+    }
+  }
+
+  glow(c, Math.round(cx), Math.round(cy), W * 0.66, 255, 150, 40, 0.3);
+
+  // A few embers, because it is a dragon.
+  for (let i = 0; i < 26; i++) {
+    const x = Math.floor(rnd() * W);
+    const y = Math.floor(rnd() * H);
+    c.blend(x, y, 255, 190, 90, rnd() * 0.7);
+  }
+  return c.bytes();
+}
+
 // ------------------------------------------------------------------ write
 
 fs.mkdirSync(outDir, { recursive: true });
-const pictures = { galaxy, strip, melon, stadium, jackpot, milk, supra, aurora, invader };
+const pictures = {
+  galaxy, strip, melon, stadium, jackpot, milk, supra, aurora, invader, deep, dragoneye,
+};
 for (const [name, draw] of Object.entries(pictures)) {
   const file = path.join(outDir, `${name}.png`);
   fs.writeFileSync(file, png(W, H, draw()));

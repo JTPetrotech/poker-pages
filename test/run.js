@@ -937,9 +937,10 @@ test('a backup code is short and carries chips and hands', () => {
   for (let i = 0; i < 42; i++) vault.recordHand({ pot: 100 });
   const code = vault.backupCode();
   // It was twelve characters when it carried only chips. The two
-  // collections cost eleven between them, one bit per skin, and that is the
-  // price of a code that restores everything rather than just a balance.
-  assert(code.length <= 28, `code should stay typable, got ${code.length}: ${code}`);
+  // collections cost thirteen between them, one bit per skin, which is what
+  // a code that restores everything costs. The QR in Settings carries the
+  // same code, so typing it is the fallback rather than the usual way.
+  assert(code.length <= 32, `code should stay typable, got ${code.length}: ${code}`);
   assert(/^[0-9A-Z-]+$/.test(code), 'uppercase and dashes only');
 
   freshVault();
@@ -1723,6 +1724,39 @@ test('the two new packs are five each, one ultra apiece', () => {
     eq(contents.length, 5, `${id} has five`);
     eq(contents.filter((d) => d.rarity === 'ultra').length, 1, `${id} has one ultra`);
   }
+});
+
+test('the two newest packs are five each, one ultra apiece', () => {
+  for (const id of ['ocean', 'mythic']) {
+    const contents = packs.packContents(id);
+    eq(contents.length, 5, `${id} has five`);
+    eq(contents.filter((d) => d.rarity === 'ultra').length, 1, `${id} has one ultra`);
+  }
+});
+
+test('every card skin belongs to a pack that exists, or to none on purpose', () => {
+  const packIds = new Set(packs.PACKS.map((p) => p.id));
+  for (const d of packs.DECKS) {
+    if (d.pack === null) continue;   // Classic and the retired Jackpot
+    assert(packIds.has(d.pack), `${d.id} is in "${d.pack}", which is a pack`);
+  }
+  // And every pack has something in it.
+  for (const p of packs.PACKS) {
+    assert(packs.packContents(p.id).length > 0, `${p.id} is not empty`);
+  }
+});
+
+test('a damaged account link restores nothing', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  const before = vault.balance();
+  vault.grantDeck('rocket');
+  // One character changed: the check characters must catch it.
+  const code = vault.backupCode();
+  const broken = code.slice(0, 5) + (code[5] === 'A' ? 'B' : 'A') + code.slice(6);
+  eq(vault.restoreCode(broken), null, 'a mistyped code is refused');
+  eq(vault.balance(), before, 'and nothing moved');
+  assert(vault.ownsDeck('rocket'), 'the collection is untouched too');
 });
 
 // ------------------------------------------------------------------ report
