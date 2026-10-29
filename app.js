@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvu45l66';
-import { TableHost } from './host.js?v=mvu45l66';
-import * as vault from './vault.js?v=mvu45l66';
-import * as friends from './friends.js?v=mvu45l66';
-import * as packs from './decks.js?v=mvu45l66';
-import * as cloud from './cloud.js?v=mvu45l66';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvu45l66';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvu45l66';
+import { HostNet, GuestNet } from './net.js?v=mvu4b8du';
+import { TableHost } from './host.js?v=mvu4b8du';
+import * as vault from './vault.js?v=mvu4b8du';
+import * as friends from './friends.js?v=mvu4b8du';
+import * as packs from './decks.js?v=mvu4b8du';
+import * as cloud from './cloud.js?v=mvu4b8du';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvu4b8du';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvu4b8du';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 65;
+const BUILD = 66;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -597,6 +597,26 @@ function buyChipPack() {
   return { ok: true, pulled, duplicate: !fresh };
 }
 
+/**
+ * How many of a skin you hold: the one in your collection plus its spares.
+ *
+ * Classic and Pink are never in a pack and never in the owned lists, so they
+ * are counted as the one copy everybody starts with.
+ */
+function copiesOf(kind, id) {
+  const owned = kind === 'deck'
+    ? (id === packs.FREE_DECK || vault.ownsDeck(id))
+    : (id === packs.FREE_CHIP || vault.ownsChip(id));
+  return owned ? 1 + vault.spareCount(kind, id) : 0;
+}
+
+/** The little number on a tile saying how many of that skin are yours. */
+function countTag(kind, id) {
+  const n = copiesOf(kind, id);
+  if (!n) return '';
+  return `<span class="count-tag${n > 1 ? ' many' : ''}">&times;${n}</span>`;
+}
+
 /** What the banner says when a pack hands over a copy you already had. */
 function spareLine(name) {
   return `<strong>${name}</strong> again — a spare. `
@@ -612,7 +632,7 @@ function chipTile(c, ownedList) {
   b.title = owned ? `${c.name} — ${c.rarity}` : `${c.rarity}, not yours yet`;
   const free = packs.claimable('chips').has(c.id);
   b.innerHTML = `<span class="token big"></span>`
-    + `<span>${owned || free ? c.name : '???'}`
+    + `<span>${owned || free ? c.name : '???'}${countTag('chip', c.id)}`
     + `${free ? '<span class="free-tag">free</span>' : ''}</span>`;
   if (owned) b.addEventListener('click', () => { wearChip(c.id); paintChipShop(); });
   return b;
@@ -714,7 +734,8 @@ function deckTile(d, ownedList) {
     : '';
   const free = packs.claimable('decks').has(d.id) ? '<span class="free-tag">free</span>' : '';
   b.innerHTML = `<span class="card back small"></span>`
-    + `<span>${owned || d.odds ? d.name : '???'}${chance}${free}</span>`;
+    + `<span>${owned || d.odds ? d.name : '???'}${countTag('deck', d.id)}`
+    + `${chance}${free}</span>`;
   if (owned) b.addEventListener('click', () => { wearDeck(d.id); paintDecks(); });
   return b;
 }
@@ -830,12 +851,12 @@ function ownedTile(item, kind, worn) {
     + ` rar-${item.rarity}`;
   b.classList.toggle('active', item.id === worn);
   b.classList.toggle('picked', !!ownedPick && ownedPick.kind === kind && ownedPick.id === item.id);
-  const spare = vault.spareCount(kind, item.id);
-  b.title = spare
-    ? `${item.name} — ${item.rarity}, and ${spare} spare. Double-click to wear it.`
+  const copies = copiesOf(kind, item.id);
+  b.title = copies > 1
+    ? `${item.name} — ${item.rarity}. ${copies} copies, ${copies - 1} of them spare. `
+      + 'Double-click to wear it.'
     : `${item.name} — ${item.rarity}. Double-click to wear it.`;
-  b.innerHTML = `${face}<span>${item.name}`
-    + `${spare ? `<span class="spare-tag">+${spare}</span>` : ''}</span>`;
+  b.innerHTML = `${face}<span>${item.name}${countTag(kind, item.id)}</span>`;
 
   const pick = (extra) => {
     ownedPick = { kind, id: item.id, name: item.name, rarity: item.rarity, ...extra };
@@ -914,10 +935,10 @@ function paintOwned() {
 
   const note = $('ownedPick');
   if (ownedPick) {
-    const spare = vault.spareCount(ownedPick.kind, ownedPick.id);
-    const tail = spare
-      ? ` — ${spare} spare${spare === 1 ? '' : 's'}.`
-      : ' — double-click it to wear it.';
+    const copies = copiesOf(ownedPick.kind, ownedPick.id);
+    const tail = copies > 1
+      ? ` — ${copies} copies, ${copies - 1} spare.`
+      : ' — one copy. Double-click it to wear it.';
     if (ownedPick.sold) {
       note.innerHTML = `Sold ${ownedPick.sold.sold} `
         + `<strong>${ownedPick.name}</strong> for ${fmt(ownedPick.sold.paid)}.`;
@@ -946,7 +967,8 @@ function paintOwned() {
   if (foot) {
     foot.textContent = spare
       ? `${spare} spare cop${spare === 1 ? 'y' : 'ies'} in hand, worth `
-        + `${fmt(spare * packs.SPARE_PRICE)}. Tap a skin marked with a + to sell one.`
+        + `${fmt(spare * packs.SPARE_PRICE)}. The number on a skin is how many `
+        + 'of it you hold; tap one above a single copy to sell the rest.'
       : 'Only what is yours is here. The Shop is where the rest of it is. '
         + `A pack that repeats itself leaves a spare, and a spare sells for ${fmt(packs.SPARE_PRICE)}.`;
   }
@@ -2428,9 +2450,9 @@ function paintTableFacts() {
     + 'and draws from everything in it, so it can repeat one that is already '
     + `yours. That copy is a spare, and Collection sells one for ${fmt(packs.SPARE_PRICE)}. `
     + 'Everyone at the table sees the skin you are wearing.');
-  note('Every pack holds an ultra rare at roughly 1 in 190 and a milk skin '
-    + 'rarer still, at a flat 1 in 250. The chip pack works the same way, '
-    + 'and your chip travels to the other players just as your cards do.');
+  note('Roughly 1 in 20 opens is a rare, 1 in 90 a legendary, 1 in 215 an '
+    + 'ultra rare and 1 in 250 the milk skin. The chip pack works the same '
+    + 'way, and your chip travels to the other players as your cards do.');
   note('Limited is the exception: it runs on announced odds rather than '
     + 'weights, and 98 opens in 100 are Bad. The Chips tab is a separate '
     + 'thing — a coin flip on your own chips, double or lose it.');

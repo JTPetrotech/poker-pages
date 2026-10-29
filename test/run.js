@@ -1609,6 +1609,27 @@ test('the milk tier is a flat one in two hundred and fifty', () => {
   eq(milk, 4, 'the chip pack too');
 });
 
+test('every tier is harder to pull than the one below it', () => {
+  // The tiles are sorted by RARITIES and the shop quotes these numbers, so
+  // the real chances have to fall in that order with nothing tied.
+  const counts = {};
+  const n = 100_000;
+  for (let i = 0; i < n; i++) {
+    const r = packs.drawFromPack('cosmic', i / n).rarity;
+    counts[r] = (counts[r] || 0) + 1;
+  }
+  let last = Infinity;
+  for (const tier of packs.RARITIES) {
+    const got = counts[tier] || 0;
+    assert(got > 0, `${tier} is reachable at all`);
+    assert(got < last, `${tier} (${got}) must be rarer than the tier below (${last})`);
+    last = got;
+  }
+  // And a rare really is a rare: roughly one open in twenty, not one in ten.
+  assert(counts.rare < n / 15, `rare came up ${counts.rare} times in ${n}`);
+  assert(counts.legendary < n / 60, `legendary came up ${counts.legendary} times`);
+});
+
 test('the milk skin is rarer than the ultra rare beside it', () => {
   // Both are in the same pack, so this is the whole claim the shop makes:
   // milk is the top tier, and the ultra rare under it is still hard.

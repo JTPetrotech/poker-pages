@@ -2780,18 +2780,20 @@ kbd {
 
 /* ------------------------------------------------------------- spares */
 
-/* How many spare copies of a skin are in hand, on its collection tile. */
-.spare-tag {
+/* How many of a skin you hold, on its tile. Quiet at one copy, which is
+   most of them; it only speaks up once there are spares to sell. */
+.count-tag {
   display: inline-block;
   margin-left: 4px;
   padding: 0 4px;
   border-radius: 7px;
-  background: var(--chip);
-  color: #fff;
+  background: #e7ecf1;
+  color: #6b7a88;
   font-size: 9px;
   font-weight: 800;
   vertical-align: 1px;
 }
+.count-tag.many { background: var(--chip); color: #fff; }
 
 .sell-row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
 .sell-btn {
