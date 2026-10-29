@@ -18,6 +18,8 @@ export const PACKS = [
   { id: 'car', name: 'Cars', blurb: 'Things that go.' },
   { id: 'food', name: 'Food', blurb: 'Worth the trip.' },
   { id: 'sport', name: 'Sport', blurb: 'Game day.' },
+  { id: 'weather', name: 'Weather', blurb: 'What the sky is doing.' },
+  { id: 'arcade', name: 'Arcade', blurb: 'Quarters not included.' },
   {
     id: 'limited',
     name: 'Limited',
@@ -70,6 +72,18 @@ export const DECKS = [
   // ones. Anyone who pulled it keeps it, and admin can still hand it out.
   { id: 'jackpot', name: 'Jackpot', pack: null, rarity: 'ultra' },
 
+  { id: 'storm', name: 'Storm', pack: 'weather', rarity: 'common' },
+  { id: 'sunny', name: 'Sunshine', pack: 'weather', rarity: 'common' },
+  { id: 'rain', name: 'Rain', pack: 'weather', rarity: 'rare' },
+  { id: 'snow', name: 'Snow', pack: 'weather', rarity: 'legendary' },
+  { id: 'aurora', name: 'Aurora', pack: 'weather', rarity: 'ultra' },
+
+  { id: 'pixel', name: 'Pixels', pack: 'arcade', rarity: 'common' },
+  { id: 'stick', name: 'Joystick', pack: 'arcade', rarity: 'common' },
+  { id: 'cart', name: 'Cartridge', pack: 'arcade', rarity: 'rare' },
+  { id: 'boss', name: 'Boss Fight', pack: 'arcade', rarity: 'legendary' },
+  { id: 'invader', name: 'Invader', pack: 'arcade', rarity: 'ultra' },
+
   // Limited draws on stated odds rather than on what you are missing, so
   // these three carry their own chances and they must add up to one.
   { id: 'bad', name: 'Bad', pack: 'limited', rarity: 'common', odds: 0.98 },
@@ -112,6 +126,11 @@ export const CHIP_SKINS = [
   { id: 'lava', name: 'Lava', rarity: 'legendary' },
   { id: 'galaxy', name: 'Galaxy', rarity: 'ultra' },
   { id: 'eight', name: 'Eight Ball', rarity: 'ultra' },
+  { id: 'coin', name: 'Coin', rarity: 'common' },
+  { id: 'clover', name: 'Clover', rarity: 'common' },
+  { id: 'steel', name: 'Steel', rarity: 'rare' },
+  { id: 'nova', name: 'Nova', rarity: 'legendary' },
+  { id: 'void', name: 'Void', rarity: 'ultra' },
 ];
 
 /**

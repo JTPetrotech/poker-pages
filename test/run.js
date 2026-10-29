@@ -936,10 +936,10 @@ test('a backup code is short and carries chips and hands', () => {
   vault.setAtTable('ABCD', 4500);   // some chips still on a table
   for (let i = 0; i < 42; i++) vault.recordHand({ pot: 100 });
   const code = vault.backupCode();
-  // It was twelve characters when it carried only chips. Two collections
-  // cost nine characters between them, one bit per skin, and that is the
+  // It was twelve characters when it carried only chips. The two
+  // collections cost eleven between them, one bit per skin, and that is the
   // price of a code that restores everything rather than just a balance.
-  assert(code.length <= 24, `code should stay typable, got ${code.length}: ${code}`);
+  assert(code.length <= 28, `code should stay typable, got ${code.length}: ${code}`);
   assert(/^[0-9A-Z-]+$/.test(code), 'uppercase and dashes only');
 
   freshVault();
@@ -1676,6 +1676,52 @@ test('every hand the engine can name has a frequency', () => {
   }
   for (const cat of seen) {
     assert(HAND_FREQUENCY[cat] !== undefined, `category ${cat} has a count`);
+  }
+});
+
+test('a code carries a whole collection, every last skin', () => {
+  // This is the one that catches a bit field quietly overflowing: the
+  // catalogue is past 31 skins, where a 32-bit shift wraps round and takes
+  // every card skin with it.
+  globalThis.localStorage.clear();
+  vault.detach();
+  for (const id of packs.DECK_IDS) vault.grantDeck(id);
+  for (const id of packs.CHIP_IDS) vault.grantChip(id);
+  const code = vault.backupCode();
+
+  globalThis.localStorage.clear();
+  vault.detach();
+  vault.restoreCode(code);
+  eq(vault.decks().length, packs.DECK_IDS.length, 'every card skin came back');
+  eq(vault.chipSkins().length, packs.CHIP_IDS.length, 'every chip skin too');
+  for (const id of packs.DECK_IDS) assert(vault.ownsDeck(id), `card ${id}`);
+  for (const id of packs.CHIP_IDS) assert(vault.ownsChip(id), `chip ${id}`);
+});
+
+test('the last skin in each catalogue survives a code', () => {
+  // The highest bit is the one an overflow eats first.
+  globalThis.localStorage.clear();
+  vault.detach();
+  const lastDeck = packs.DECK_IDS[packs.DECK_IDS.length - 1];
+  const lastChip = packs.CHIP_IDS[packs.CHIP_IDS.length - 1];
+  vault.grantDeck(lastDeck);
+  vault.grantChip(lastChip);
+  const code = vault.backupCode();
+
+  globalThis.localStorage.clear();
+  vault.detach();
+  vault.restoreCode(code);
+  assert(vault.ownsDeck(lastDeck), `${lastDeck} came back`);
+  assert(vault.ownsChip(lastChip), `${lastChip} came back`);
+  eq(vault.decks().length, 1, 'and nothing else did');
+  eq(vault.chipSkins().length, 1);
+});
+
+test('the two new packs are five each, one ultra apiece', () => {
+  for (const id of ['weather', 'arcade']) {
+    const contents = packs.packContents(id);
+    eq(contents.length, 5, `${id} has five`);
+    eq(contents.filter((d) => d.rarity === 'ultra').length, 1, `${id} has one ultra`);
   }
 });
 

@@ -604,10 +604,108 @@ function supra() {
   return c.bytes();
 }
 
+// ----------------------------------------------------------------- aurora
+
+/** Northern lights: curtains of green and violet over a cold sky. */
+function aurora() {
+  const c = canvas();
+  const rnd = rand(31415);
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const t = y / H;
+      c.set(x, y, mix(10, 30, t), mix(14, 40, t), mix(34, 58, t));
+    }
+  }
+
+  for (let i = 0; i < 260; i++) {
+    const x = Math.floor(rnd() * W);
+    const y = Math.floor(rnd() * H * 0.8);
+    c.blend(x, y, 255, 252, 240, (0.25 + rnd() * 0.7) * 0.85);
+  }
+
+  // Three curtains, each a wavering top edge with light hanging below it.
+  const curtains = [
+    { base: H * 0.3, amp: H * 0.09, freq: 2.1, drop: H * 0.4, rgb: [90, 255, 170] },
+    { base: H * 0.4, amp: H * 0.07, freq: 3.4, drop: H * 0.32, rgb: [150, 120, 255] },
+    { base: H * 0.24, amp: H * 0.05, freq: 1.4, drop: H * 0.26, rgb: [120, 240, 255] },
+  ];
+  for (const { base, amp, freq, drop, rgb } of curtains) {
+    for (let x = 0; x < W; x++) {
+      const top = base + Math.sin((x / W) * Math.PI * freq) * amp;
+      for (let y = Math.round(top); y < top + drop; y++) {
+        if (y < 0 || y >= H) continue;
+        const down = (y - top) / drop;
+        // Vertical streaks, the way a real curtain is ribbed.
+        const rib = 0.55 + 0.45 * Math.sin(x * 0.9);
+        c.blend(x, y, rgb[0], rgb[1], rgb[2], (1 - down) ** 1.8 * 0.5 * rib);
+      }
+    }
+  }
+
+  // A dark ridge along the bottom, so the sky has something to stand on.
+  for (let x = 0; x < W; x++) {
+    const ridge = H * 0.86 + Math.sin(x * 0.11) * 5 + Math.sin(x * 0.37) * 3;
+    for (let y = Math.round(ridge); y < H; y++) c.blend(x, y, 9, 11, 18, 1);
+  }
+  return c.bytes();
+}
+
+// ---------------------------------------------------------------- invader
+
+/** A big pixel alien on a screen, scanlines and all. */
+function invader() {
+  const c = canvas();
+  const ART = [
+    '..#.....#..',
+    '...#...#...',
+    '..#######..',
+    '.##.###.##.',
+    '###########',
+    '#.#######.#',
+    '#.#.....#.#',
+    '...##.##...',
+  ];
+  const cell = Math.floor(W / 13);
+  const artW = ART[0].length * cell;
+  const artH = ART.length * cell;
+  const ox = (W - artW) / 2;
+  const oy = (H - artH) / 2;
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const t = Math.hypot(x - W / 2, y - H / 2) / (H / 2);
+      c.set(x, y, mix(14, 4, t), mix(22, 6, t), mix(16, 5, t));
+    }
+  }
+
+  ART.forEach((row, ry) => {
+    [...row].forEach((on, rx) => {
+      if (on !== '#') return;
+      for (let dy = 0; dy < cell; dy++) {
+        for (let dx = 0; dx < cell; dx++) {
+          // A hair of a gap between pixels, so it reads as pixel art.
+          if (dx >= cell - 1 || dy >= cell - 1) continue;
+          c.blend(Math.round(ox + rx * cell + dx), Math.round(oy + ry * cell + dy),
+            108, 255, 120, 1);
+        }
+      }
+    });
+  });
+
+  glow(c, Math.round(W / 2), Math.round(H / 2), W * 0.62, 70, 220, 90, 0.3);
+
+  // Scanlines, last, so they fall across the alien too.
+  for (let y = 0; y < H; y += 3) {
+    for (let x = 0; x < W; x++) c.blend(x, y, 0, 0, 0, 0.3);
+  }
+  return c.bytes();
+}
+
 // ------------------------------------------------------------------ write
 
 fs.mkdirSync(outDir, { recursive: true });
-const pictures = { galaxy, strip, melon, stadium, jackpot, milk, supra };
+const pictures = { galaxy, strip, melon, stadium, jackpot, milk, supra, aurora, invader };
 for (const [name, draw] of Object.entries(pictures)) {
   const file = path.join(outDir, `${name}.png`);
   fs.writeFileSync(file, png(W, H, draw()));

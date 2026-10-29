@@ -7,7 +7,7 @@
  * you cash out.
  */
 
-import { DECK_IDS, CHIP_IDS } from './decks.js?v=mvsztb8f';
+import { DECK_IDS, CHIP_IDS } from './decks.js?v=mvt070g6';
 
 const KEY = 'pn.profile.v1';
 
@@ -331,11 +331,11 @@ const MAX_CODED_HANDS = 32 ** 3 - 1;
  * catalogue outgrew the first width when the ultra rares were added. Codes
  * written at the old width keep reading at the old width.
  */
-const DECK_FIELD = { C: 4, D: 5, E: 5, F: 5 };
-// E and F carry chip skins; F widened the field when the chip catalogue
-// outgrew ten of them.
-const CHIP_FIELD = { E: 2, F: 4 };
-const DECK_VERSION = 'F';
+const DECK_FIELD = { C: 4, D: 5, E: 5, F: 5, G: 7 };
+// E onwards carry chip skins. Each letter is a width, and a new one is
+// minted whenever a catalogue outgrows the field it was written into.
+const CHIP_FIELD = { E: 2, F: 4, G: 4 };
+const DECK_VERSION = 'G';
 
 /**
  * How many skins the current code width can carry. A skin past this point
@@ -347,19 +347,37 @@ export const CODED_DECK_LIMIT = DECK_FIELD[DECK_VERSION] * 5;
 /** The same, for chip skins. */
 export const CODED_CHIP_LIMIT = CHIP_FIELD[DECK_VERSION] * 5;
 
+/**
+ * The bit field is BigInt throughout, not a number.
+ *
+ * JavaScript's shifts and masks are 32-bit, so the moment a catalogue passed
+ * 31 skins `1 << i` wrapped around and the whole field encoded as zeros —
+ * silently, with every card skin dropped from every code. BigInt has no such
+ * edge, and the round-trip test below covers a full collection.
+ */
 function encodeBits(list, catalogue, width) {
-  let bits = 0;
+  let bits = 0n;
   for (const id of list) {
     const i = catalogue.indexOf(id);
-    if (i >= 0 && i < width * 5) bits |= 1 << i;
+    if (i >= 0 && i < width * 5) bits |= 1n << BigInt(i);
   }
-  return encode32(bits).padStart(width, '0');
+  let out = '';
+  let v = bits;
+  do {
+    out = C32[Number(v % 32n)] + out;
+    v /= 32n;
+  } while (v > 0n);
+  return out.padStart(width, '0');
 }
 
 function decodeBits(text, catalogue) {
-  const bits = decode32(text);
-  if (bits === null) return null;
-  return catalogue.filter((_id, i) => (bits >> i) & 1);
+  let bits = 0n;
+  for (const ch of text) {
+    const i = C32.indexOf(ch);
+    if (i < 0) return null;
+    bits = bits * 32n + BigInt(i);
+  }
+  return catalogue.filter((_id, i) => ((bits >> BigInt(i)) & 1n) === 1n);
 }
 
 export function backupCode() {
