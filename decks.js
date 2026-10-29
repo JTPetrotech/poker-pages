@@ -14,13 +14,30 @@
 export const PACK_PRICE = 5000;
 
 /**
- * What the shop pays for a spare.
+ * What the shop pays for a spare, by what the spare is.
  *
  * A pack can hand you something you already have, and the second copy and
- * every one after it is a spare rather than nothing. Twenty of them buy a
- * pack, so an open is never entirely wasted even when it repeats.
+ * every one after it is a spare rather than nothing. A doubled common is
+ * small change, twenty of them to a pack; a doubled milk skin is a hundred
+ * packs, which is roughly what it costs to see one at all.
+ *
+ * The ladder is steeper than the odds are, on purpose: pulling a rare twice
+ * should feel like something rather than like a near miss.
  */
-export const SPARE_PRICE = 250;
+export const SPARE_PRICES = {
+  free: 250,
+  common: 250,
+  rare: 1_000,
+  legendary: 5_000,
+  ultra: 50_000,
+  milk: 500_000,
+};
+
+/** What one spare of this skin sells for. */
+export function sparePrice(kind, id) {
+  const skin = kind === 'chip' ? chipById(id) : deckById(id);
+  return SPARE_PRICES[skin ? skin.rarity : 'common'] || SPARE_PRICES.common;
+}
 
 export const PACKS = [
   { id: 'cosmic', name: 'Cosmic', blurb: 'Deep space.' },

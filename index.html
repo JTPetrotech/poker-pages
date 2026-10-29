@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mvu5668c" />
+<link rel="stylesheet" href="style.css?v=mvu5hq9n" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
@@ -408,6 +408,13 @@
     </p>
 
     <p id="ownedPick" class="deck-pull" hidden></p>
+    <div id="giftChips" class="gift-chips" hidden>
+      <label class="field"><span>Gift chips from your vault</span></label>
+      <div class="code-row">
+        <input id="giftAmount" type="number" inputmode="numeric" placeholder="Amount" />
+        <span id="giftWho" class="gift-who"></span>
+      </div>
+    </div>
     <div id="ownedBulk" class="bulk-row" hidden></div>
     <div id="ownedList"></div>
     <p id="ownedFoot" class="rank-foot">
@@ -442,9 +449,10 @@
       <p class="deck-note">
         Every pack costs 5,000 and draws from everything in it, so it can
         repeat a skin you already have — that copy is a spare, and Collection
-        buys one back for 250. Roughly 1 open in 20 is a rare, 1 in 90 a
-        legendary, 1 in 150 an ultra rare and 1 in 1,000 the milk skin.
-        Limited runs on its own stated odds.
+        buys it back by rarity &mdash; 250 for a common, 1,000 a rare,
+        5,000 a legendary, 50,000 an ultra and 500,000 a milk skin. Roughly
+        1 open in 20 is a rare, 1 in 90 a legendary, 1 in 150 an ultra rare
+        and 1 in 1,000 the milk skin. Limited runs on its own stated odds.
       </p>
       <p id="decksPull" class="deck-pull" hidden></p>
       <div id="decksPicker"></div>
@@ -687,6 +695,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvu5668c"></script>
+<script type="module" src="app.js?v=mvu5hq9n"></script>
 </body>
 </html>

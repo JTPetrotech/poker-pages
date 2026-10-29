@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvu5668c';
-import { TableHost } from './host.js?v=mvu5668c';
-import * as vault from './vault.js?v=mvu5668c';
-import * as friends from './friends.js?v=mvu5668c';
-import * as packs from './decks.js?v=mvu5668c';
-import * as cloud from './cloud.js?v=mvu5668c';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvu5668c';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvu5668c';
+import { HostNet, GuestNet } from './net.js?v=mvu5hq9n';
+import { TableHost } from './host.js?v=mvu5hq9n';
+import * as vault from './vault.js?v=mvu5hq9n';
+import * as friends from './friends.js?v=mvu5hq9n';
+import * as packs from './decks.js?v=mvu5hq9n';
+import * as cloud from './cloud.js?v=mvu5hq9n';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvu5hq9n';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvu5hq9n';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 69;
+const BUILD = 70;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -98,6 +98,7 @@ const app = {
   dialogSeat: -1,
   buyIn: 0,
   pendingBuyIn: 0,  // withdrawn but not yet confirmed in a seat
+  pendingGift: 0,   // withdrawn for a gift the table has not confirmed
   cashedOut: false,
   code: null,
   name: '',
@@ -618,9 +619,9 @@ function countTag(kind, id) {
 }
 
 /** What the banner says when a pack hands over a copy you already had. */
-function spareLine(name) {
+function spareLine(kind, id, name) {
   return `<strong>${name}</strong> again — a spare. `
-    + `Collection sells it for ${fmt(packs.SPARE_PRICE)}.`;
+    + `Collection sells it for ${fmt(packs.sparePrice(kind, id))}.`;
 }
 
 function chipTile(c, ownedList) {
@@ -653,7 +654,7 @@ function paintChipShop() {
   const note = $('chipPull');
   note.classList.toggle('lost', !!(lastChip && lastChip.again));
   if (lastChip && lastChip.again) {
-    note.innerHTML = spareLine(lastChip.name);
+    note.innerHTML = spareLine('chip', lastChip.id, lastChip.name);
     show(note, true);
   } else if (lastChip) {
     note.innerHTML = `You pulled <strong>${lastChip.name}</strong> `
@@ -757,7 +758,7 @@ function paintDecks() {
   if (lastPull && lastPull.again) {
     // A repeat is a real outcome, and it is worth something, so it says what
     // rather than quietly looking like a win or like nothing at all.
-    note.innerHTML = spareLine(lastPull.name);
+    note.innerHTML = spareLine('deck', lastPull.id, lastPull.name);
     show(note, true);
   } else if (lastPull) {
     note.innerHTML = `You pulled <strong>${lastPull.name}</strong> `
@@ -929,8 +930,9 @@ function sellRow(host) {
     paintOwned();
   });
 
-  sell(1, `Sell one — ${fmt(packs.SPARE_PRICE)}`);
-  if (spare > 1) sell(spare, `Sell all ${spare} — ${fmt(spare * packs.SPARE_PRICE)}`);
+  const each = packs.sparePrice(ownedPick.kind, ownedPick.id);
+  sell(1, `Sell one — ${fmt(each)}`);
+  if (spare > 1) sell(spare, `Sell all ${spare} — ${fmt(spare * each)}`);
   if (giftTargets().length) {
     rowBtn(row, 'Gift one', () => {
       ownedPick = { ...ownedPick, sold: null, justWorn: false, giving: true };
@@ -938,6 +940,43 @@ function sellRow(host) {
     }, 'sell-btn gift-btn');
   }
   host.appendChild(row);
+}
+
+/**
+ * Chips out of your vault and into somebody else's.
+ *
+ * Different from tapping a seat, which moves stacks that are already on the
+ * table. This never touches the game: it leaves your vault and arrives in
+ * theirs, and it can be any amount you have rather than what you are sitting
+ * behind. The chips go first and come back if the table refuses, which is
+ * the way round that cannot invent chips out of a dropped message.
+ */
+function paintGiftChips() {
+  const host = $('giftChips');
+  if (!host) return;
+  const targets = giftTargets();
+  show(host, targets.length > 0);
+  if (!targets.length) return;
+
+  const who = $('giftWho');
+  who.innerHTML = '';
+  for (const p of targets) {
+    rowBtn(who, `To ${p.name}`, () => {
+      const want = Math.floor(Number($('giftAmount').value));
+      if (!Number.isFinite(want) || want <= 0) {
+        toast('Enter an amount to send.');
+        return;
+      }
+      if (want > vault.balance()) {
+        toast(`Your vault has ${fmt(vault.balance())}.`);
+        return;
+      }
+      app.pendingGift = vault.withdraw(want);
+      paintVault();
+      send({ t: 'giftchips', seat: p.seat, amount: app.pendingGift });
+      $('giftAmount').value = '';
+    }, 'sell-btn gift-btn');
+  }
 }
 
 /** Sell every double in both collections, in one press. */
@@ -949,7 +988,7 @@ function paintBulk() {
   if (!spare) { show(host, false); return; }
   show(host, true);
   rowBtn(host, `Sell all ${spare} double${spare === 1 ? '' : 's'} — `
-    + `${fmt(spare * packs.SPARE_PRICE)}`, () => {
+    + `${fmt(vault.spareValue())}`, () => {
     const done = vault.sellAllSpares();
     if (!done) return;
     paintVault();
@@ -1017,6 +1056,7 @@ function paintOwned() {
   const chips = packs.CHIP_SKINS.filter((c) => c.id === packs.FREE_CHIP || myChips.includes(c.id));
   ownedSection(host, 'Chip skins', chips, 'chip', myChip(), packs.CHIP_SKINS.length);
 
+  paintGiftChips();
   paintBulk();
 
   const spare = vault.spareTotal();
@@ -1024,11 +1064,13 @@ function paintOwned() {
   if (foot) {
     foot.textContent = spare
       ? `${spare} spare cop${spare === 1 ? 'y' : 'ies'} in hand, worth `
-        + `${fmt(spare * packs.SPARE_PRICE)}. The number on a skin is how many `
+        + `${fmt(vault.spareValue())}. The number on a skin is how many `
         + 'of it you hold; tap one above a single copy to sell it or give it '
         + 'to somebody at your table.'
       : 'Only what is yours is here. The Shop is where the rest of it is. '
-        + `A pack that repeats itself leaves a spare, and a spare sells for ${fmt(packs.SPARE_PRICE)}.`;
+        + 'A pack that repeats itself leaves a spare, and a spare sells for '
+        + `${fmt(packs.SPARE_PRICES.common)} up to ${fmt(packs.SPARE_PRICES.milk)}, `
+        + 'by how rare it is.';
   }
 }
 
@@ -1888,6 +1930,19 @@ function onMessage(msg) {
       paintOwned();
       break;
     }
+    case 'gotchips': {
+      vault.deposit(msg.amount);
+      paintVault();
+      toast(`${msg.from} sent you ${fmt(msg.amount)} chips for your vault.`);
+      paintOwned();
+      break;
+    }
+    case 'chipssent': {
+      app.pendingGift = 0;   // they are already out of the vault
+      toast(`${fmt(msg.amount)} chips sent to ${msg.to}.`);
+      paintOwned();
+      break;
+    }
     case 'cashout':
       cashOut(msg.amount, 'stand');
       break;
@@ -1896,10 +1951,11 @@ function onMessage(msg) {
       break;
     case 'error': {
       // A rejected sit leaves chips in limbo — put them straight back.
-      if (app.pendingBuyIn || app.pendingAdd) {
-        vault.deposit(app.pendingBuyIn + app.pendingAdd);
+      if (app.pendingBuyIn || app.pendingAdd || app.pendingGift) {
+        vault.deposit(app.pendingBuyIn + app.pendingAdd + app.pendingGift);
         app.pendingBuyIn = 0;
         app.pendingAdd = 0;
+        app.pendingGift = 0;
         paintVault();
       }
       if ($('game').hidden) lobbyError(msg.message);
@@ -2543,8 +2599,10 @@ function paintTableFacts() {
     + 'either way. Tap another seat to send chips to that player.');
   note(`Shop sells card skins. A pack costs ${fmt(packs.PACK_PRICE)} chips `
     + 'and draws from everything in it, so it can repeat one that is already '
-    + `yours. That copy is a spare, and Collection sells one for ${fmt(packs.SPARE_PRICE)}. `
-    + 'Everyone at the table sees the skin you are wearing.');
+    + 'yours. That copy is a spare, and Collection buys it back by rarity: '
+    + `${fmt(packs.SPARE_PRICES.common)} for a common up to `
+    + `${fmt(packs.SPARE_PRICES.milk)} for a milk skin. Everyone at the table `
+    + 'sees the skin you are wearing.');
   note('Roughly 1 in 20 opens is a rare, 1 in 90 a legendary, 1 in 150 an '
     + 'ultra rare and 1 in 1,000 the milk skin. The chip pack works the same '
     + 'way, and your chip travels to the other players as your cards do.');

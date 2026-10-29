@@ -1681,18 +1681,19 @@ test('a spare sells for its price, and the skin itself never does', () => {
   globalThis.localStorage.clear();
   vault.detach();
   const start = vault.balance();
+  const price = packs.sparePrice('deck', 'rocket');   // legendary
   vault.addDeck('rocket');
   vault.addDeck('rocket');
 
   const sale = vault.sellSpares('deck', 'rocket');
   eq(sale.sold, 1);
-  eq(sale.paid, packs.SPARE_PRICE);
-  eq(vault.balance(), start + packs.SPARE_PRICE, 'the chips arrived');
+  eq(sale.paid, price);
+  eq(vault.balance(), start + price, 'the chips arrived');
   eq(vault.spareCount('deck', 'rocket'), 0, 'the spare is gone');
 
   eq(vault.sellSpares('deck', 'rocket'), null, 'and there is nothing left to sell');
   assert(vault.ownsDeck('rocket'), 'the skin is still yours');
-  eq(vault.balance(), start + packs.SPARE_PRICE, 'and nothing moved on the refusal');
+  eq(vault.balance(), start + price, 'and nothing moved on the refusal');
 });
 
 test('selling several spares at once pays for all of them', () => {
@@ -1702,10 +1703,11 @@ test('selling several spares at once pays for all of them', () => {
   for (let i = 0; i < 6; i++) vault.addChip('prism');   // one real, five spare
   eq(vault.spareCount('chip', 'prism'), 5);
 
+  const price = packs.sparePrice('chip', 'prism');
   const sale = vault.sellSpares('chip', 'prism', 99);
   eq(sale.sold, 5, 'it sells what is there and no more');
-  eq(sale.paid, 5 * packs.SPARE_PRICE);
-  eq(vault.balance(), start + 5 * packs.SPARE_PRICE);
+  eq(sale.paid, 5 * price);
+  eq(vault.balance(), start + 5 * price);
   assert(vault.ownsChip('prism'), 'and the skin stays');
 });
 
@@ -1726,11 +1728,17 @@ test('selling every double at once pays for the lot', () => {
   for (let i = 0; i < 3; i++) vault.addDeck('donut');     // 1 owned, 2 spare
   for (let i = 0; i < 2; i++) vault.addChip('prism');     // 1 owned, 1 spare
   eq(vault.spareTotal(), 6);
+  // Priced one by one, not six times the cheapest: Rocket and Prism are
+  // worth more than Donut, and the total has to say so.
+  const worth = 3 * packs.sparePrice('deck', 'rocket')
+    + 2 * packs.sparePrice('deck', 'donut')
+    + 1 * packs.sparePrice('chip', 'prism');
+  eq(vault.spareValue(), worth, 'quoted before anything is sold');
 
   const done = vault.sellAllSpares();
   eq(done.sold, 6, 'both collections at once');
-  eq(done.paid, 6 * packs.SPARE_PRICE);
-  eq(vault.balance(), start + 6 * packs.SPARE_PRICE);
+  eq(done.paid, worth);
+  eq(vault.balance(), start + worth);
   eq(vault.spareTotal(), 0, 'no doubles left');
   // And the skins themselves are all still there.
   assert(vault.ownsDeck('rocket') && vault.ownsDeck('donut') && vault.ownsChip('prism'));
@@ -1820,9 +1828,79 @@ test('a bot is not somewhere a skin can go', () => {
   assert(sent.some((m) => m.msg.t === 'error'));
 });
 
-test('twenty spares buy a pack', () => {
-  eq(packs.SPARE_PRICE, 250);
-  eq(packs.PACK_PRICE / packs.SPARE_PRICE, 20);
+test('a spare is worth more the rarer it is, and milk is worth a lot', () => {
+  // The shop quotes these to the player, so they are fixed here rather than
+  // left to whatever order an object happens to be written in.
+  eq(packs.SPARE_PRICES.common, 250, 'twenty commons to a pack');
+  eq(packs.SPARE_PRICES.milk, 500_000, 'a hundred packs for a doubled milk');
+  eq(packs.PACK_PRICE / packs.SPARE_PRICES.common, 20);
+
+  let last = 0;
+  for (const tier of packs.RARITIES) {
+    const price = packs.SPARE_PRICES[tier];
+    assert(price > last, `${tier} (${price}) must beat the tier below (${last})`);
+    last = price;
+  }
+
+  // And a skin is priced by its own tier, whichever collection it is in.
+  eq(packs.sparePrice('deck', 'planet'), packs.SPARE_PRICES.common);
+  eq(packs.sparePrice('deck', 'rocket'), packs.SPARE_PRICES.legendary);
+  eq(packs.sparePrice('deck', 'galaxy'), packs.SPARE_PRICES.ultra);
+  eq(packs.sparePrice('deck', 'milkyway'), packs.SPARE_PRICES.milk);
+  eq(packs.sparePrice('chip', 'cream'), packs.SPARE_PRICES.milk);
+  eq(packs.sparePrice('deck', 'not-a-skin'), packs.SPARE_PRICES.common,
+    'and nonsense falls back to the cheapest rather than to nothing');
+});
+
+test('a chip gift reaches the other player and tells the sender', () => {
+  const sent = [];
+  const host = new TableHost({
+    code: 'GIFT',
+    options: { startingStack: 1000 },
+    deliver: (token, msg) => sent.push({ token, msg }),
+  });
+  host.handle('a', { t: 'hello', name: 'Ann' });
+  host.handle('b', { t: 'hello', name: 'Bo' });
+  host.handle('a', { t: 'sit', name: 'Ann', seat: 0, buyIn: 1000 });
+  host.handle('b', { t: 'sit', name: 'Bo', seat: 1, buyIn: 1000 });
+
+  sent.length = 0;
+  host.handle('a', { t: 'giftchips', seat: 1, amount: 7500 });
+  const toBo = sent.find((m) => m.token === 'b' && m.msg.t === 'gotchips');
+  const toAnn = sent.find((m) => m.token === 'a' && m.msg.t === 'chipssent');
+  eq(toBo.msg.amount, 7500);
+  eq(toBo.msg.from, 'Ann');
+  eq(toAnn.msg.to, 'Bo');
+
+  // The stacks on the table are not what moved: this is vault to vault.
+  eq(host.table.seats[0].chips, 1000, 'the sender is still sitting behind 1,000');
+  eq(host.table.seats[1].chips, 1000);
+});
+
+test('a chip gift of nothing, or to nobody, is refused', () => {
+  const sent = [];
+  const host = new TableHost({
+    code: 'GIFT',
+    options: { startingStack: 1000 },
+    deliver: (token, msg) => sent.push({ token, msg }),
+  });
+  host.handle('a', { t: 'hello', name: 'Ann' });
+  host.handle('b', { t: 'hello', name: 'Bo' });
+  host.handle('a', { t: 'sit', name: 'Ann', seat: 0, buyIn: 1000 });
+  host.handle('b', { t: 'sit', name: 'Bo', seat: 1, buyIn: 1000 });
+
+  for (const msg of [
+    { t: 'giftchips', seat: 1, amount: 0 },
+    { t: 'giftchips', seat: 1, amount: -500 },
+    { t: 'giftchips', seat: 1, amount: 'lots' },
+    { t: 'giftchips', seat: 0, amount: 100 },     // their own seat
+    { t: 'giftchips', seat: 5, amount: 100 },     // nobody there
+  ]) {
+    sent.length = 0;
+    host.handle('a', msg);
+    assert(!sent.some((m) => m.msg.t === 'gotchips'), `nothing sent for ${msg.amount}`);
+    assert(sent.some((m) => m.msg.t === 'error'), 'and the sender was told why');
+  }
 });
 
 test('there is no Milk chip, and the code is about cards alone', () => {

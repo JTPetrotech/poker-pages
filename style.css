@@ -3221,4 +3221,8 @@ kbd {
 
 /* Clearing out every double at once, above the collection itself. */
 .bulk-row { margin: 0 0 12px; }
+
+/* Sending chips rather than a skin: only up while you are at a table. */
+.gift-chips { margin: 0 0 12px; }
+.gift-who { display: flex; gap: 6px; flex-wrap: wrap; }
 .sell-btn.bulk-btn { width: 100%; padding: 9px 11px; font-size: 12px; }

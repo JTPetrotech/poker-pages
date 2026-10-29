@@ -7,7 +7,7 @@
  * you cash out.
  */
 
-import { DECK_IDS, CHIP_IDS, SPARE_PRICE } from './decks.js?v=mvu5668c';
+import { DECK_IDS, CHIP_IDS, sparePrice } from './decks.js?v=mvu5hq9n';
 
 const KEY = 'pn.profile.v1';
 
@@ -223,6 +223,21 @@ export function spareTotal() {
 }
 
 /**
+ * What every spare in hand would fetch.
+ *
+ * Each one is priced by its own rarity, so this is a sum rather than a
+ * count times a price, and the buttons quote it before anything is sold.
+ */
+export function spareValue() {
+  const p = read();
+  let total = 0;
+  for (const [kind, key] of Object.entries(SPARE_KEY)) {
+    for (const [id, n] of Object.entries(p[key])) total += n * sparePrice(kind, id);
+  }
+  return total;
+}
+
+/**
  * Take delivery of a skin a pack just handed over.
  *
  * The first copy joins the collection; every one after it is a spare. The
@@ -270,9 +285,10 @@ export function sellSpares(kind, id, howMany = 1) {
   if (sold === have) delete next[id];
   else next[id] = have - sold;
   p[key] = next;
-  p.vault = Math.min(MAX_VAULT, p.vault + sold * SPARE_PRICE);
+  const paid = sold * sparePrice(kind, id);
+  p.vault = Math.min(MAX_VAULT, p.vault + paid);
   write(p);
-  return { sold, paid: sold * SPARE_PRICE, balance: p.vault };
+  return { sold, paid, balance: p.vault };
 }
 
 /**
@@ -307,14 +323,18 @@ export function giveSpare(kind, id) {
 export function sellAllSpares() {
   const p = read();
   let sold = 0;
-  for (const key of Object.values(SPARE_KEY)) {
-    for (const n of Object.values(p[key])) sold += n;
+  let paid = 0;
+  for (const [kind, key] of Object.entries(SPARE_KEY)) {
+    for (const [id, n] of Object.entries(p[key])) {
+      sold += n;
+      paid += n * sparePrice(kind, id);
+    }
     p[key] = {};
   }
   if (!sold) return null;
-  p.vault = Math.min(MAX_VAULT, p.vault + sold * SPARE_PRICE);
+  p.vault = Math.min(MAX_VAULT, p.vault + paid);
   write(p);
-  return { sold, paid: sold * SPARE_PRICE, balance: p.vault };
+  return { sold, paid, balance: p.vault };
 }
 
 /** How often a chip flip comes up heads. A fair coin, by design. */
