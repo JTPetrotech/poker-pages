@@ -3214,3 +3214,11 @@ kbd {
 
 /* The one admin button that does the lot. */
 .admin-all { margin: 0 0 10px; }
+
+/* Giving a spare away rather than selling it. */
+.sell-btn.gift-btn { border-color: var(--accent); color: var(--accent); }
+.sell-btn.gift-btn:hover { background: var(--accent); color: #fff; }
+
+/* Clearing out every double at once, above the collection itself. */
+.bulk-row { margin: 0 0 12px; }
+.sell-btn.bulk-btn { width: 100%; padding: 9px 11px; font-size: 12px; }

@@ -1,6 +1,6 @@
-import { Table } from './engine/game.js?v=mvu4ub1o';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvu4ub1o';
-import { safeDeck, safeChip, DECKS, CHIP_SKINS } from './decks.js?v=mvu4ub1o';
+import { Table } from './engine/game.js?v=mvu5668c';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mvu5668c';
+import { safeDeck, safeChip, deckById, chipById, DECKS, CHIP_SKINS } from './decks.js?v=mvu5668c';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;
@@ -146,6 +146,28 @@ export class TableHost {
       case 'chip':
         table.setChip(token, safeChip(msg.chip));
         break;
+      // Passing a spare skin to somebody else at the table. The table does
+      // not know who owns what — collections live in each player's own
+      // browser — so this only carries the offer across. The sender takes
+      // the spare out of their own vault when the confirmation comes back,
+      // which is why a gift this refuses costs nothing.
+      case 'gift': {
+        const from = table.playerById(token);
+        if (!from) throw new Error('Sit down before giving anything away.');
+        const seat = clampInt(msg.seat, 0, table.maxSeats - 1, -1);
+        const to = table.seats[seat];
+        if (!to) throw new Error('Nobody is sitting there.');
+        if (to === from) throw new Error('That is your own seat.');
+        if (to.bot) throw new Error('A computer player has no use for it.');
+        const kind = msg.kind === 'chip' ? 'chip' : 'deck';
+        const id = String(msg.id || '');
+        const skin = kind === 'chip' ? chipById(id) : deckById(id);
+        if (!skin) throw new Error('That is not a skin.');
+        this.deliver(to.id, { t: 'gifted', kind, id, name: skin.name, from: from.name });
+        this.deliver(from.id, { t: 'giftsent', kind, id, name: skin.name, to: to.name });
+        table.pushLog(`${from.name} gave ${to.name} a skin.`);
+        break;
+      }
       case 'stand': {
         // Tell them what they're walking away with, so it reaches their vault.
         const seated = table.playerById(token);

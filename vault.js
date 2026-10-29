@@ -7,7 +7,7 @@
  * you cash out.
  */
 
-import { DECK_IDS, CHIP_IDS, SPARE_PRICE } from './decks.js?v=mvu4ub1o';
+import { DECK_IDS, CHIP_IDS, SPARE_PRICE } from './decks.js?v=mvu5668c';
 
 const KEY = 'pn.profile.v1';
 
@@ -270,6 +270,48 @@ export function sellSpares(kind, id, howMany = 1) {
   if (sold === have) delete next[id];
   else next[id] = have - sold;
   p[key] = next;
+  p.vault = Math.min(MAX_VAULT, p.vault + sold * SPARE_PRICE);
+  write(p);
+  return { sold, paid: sold * SPARE_PRICE, balance: p.vault };
+}
+
+/**
+ * Hand one spare over to somebody else: it leaves, and no chips arrive.
+ *
+ * Called only once the table has confirmed the gift was delivered, so a
+ * gift that was refused costs nothing. Returns false when there was no
+ * spare to give, which the caller says out loud rather than swallowing.
+ */
+export function giveSpare(kind, id) {
+  const key = SPARE_KEY[kind];
+  if (!key) return false;
+  const p = read();
+  const have = p[key][id] || 0;
+  if (have <= 0) return false;
+  const next = { ...p[key] };
+  if (have === 1) delete next[id];
+  else next[id] = have - 1;
+  p[key] = next;
+  write(p);
+  return true;
+}
+
+/**
+ * Sell every spare in one go, both collections together.
+ *
+ * Same rule as selling one: the copy in your collection stays, so this
+ * empties the doubles and leaves you owning exactly what you owned before.
+ * Returns null when there was nothing to sell, so the caller can say so
+ * rather than claiming a sale of nothing.
+ */
+export function sellAllSpares() {
+  const p = read();
+  let sold = 0;
+  for (const key of Object.values(SPARE_KEY)) {
+    for (const n of Object.values(p[key])) sold += n;
+    p[key] = {};
+  }
+  if (!sold) return null;
   p.vault = Math.min(MAX_VAULT, p.vault + sold * SPARE_PRICE);
   write(p);
   return { sold, paid: sold * SPARE_PRICE, balance: p.vault };

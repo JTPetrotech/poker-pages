@@ -5,6 +5,7 @@ import { decide, equity, chen, BOT_STYLES } from '../bot.js';
 import * as vault from '../vault.js';
 import * as friends from '../friends.js';
 import * as packs from '../decks.js';
+import { TableHost } from '../host.js';
 
 let passed = 0;
 let failed = 0;
@@ -1715,6 +1716,108 @@ test('a spare of something that is not a skin cannot be made or sold', () => {
   eq(vault.spareCount('deck', 'not-a-deck'), 0);
   eq(vault.sellSpares('deck', 'not-a-deck'), null);
   eq(vault.sellSpares('nonsense', 'rocket'), null);
+});
+
+test('selling every double at once pays for the lot', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  const start = vault.balance();
+  for (let i = 0; i < 4; i++) vault.addDeck('rocket');    // 1 owned, 3 spare
+  for (let i = 0; i < 3; i++) vault.addDeck('donut');     // 1 owned, 2 spare
+  for (let i = 0; i < 2; i++) vault.addChip('prism');     // 1 owned, 1 spare
+  eq(vault.spareTotal(), 6);
+
+  const done = vault.sellAllSpares();
+  eq(done.sold, 6, 'both collections at once');
+  eq(done.paid, 6 * packs.SPARE_PRICE);
+  eq(vault.balance(), start + 6 * packs.SPARE_PRICE);
+  eq(vault.spareTotal(), 0, 'no doubles left');
+  // And the skins themselves are all still there.
+  assert(vault.ownsDeck('rocket') && vault.ownsDeck('donut') && vault.ownsChip('prism'));
+  eq(vault.sellAllSpares(), null, 'a second press sells nothing');
+});
+
+test('giving a spare away costs the spare and pays nothing', () => {
+  globalThis.localStorage.clear();
+  vault.detach();
+  const start = vault.balance();
+  vault.addDeck('rocket');
+  vault.addDeck('rocket');
+
+  assert(vault.giveSpare('deck', 'rocket'), 'the spare went');
+  eq(vault.spareCount('deck', 'rocket'), 0);
+  eq(vault.balance(), start, 'a gift is not a sale');
+  assert(vault.ownsDeck('rocket'), 'and your own copy stays');
+
+  eq(vault.giveSpare('deck', 'rocket'), false, 'nothing left to give');
+  eq(vault.giveSpare('nonsense', 'rocket'), false);
+  eq(vault.giveSpare('deck', 'not-a-deck'), false);
+});
+
+test('a gift reaches the other player and tells the sender', () => {
+  const sent = [];
+  const host = new TableHost({
+    code: 'GIFT',
+    options: { startingStack: 1000 },
+    deliver: (token, msg) => sent.push({ token, msg }),
+  });
+  host.handle('a', { t: 'hello', name: 'Ann' });
+  host.handle('b', { t: 'hello', name: 'Bo' });
+  host.handle('a', { t: 'sit', name: 'Ann', seat: 0, buyIn: 1000 });
+  host.handle('b', { t: 'sit', name: 'Bo', seat: 1, buyIn: 1000 });
+
+  sent.length = 0;
+  host.handle('a', { t: 'gift', kind: 'deck', id: 'rocket', seat: 1 });
+  const toBo = sent.find((m) => m.token === 'b' && m.msg.t === 'gifted');
+  const toAnn = sent.find((m) => m.token === 'a' && m.msg.t === 'giftsent');
+  assert(toBo, 'Bo was told');
+  eq(toBo.msg.id, 'rocket');
+  eq(toBo.msg.name, 'Rocket', 'with a name to put in the message');
+  eq(toBo.msg.from, 'Ann');
+  assert(toAnn, 'and so was Ann');
+  eq(toAnn.msg.to, 'Bo');
+});
+
+test('a gift of something that is not a skin goes nowhere', () => {
+  const sent = [];
+  const host = new TableHost({
+    code: 'GIFT',
+    options: { startingStack: 1000 },
+    deliver: (token, msg) => sent.push({ token, msg }),
+  });
+  host.handle('a', { t: 'hello', name: 'Ann' });
+  host.handle('b', { t: 'hello', name: 'Bo' });
+  host.handle('a', { t: 'sit', name: 'Ann', seat: 0, buyIn: 1000 });
+  host.handle('b', { t: 'sit', name: 'Bo', seat: 1, buyIn: 1000 });
+
+  const bad = [
+    { t: 'gift', kind: 'deck', id: 'deck-opt" onload="x', seat: 1 },
+    { t: 'gift', kind: 'deck', id: 'rocket', seat: 0 },     // their own seat
+    { t: 'gift', kind: 'deck', id: 'rocket', seat: 4 },     // nobody there
+  ];
+  for (const msg of bad) {
+    sent.length = 0;
+    host.handle('a', msg);
+    assert(!sent.some((m) => m.msg.t === 'gifted'), `nothing delivered for ${msg.id}`);
+    assert(sent.some((m) => m.msg.t === 'error'), 'and the sender was told why');
+  }
+});
+
+test('a bot is not somewhere a skin can go', () => {
+  const sent = [];
+  const host = new TableHost({
+    code: 'GIFT',
+    options: { startingStack: 1000 },
+    deliver: (token, msg) => sent.push({ token, msg }),
+  });
+  host.handle('a', { t: 'hello', name: 'Ann' });
+  host.handle('a', { t: 'sit', name: 'Ann', seat: 0, buyIn: 1000 });
+  host.handle('a', { t: 'addbot', style: 'shark', seat: 2 });
+
+  sent.length = 0;
+  host.handle('a', { t: 'gift', kind: 'deck', id: 'rocket', seat: 2 });
+  assert(!sent.some((m) => m.msg.t === 'gifted'), 'the bot got nothing');
+  assert(sent.some((m) => m.msg.t === 'error'));
 });
 
 test('twenty spares buy a pack', () => {
