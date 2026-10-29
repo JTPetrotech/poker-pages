@@ -31,6 +31,8 @@ export const PACKS = [
   { id: 'arcade', name: 'Arcade', blurb: 'Quarters not included.' },
   { id: 'ocean', name: 'Ocean', blurb: 'Down where the light stops.' },
   { id: 'mythic', name: 'Mythic', blurb: 'Old stories.' },
+  { id: 'casino', name: 'Casino', blurb: 'The room itself.' },
+  { id: 'music', name: 'Music', blurb: 'Turn it up.' },
   {
     id: 'limited',
     name: 'Limited',
@@ -125,6 +127,22 @@ export const DECKS = [
   { id: 'milktoken', name: 'Milk Token', pack: 'arcade', rarity: 'milk' },
   { id: 'milksea', name: 'Milky Sea', pack: 'ocean', rarity: 'milk' },
   { id: 'moonmilk', name: 'Moon Milk', pack: 'mythic', rarity: 'milk' },
+
+  { id: 'dice', name: 'Dice', pack: 'casino', rarity: 'common' },
+  { id: 'wheel', name: 'Roulette', pack: 'casino', rarity: 'common' },
+  { id: 'slots', name: 'Slots', pack: 'casino', rarity: 'rare' },
+  { id: 'ace', name: 'Ace High', pack: 'casino', rarity: 'legendary' },
+  { id: 'highroller', name: 'High Roller', pack: 'casino', rarity: 'ultra' },
+  { id: 'milkmoney', name: 'Milk Money', pack: 'casino', rarity: 'milk' },
+
+  // Not 'note': .deck-note is already a class in the stylesheet, and a skin
+  // whose id collides with one would paint the shop's own paragraph.
+  { id: 'melody', name: 'Melody', pack: 'music', rarity: 'common' },
+  { id: 'cassette', name: 'Cassette', pack: 'music', rarity: 'common' },
+  { id: 'amp', name: 'Amp', pack: 'music', rarity: 'rare' },
+  { id: 'guitar', name: 'Guitar', pack: 'music', rarity: 'legendary' },
+  { id: 'encore', name: 'Encore', pack: 'music', rarity: 'ultra' },
+  { id: 'milkvinyl', name: 'Milk Mix', pack: 'music', rarity: 'milk' },
 ];
 
 /**
@@ -191,6 +209,16 @@ export const CHIP_SKINS = [
   // one is about the cards alone.
   { id: 'cream', name: 'Cream', rarity: 'milk' },
   { id: 'eclipse', name: 'Eclipse', rarity: 'ultra' },
+  { id: 'marble', name: 'Marble', rarity: 'common' },
+  { id: 'camo', name: 'Camo', rarity: 'common' },
+  { id: 'denim', name: 'Denim', rarity: 'common' },
+  { id: 'dusk', name: 'Dusk', rarity: 'common' },
+  { id: 'jade', name: 'Jade', rarity: 'rare' },
+  { id: 'circuit', name: 'Circuit', rarity: 'rare' },
+  { id: 'plasma', name: 'Plasma', rarity: 'legendary' },
+  { id: 'tiger', name: 'Tiger', rarity: 'legendary' },
+  { id: 'quasar', name: 'Quasar', rarity: 'ultra' },
+  { id: 'mirror', name: 'Mirror', rarity: 'ultra' },
 ];
 
 /**

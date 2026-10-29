@@ -2805,3 +2805,208 @@ kbd {
   cursor: pointer;
 }
 .sell-btn:hover { background: var(--green); color: #fff; }
+
+/* -------------------------------------------------------------- casino */
+
+.deck-dice {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.42) 0 32%, transparent 60%),
+    radial-gradient(2.4px 2.4px at 26% 26%, #f6f3ec 50%, transparent 51%),
+    radial-gradient(2.4px 2.4px at 74% 26%, #f6f3ec 50%, transparent 51%),
+    radial-gradient(2.4px 2.4px at 26% 74%, #f6f3ec 50%, transparent 51%),
+    radial-gradient(2.4px 2.4px at 74% 74%, #f6f3ec 50%, transparent 51%),
+    linear-gradient(165deg, #9b1f2c 0%, #5e0f18 100%);
+  --deck-edge: #f3e7d2;
+  --deck-glyph: "\1F3B2";
+}
+/* A wheel reads on its own, so no motif sits on top of it. */
+.deck-wheel {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, #e8d9ae 0 11%, transparent 12%),
+    radial-gradient(circle at 50% 50%, rgba(232, 217, 174, 0.9) 0 30%, transparent 31%),
+    repeating-conic-gradient(from 0deg, #16181d 0 15deg, #a8232f 15deg 30deg),
+    linear-gradient(#16181d, #16181d);
+  --deck-edge: #d8c38a;
+  --deck-glyph: "";
+}
+.deck-slots {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.44) 0 32%, transparent 60%),
+    repeating-linear-gradient(90deg, #2b2f3a 0 9px, #3a3f4d 9px 18px),
+    linear-gradient(#2b2f3a, #2b2f3a);
+  --deck-edge: #ffd24d;
+  --deck-glyph: "\1F3B0";
+}
+.deck-ace {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(246, 243, 236, 0.95) 0 33%, transparent 62%),
+    repeating-linear-gradient(135deg, rgba(20, 22, 28, 0.08) 0 4px, transparent 4px 9px),
+    linear-gradient(165deg, #f8f6f0 0%, #ddd8cb 100%);
+  --deck-edge: #16181d;
+  --deck-glyph: "\2660\FE0F";
+}
+.deck-highroller {
+  --deck-bg: url("backs/highroller.png") center / cover no-repeat;
+  --deck-edge: #e3c98a;
+  --deck-glyph: "";
+}
+.deck-milkmoney {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92) 0 30%, transparent 58%),
+    repeating-linear-gradient(135deg, rgba(90, 160, 120, 0.22) 0 4px, transparent 4px 11px),
+    linear-gradient(160deg, #fdfefa 0%, #dcefe0 100%);
+  --deck-edge: #8fcaa4;
+  --deck-glyph: "\1F4B5";
+}
+
+/* --------------------------------------------------------------- music */
+
+.deck-melody {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.4) 0 32%, transparent 60%),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.22) 0 1px, transparent 1px 9px),
+    linear-gradient(165deg, #2b2063 0%, #140d33 100%);
+  --deck-edge: #b9a8ff;
+  --deck-glyph: "\1F3B5";
+}
+.deck-cassette {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.36) 0 32%, transparent 60%),
+    radial-gradient(circle at 32% 50%, rgba(240, 236, 226, 0.5) 0 13%, transparent 15%),
+    radial-gradient(circle at 68% 50%, rgba(240, 236, 226, 0.5) 0 13%, transparent 15%),
+    linear-gradient(165deg, #3f4652 0%, #20242c 100%);
+  --deck-edge: #e8a33c;
+  --deck-glyph: "\1F4FC";
+}
+.deck-amp {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.44) 0 32%, transparent 60%),
+    conic-gradient(rgba(0, 0, 0, 0.3) 0 25%, transparent 0 50%,
+                   rgba(0, 0, 0, 0.3) 0 75%, transparent 0) 0 0 / 5px 5px,
+    linear-gradient(165deg, #5a3a22 0%, #2a1a0f 100%);
+  --deck-edge: #d9b06a;
+  --deck-glyph: "\1F50A";
+}
+.deck-guitar {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.42) 0 32%, transparent 60%),
+    radial-gradient(70% 45% at 50% 86%, rgba(255, 160, 60, 0.45), transparent 72%),
+    linear-gradient(165deg, #8c1f2a 0%, #3a0a12 100%);
+  --deck-edge: #ffbe63;
+  --deck-glyph: "\1F3B8";
+}
+.deck-encore {
+  --deck-bg: url("backs/encore.png") center / cover no-repeat;
+  --deck-edge: #ff7fd0;
+  --deck-glyph: "";
+}
+.deck-milkvinyl {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.9) 0 30%, transparent 58%),
+    repeating-radial-gradient(circle at 50% 50%, rgba(150, 140, 200, 0.26) 0 2px, transparent 2px 6px),
+    linear-gradient(160deg, #fdfcff 0%, #e4e0f4 100%);
+  --deck-edge: #b6aee0;
+  --deck-glyph: "\1F3A7";
+}
+
+/* --------------------------------------------------- chips, fourth batch */
+
+.chipskin-marble {
+  --tok-bg:
+    linear-gradient(118deg, rgba(150, 160, 175, 0.55) 0 2px, transparent 2px 9px),
+    linear-gradient(62deg, rgba(140, 150, 168, 0.4) 0 1px, transparent 1px 7px),
+    radial-gradient(circle at 36% 30%, #ffffff, #dfe3ea 78%);
+  --tok-edge: #9aa3b0;
+  --tok-face: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0 28%, transparent 30%);
+  --tok-inset: 0;
+  --tok-spin: none;
+}
+.chipskin-camo {
+  --tok-bg:
+    radial-gradient(circle at 30% 28%, #6b7f4a 0 22%, transparent 24%),
+    radial-gradient(circle at 70% 40%, #39502c 0 20%, transparent 22%),
+    radial-gradient(circle at 44% 74%, #8a9a62 0 24%, transparent 26%),
+    linear-gradient(#4e6236, #3b4c29);
+  --tok-edge: #2a371d;
+  --tok-face: none;
+  --tok-inset: 0;
+  --tok-spin: none;
+}
+.chipskin-denim {
+  --tok-bg:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0 1px, transparent 1px 3px),
+    radial-gradient(circle at 36% 30%, #5b82bd, #27406b 76%);
+  --tok-edge: #e8c87a;
+  --tok-face: radial-gradient(circle, transparent 0 44%, rgba(232, 200, 122, 0.85) 46% 52%, transparent 54%);
+  --tok-inset: 0;
+  --tok-spin: none;
+}
+.chipskin-dusk {
+  --tok-bg: radial-gradient(circle at 50% 76%, #ffd36a 0 16%, #ef6f52 42%, #6a2f86 100%);
+  --tok-edge: #ffd8a8;
+  --tok-face: radial-gradient(circle at 50% 76%, rgba(255, 244, 214, 0.9) 0 12%, transparent 15%);
+  --tok-inset: 0;
+  --tok-spin: none;
+}
+/* Jade: a carved stone, with the ring cut into it. */
+.chipskin-jade {
+  --tok-bg: radial-gradient(circle at 34% 28%, #7fe0b4, #116b4c 78%);
+  --tok-edge: #d8f6e6;
+  --tok-face: radial-gradient(circle, transparent 0 34%, rgba(216, 246, 230, 0.7) 36% 44%, transparent 46%);
+  --tok-inset: 0;
+  --tok-spin: none;
+}
+/* Circuit: traces creeping round the board. */
+.chipskin-circuit {
+  --tok-bg: radial-gradient(circle at 36% 30%, #1c6b4a, #06301f 78%);
+  --tok-edge: #d6b24a;
+  --tok-face:
+    conic-gradient(from 0deg, rgba(214, 178, 74, 0) 0 10%, rgba(214, 178, 74, 0.9) 14% 18%,
+                   rgba(214, 178, 74, 0) 22% 46%, rgba(214, 178, 74, 0.9) 50% 54%,
+                   rgba(214, 178, 74, 0) 58% 82%, rgba(214, 178, 74, 0.9) 86% 90%,
+                   rgba(214, 178, 74, 0) 94%);
+  --tok-inset: 2px;
+  --tok-spin: tok-spin 8s linear infinite;
+}
+/* Plasma: the whole thing running through the spectrum, slower than Neon. */
+.chipskin-plasma {
+  --tok-bg: radial-gradient(circle at 40% 34%, #d14bff 0 30%, #3b1180 76%, #150531 100%);
+  --tok-edge: #f0c4ff;
+  --tok-glow: 0 0 9px rgba(190, 90, 255, 0.85);
+  --tok-face: radial-gradient(circle, rgba(255, 255, 255, 0.75) 0 26%, transparent 30%);
+  --tok-inset: 0;
+  --tok-spin: tok-hue 6s linear infinite;
+}
+/* Tiger: stripes going round. */
+.chipskin-tiger {
+  --tok-bg: radial-gradient(circle at 36% 30%, #ffb44e, #c56a0d 78%);
+  --tok-edge: #2a1a08;
+  --tok-face:
+    repeating-conic-gradient(from 0deg, rgba(26, 16, 6, 0.95) 0 7deg,
+                             rgba(26, 16, 6, 0) 7deg 26deg);
+  --tok-inset: 2px;
+  --tok-spin: tok-spin 10s linear infinite;
+}
+/* Quasar: a hard white core with a jet sweeping off it. */
+.chipskin-quasar {
+  --tok-bg: radial-gradient(circle, #ffffff 0 14%, #7ad6ff 32%, #1b3a8c 70%, #050a23 100%);
+  --tok-edge: #cdeaff;
+  --tok-glow: 0 0 11px rgba(120, 200, 255, 0.9);
+  --tok-face:
+    conic-gradient(from 0deg, rgba(255,255,255,0) 0 44%, rgba(235,250,255,0.95) 50%,
+                   rgba(255,255,255,0) 56%, rgba(255,255,255,0) 94%,
+                   rgba(235,250,255,0.7) 98%, rgba(255,255,255,0) 100%);
+  --tok-inset: -2px;
+  --tok-spin: tok-spin 4.2s linear infinite;
+}
+/* Mirror: polished to the point of showing the room back. */
+.chipskin-mirror {
+  --tok-bg: #c8d2dc;
+  --tok-edge: #ffffff;
+  --tok-glow: 0 0 9px rgba(255, 255, 255, 0.7);
+  --tok-face:
+    conic-gradient(#ffffff 0 6%, #8e9aa7 14%, #f2f6fa 24%, #7e8a98 36%,
+                   #ffffff 48%, #909cab 60%, #f4f8fc 74%, #828e9c 88%, #ffffff 100%);
+  --tok-inset: 0;
+  --tok-spin: tok-spin 5.5s linear infinite;
+}

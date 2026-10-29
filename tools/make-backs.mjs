@@ -805,11 +805,173 @@ function dragoneye() {
   return c.bytes();
 }
 
+// ----------------------------------------------------------- high roller
+
+/**
+ * A spade, pointing up, in whatever space the caller is working in.
+ *
+ * `u` and `v` run from -1 to 1 across the pip with v downwards, which lets
+ * the fanned cards below test it in their own rotated space and get a pip
+ * that leans with the card rather than one stuck upright.
+ */
+function inSpade(u, v) {
+  const tri = v <= 0.15 && Math.abs(u) <= 0.72 * (v + 1) / 1.15;
+  const lobes = Math.hypot(Math.abs(u) - 0.34, v - 0.2) <= 0.42;
+  const stem = v > 0.3 && v <= 0.95 && Math.abs(u) <= 0.07 + (v - 0.3) * 0.45;
+  return tri || lobes || stem;
+}
+
+/** Five cards fanned out of one hand, which is the whole tier in a picture. */
+function highroller() {
+  const c = canvas();
+  const cx = W / 2;
+  const rnd = rand(20260214);
+
+  // Deep baize, dark at the corners, with the light coming from above.
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const d = Math.hypot((x - cx) / (W * 0.7), (y - H * 0.34) / (H * 0.78));
+      c.set(x, y, mix(28, 6, d), mix(74, 20, d), mix(50, 18, d));
+    }
+  }
+  glow(c, Math.round(cx), Math.round(H * 0.3), 74, 255, 232, 158, 0.5);
+
+  const pivotY = H + 30;
+  const cw = 44;
+  const ch = 150;
+  const corner = 5;
+
+  // Left to right, so each card laps the one before it and the near edge of
+  // every card is its index corner — which is where the pip goes.
+  for (const deg of [-24, -12, 0, 12, 24]) {
+    const a = (deg * Math.PI) / 180;
+    const cos = Math.cos(a);
+    const sin = Math.sin(a);
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const dx = x - cx;
+        const dy = y - pivotY;
+        const lx = dx * cos + dy * sin;
+        const ly = -dx * sin + dy * cos;
+        if (Math.abs(lx) > cw / 2 || ly < -ch || ly > 0) continue;
+        // Round the two corners at the far end; the near end is off-card.
+        const ox = Math.abs(lx) - (cw / 2 - corner);
+        const oy = -ch + corner - ly;
+        if (ox > 0 && oy > 0 && Math.hypot(ox, oy) > corner) continue;
+
+        const edge = Math.abs(lx) > cw / 2 - 1.4 || ly < -ch + 1.4;
+        if (edge) { c.blend(x, y, 196, 164, 92, 1); continue; }
+
+        // Face: a little shading across it so five of them do not read flat.
+        const across = (lx / cw + 0.5);
+        const down = (ly + ch) / ch;
+        c.blend(x, y, mix(252, 228, across) - down * 10,
+          mix(250, 224, across) - down * 10, mix(242, 210, across) - down * 10, 1);
+
+        // The index pip in the corner, and one large one on the face.
+        const pu = (lx - (-cw / 2 + 9)) / 6;
+        const pv = (ly - (-ch + 16)) / 6;
+        if (Math.abs(pu) <= 1 && Math.abs(pv) <= 1 && inSpade(pu, pv)) {
+          c.blend(x, y, 22, 24, 30, 1);
+          continue;
+        }
+        const bu = lx / 15;
+        const bv = (ly - (-ch + 52)) / 15;
+        if (Math.abs(bu) <= 1 && Math.abs(bv) <= 1 && inSpade(bu, bv)) {
+          c.blend(x, y, 22, 24, 30, 1);
+        }
+      }
+    }
+  }
+
+  // Dust in the light.
+  for (let i = 0; i < 34; i++) {
+    const x = Math.floor(rnd() * W);
+    const y = Math.floor(rnd() * H * 0.55);
+    c.blend(x, y, 255, 246, 214, rnd() * 0.5);
+  }
+  return c.bytes();
+}
+
+// ---------------------------------------------------------------- encore
+
+/** The rig, the haze and the one microphone everybody is looking at. */
+function encore() {
+  const c = canvas();
+  const cx = W / 2;
+  const rnd = rand(20260311);
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const t = y / H;
+      c.set(x, y, mix(14, 32, t), mix(9, 13, t), mix(32, 46, t));
+    }
+  }
+
+  // Four beams, each off its own lamp and fanning towards the middle.
+  const beams = [
+    { x: 13, slope: 0.40, col: [255, 72, 182] },
+    { x: 45, slope: 0.13, col: [86, 212, 255] },
+    { x: 87, slope: -0.13, col: [255, 198, 72] },
+    { x: 119, slope: -0.40, col: [152, 112, 255] },
+  ];
+  for (const beam of beams) {
+    for (let y = 0; y < H * 0.9; y++) {
+      const axis = beam.x + y * beam.slope;
+      const spread = 2.5 + y * 0.09;
+      const fade = (1 - y / (H * 0.98)) * 0.8;
+      for (let x = Math.floor(axis - spread); x <= Math.ceil(axis + spread); x++) {
+        const off = Math.abs(x - axis) / spread;
+        if (off > 1) continue;
+        c.blend(x, y, beam.col[0], beam.col[1], beam.col[2], (1 - off) ** 2 * fade);
+      }
+    }
+    glow(c, Math.round(beam.x), 1, 11, beam.col[0], beam.col[1], beam.col[2], 0.95);
+  }
+
+  // Haze, so the beams sit in air rather than on glass.
+  for (let y = Math.round(H * 0.5); y < H; y++) {
+    const a = ((y - H * 0.5) / (H * 0.5)) ** 2 * 0.22;
+    for (let x = 0; x < W; x++) c.blend(x, y, 120, 90, 180, a);
+  }
+
+  // The microphone, almost a silhouette, with the rig behind it.
+  const headY = H * 0.42;
+  const headRx = 12.5;
+  const headRy = 17;
+  glow(c, Math.round(cx), Math.round(headY), 40, 255, 236, 180, 0.45);
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const nx = (x - cx) / headRx;
+      const ny = (y - headY) / headRy;
+      const inHead = nx * nx + ny * ny <= 1;
+      const stemHalf = 2.6 + (y - headY) / 90;
+      const inStem = y > headY && y < H * 0.88 && Math.abs(x - cx) < stemHalf;
+      const inBase = Math.hypot((x - cx) / 23, (y - H * 0.88) / 5) <= 1;
+      if (!inHead && !inStem && !inBase) continue;
+      // Lit along the left edge, where the magenta lamp is.
+      const lit = inHead ? Math.max(0, 0.55 - Math.hypot(nx + 0.6, ny + 0.5)) : 0;
+      c.blend(x, y, 22 + lit * 420, 18 + lit * 140, 30 + lit * 300, 1);
+      // The grille, as rows across the head.
+      if (inHead && y % 4 === 0) c.blend(x, y, 96, 90, 116, 0.34);
+    }
+  }
+
+  for (let i = 0; i < 30; i++) {
+    const x = Math.floor(rnd() * W);
+    const y = Math.floor(rnd() * H);
+    c.blend(x, y, 255, 240, 220, rnd() * 0.45);
+  }
+  return c.bytes();
+}
+
 // ------------------------------------------------------------------ write
 
 fs.mkdirSync(outDir, { recursive: true });
 const pictures = {
   galaxy, strip, melon, stadium, jackpot, milk, supra, aurora, invader, deep, dragoneye,
+  highroller, encore,
 };
 for (const [name, draw] of Object.entries(pictures)) {
   const file = path.join(outDir, `${name}.png`);
