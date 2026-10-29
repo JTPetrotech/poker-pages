@@ -2390,3 +2390,16 @@ kbd {
   --tok-inset: 0;
   --tok-spin: none;
 }
+
+.rank-odds {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--chip);
+  font-variant-numeric: tabular-nums;
+  margin-left: 4px;
+}
+
+/* The collection's single-click highlight, distinct from the worn one. */
+.deck-opt.picked { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(15, 111, 196, 0.2); }
+.deck-opt.picked.active { border-color: var(--chip); }
+.deck-opt { user-select: none; }

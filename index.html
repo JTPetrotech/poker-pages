@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mvrlrtp9" />
+<link rel="stylesheet" href="style.css?v=mvsztb8f" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
@@ -82,6 +82,7 @@
   <div class="corner-left">
     <button id="lobbyFriends" class="corner-pill" title="Friends">Friends</button>
     <button id="lobbyDecks" class="corner-pill" title="Shop">Shop</button>
+    <button id="lobbyOwned" class="corner-pill" title="Collection">Collection</button>
   </div>
   <button id="lobbyGear" class="corner-gear" aria-label="Appearance" title="Appearance">&#9881;</button>
   <div class="lobby-card">
@@ -244,6 +245,7 @@
     <button id="adminBtn" class="ghost admin-btn" hidden>Admin</button>
     <button id="friendsBtn" class="ghost">Friends</button>
     <button id="decksBtn" class="ghost">Shop</button>
+    <button id="ownedBtn" class="ghost">Collection</button>
     <button id="settingsBtn" class="ghost gear" aria-label="Appearance">&#9881;</button>
   </header>
 
@@ -392,6 +394,23 @@
     <p class="rank-foot" id="friendsNote">
       Players are remembered by the name they sit down under — there are no
       accounts, so a friend who changes their name looks like someone new.
+    </p>
+  </div>
+</div>
+
+<!-- ------------------------------------------------------------ collection -->
+<div id="ownedModal" class="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="ownedTitle">
+    <button id="ownedClose" class="modal-x" aria-label="Close">&times;</button>
+    <h2 id="ownedTitle">Collection</h2>
+    <p class="modal-sub">
+      Everything you own. <strong>Double-click</strong> one to wear it.
+    </p>
+
+    <p id="ownedPick" class="deck-pull" hidden></p>
+    <div id="ownedList"></div>
+    <p class="rank-foot">
+      Only what is yours is here. The Shop is where the rest of it is.
     </p>
   </div>
 </div>
@@ -593,8 +612,13 @@
     </div>
 
     <div id="hpane-hands" class="hpane active">
-      <p class="modal-sub">Best at the top. Five cards play — your two plus the five on the table.</p>
+      <p class="modal-sub">Best at the top. Five cards play &mdash; your two plus the five on the table.</p>
       <div id="rankList" class="rank-list"></div>
+      <p class="rank-foot">
+        The percentage is how often seven cards make that hand, if every hand
+        ran to the river. Most fold long before, so it is not your chance of
+        winning with one. Hover a percentage for the odds the long way round.
+      </p>
     </div>
 
     <div id="hpane-play" class="hpane">
@@ -644,6 +668,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mvrlrtp9"></script>
+<script type="module" src="app.js?v=mvsztb8f"></script>
 </body>
 </html>

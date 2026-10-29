@@ -1,4 +1,4 @@
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './cards.js?v=mvrlrtp9';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './cards.js?v=mvsztb8f';
 
 export const CATEGORIES = [
   'High Card', 'Pair', 'Two Pair', 'Three of a Kind', 'Straight',
@@ -74,6 +74,33 @@ export function bestHand(cards) {
   }
   return { ...best, name: describe(best.score) };
 }
+
+/**
+ * How often each hand turns up in seven cards — your two plus the board.
+ *
+ * Indexed by the category a score carries, so there is one place that says
+ * what a category is worth and one that says how rare it is. The counts are
+ * out of every possible seven-card holding and must add up to exactly that
+ * many, which the tests check: these numbers are shown to players as fact.
+ *
+ * Royal flushes sit apart from other straight flushes because the help
+ * screen lists them apart, so the key is the category with the royal split
+ * out as 9.
+ */
+export const SEVEN_CARD_HANDS = 133_784_560;
+
+export const HAND_FREQUENCY = {
+  9: 4_324,          // royal flush
+  8: 37_260,         // other straight flushes
+  7: 224_848,        // four of a kind
+  6: 3_473_184,      // full house
+  5: 4_047_644,      // flush
+  4: 6_180_020,      // straight
+  3: 6_461_620,      // three of a kind
+  2: 31_433_400,     // two pair
+  1: 58_627_800,     // one pair
+  0: 23_294_460,     // high card
+};
 
 export function describe(score) {
   const [cat, a, b] = score;

@@ -1,4 +1,4 @@
-import { score5, compareScores, bestHand } from '../engine/hand.js';
+import { score5, compareScores, bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from '../engine/hand.js';
 import { Table } from '../engine/game.js';
 import { makeDeck, shuffle } from '../engine/cards.js';
 import { decide, equity, chen, BOT_STYLES } from '../bot.js';
@@ -1640,6 +1640,43 @@ test('a code carries a chip skin from past the old field width', () => {
   vault.detach();
   vault.restoreCode(code);
   assert(vault.ownsChip(last), `${last} came across`);
+});
+
+// ------------------------------------------------------------------ hand odds
+
+test('the hand frequencies add up to every seven-card holding', () => {
+  // These go on a help screen as fact, so they have to be right: the counts
+  // of all ten hands must come to C(52,7) exactly.
+  const counts = Object.values(HAND_FREQUENCY);
+  eq(counts.length, 10, 'every hand has a count');
+  eq(counts.reduce((a, b) => a + b, 0), SEVEN_CARD_HANDS,
+    'the ten counts cover every holding once');
+  eq(SEVEN_CARD_HANDS, 133784560, 'which is C(52,7)');
+});
+
+test('a better hand is always a rarer one', () => {
+  // Categories 1 to 9 run from a pair up to a royal flush, so each must be
+  // rarer than the one below it. High card sits outside that: it beats
+  // nothing and is still rarer than a pair.
+  for (let cat = 2; cat <= 9; cat++) {
+    assert(HAND_FREQUENCY[cat] < HAND_FREQUENCY[cat - 1],
+      `category ${cat} must be rarer than ${cat - 1}`);
+  }
+  assert(HAND_FREQUENCY[0] < HAND_FREQUENCY[1], 'high card is rarer than a pair');
+});
+
+test('every hand the engine can name has a frequency', () => {
+  // A category the engine returns but the table does not know would show a
+  // blank percentage on the help screen.
+  const seen = new Set();
+  const deck = makeDeck();
+  for (let i = 0; i < 3000; i++) {
+    const cards = shuffle(deck.slice()).slice(0, 7);
+    seen.add(bestHand(cards).score[0]);
+  }
+  for (const cat of seen) {
+    assert(HAND_FREQUENCY[cat] !== undefined, `category ${cat} has a count`);
+  }
 });
 
 // ------------------------------------------------------------------ report

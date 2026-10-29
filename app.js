@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvrlrtp9';
-import { TableHost } from './host.js?v=mvrlrtp9';
-import * as vault from './vault.js?v=mvrlrtp9';
-import * as friends from './friends.js?v=mvrlrtp9';
-import * as packs from './decks.js?v=mvrlrtp9';
-import * as cloud from './cloud.js?v=mvrlrtp9';
-import { bestHand } from './engine/hand.js?v=mvrlrtp9';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvrlrtp9';
+import { HostNet, GuestNet } from './net.js?v=mvsztb8f';
+import { TableHost } from './host.js?v=mvsztb8f';
+import * as vault from './vault.js?v=mvsztb8f';
+import * as friends from './friends.js?v=mvsztb8f';
+import * as packs from './decks.js?v=mvsztb8f';
+import * as cloud from './cloud.js?v=mvsztb8f';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvsztb8f';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvsztb8f';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 58;
+const BUILD = 59;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -776,6 +776,109 @@ function paintDecks() {
 
     host.appendChild(row);
   }
+}
+
+// ----------------------------------------------------------- collection
+
+/** What a single click has picked out, so its details can be shown. */
+let ownedPick = null;
+
+/**
+ * One owned skin, in the collection rather than the shop.
+ *
+ * A single click tells you about it; a double-click puts it on. Separating
+ * the two means browsing what you have cannot change what you are wearing by
+ * accident, which in the shop is a single click away.
+ */
+function ownedTile(item, kind, worn) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  const face = kind === 'deck'
+    ? '<span class="card back small"></span>'
+    : '<span class="token big"></span>';
+  b.className = `deck-opt ${kind === 'deck' ? `deck-${item.id}` : `chipskin-${item.id}`}`
+    + ` rar-${item.rarity}`;
+  b.classList.toggle('active', item.id === worn);
+  b.classList.toggle('picked', !!ownedPick && ownedPick.kind === kind && ownedPick.id === item.id);
+  b.title = `${item.name} — ${item.rarity}. Double-click to wear it.`;
+  b.innerHTML = `${face}<span>${item.name}</span>`;
+
+  b.addEventListener('click', () => {
+    ownedPick = { kind, id: item.id, name: item.name, rarity: item.rarity };
+    paintOwned();
+  });
+  b.addEventListener('dblclick', () => {
+    if (kind === 'deck') wearDeck(item.id);
+    else wearChip(item.id);
+    ownedPick = { kind, id: item.id, name: item.name, rarity: item.rarity, justWorn: true };
+    paintOwned();
+  });
+  return b;
+}
+
+function ownedSection(host, title, items, kind, worn, total) {
+  const row = document.createElement('div');
+  row.className = 'pack';
+
+  const head = document.createElement('div');
+  head.className = 'pack-head';
+  head.innerHTML = `<div><strong>${title}</strong> `
+    + `<span class="pack-count">${items.length} of ${total}</span></div>`;
+  row.appendChild(head);
+
+  if (!items.length) {
+    const none = document.createElement('p');
+    none.className = 'pack-blurb';
+    none.textContent = 'Nothing here yet. Packs are in the Shop.';
+    row.appendChild(none);
+  } else {
+    const tiles = document.createElement('div');
+    tiles.className = 'decks';
+    for (const item of items) tiles.appendChild(ownedTile(item, kind, worn));
+    row.appendChild(tiles);
+  }
+  host.appendChild(row);
+}
+
+function paintOwned() {
+  const host = $('ownedList');
+  if (!host) return;
+  host.innerHTML = '';
+
+  const note = $('ownedPick');
+  if (ownedPick) {
+    note.innerHTML = ownedPick.justWorn
+      ? `Wearing <strong>${ownedPick.name}</strong>.`
+      : `<strong>${ownedPick.name}</strong> `
+        + `<span class="rarity ${ownedPick.rarity}">${ownedPick.rarity}</span>`
+        + ' — double-click it to wear it.';
+    show(note, true);
+  } else {
+    show(note, false);
+  }
+
+  const myDecks = vault.decks();
+  const cards = packs.DECKS.filter((d) => d.id === packs.FREE_DECK || myDecks.includes(d.id));
+  ownedSection(host, 'Card skins', cards, 'deck', myDeck(), packs.DECKS.length);
+
+  const myChips = vault.chipSkins();
+  const chips = packs.CHIP_SKINS.filter((c) => c.id === packs.FREE_CHIP || myChips.includes(c.id));
+  ownedSection(host, 'Chip skins', chips, 'chip', myChip(), packs.CHIP_SKINS.length);
+}
+
+function openOwned() {
+  ownedPick = null;
+  paintOwned();
+  show($('ownedModal'), true);
+}
+
+function initOwned() {
+  $('ownedBtn').addEventListener('click', openOwned);
+  $('lobbyOwned').addEventListener('click', openOwned);
+  $('ownedClose').addEventListener('click', () => show($('ownedModal'), false));
+  $('ownedModal').addEventListener('click', (e) => {
+    if (e.target === $('ownedModal')) show($('ownedModal'), false);
+  });
 }
 
 function openDecks() {
@@ -1836,7 +1939,8 @@ function initVaultUi() {
   });
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
-    if (!$('decksModal').hidden) show($('decksModal'), false);
+    if (!$('ownedModal').hidden) show($('ownedModal'), false);
+    else if (!$('decksModal').hidden) show($('decksModal'), false);
     else if (!$('friendsModal').hidden) show($('friendsModal'), false);
     else if (!$('adminModal').hidden) show($('adminModal'), false);
     else if (!$('settingsModal').hidden) show($('settingsModal'), false);
@@ -2082,18 +2186,40 @@ function initAuthUi() {
 
 // ---------------------------------------------------------------- hand rankings
 
+/**
+ * The hand rankings, with how often each one turns up.
+ *
+ * The last number on each row is how many of the 133,784,560 possible
+ * seven-card holdings make that hand — your two cards plus all five on the
+ * board. The percentage is worked out from it rather than typed in, and the
+ * counts add up to exactly that total, which a test checks: a wrong figure
+ * here would be a confidently stated falsehood on a help screen.
+ *
+ * It is the chance of holding the hand if every hand ran to the river. Real
+ * ones fold long before that, so these are not your chances of winning with
+ * it — the help screen says so.
+ */
 const HAND_RANKINGS = [
-  ['Royal Flush', 'The best hand there is', 'As Ks Qs Js Ts'],
-  ['Straight Flush', 'Five in a row, all one suit', '9h 8h 7h 6h 5h'],
-  ['Four of a Kind', 'All four of one rank', 'Qs Qh Qd Qc 3s'],
-  ['Full House', 'Three of one, two of another', 'Js Jh Jd 8c 8s'],
-  ['Flush', 'Any five of one suit', 'Kd Jd 9d 6d 2d'],
-  ['Straight', 'Five in a row, suits mixed', 'Tc 9d 8s 7h 6c'],
-  ['Three of a Kind', 'Three of one rank', '7s 7h 7d Kc 4s'],
-  ['Two Pair', 'Two pairs', 'As Ad 5c 5h 9s'],
-  ['One Pair', 'Two of the same rank', 'Ts Td Ac 7h 3s'],
-  ['High Card', 'Nothing made — highest card plays', 'Ad Qs 9h 5c 2d'],
+  ['Royal Flush', 'The best hand there is', 'As Ks Qs Js Ts', 9],
+  ['Straight Flush', 'Five in a row, all one suit', '9h 8h 7h 6h 5h', 8],
+  ['Four of a Kind', 'All four of one rank', 'Qs Qh Qd Qc 3s', 7],
+  ['Full House', 'Three of one, two of another', 'Js Jh Jd 8c 8s', 6],
+  ['Flush', 'Any five of one suit', 'Kd Jd 9d 6d 2d', 5],
+  ['Straight', 'Five in a row, suits mixed', 'Tc 9d 8s 7h 6c', 4],
+  ['Three of a Kind', 'Three of one rank', '7s 7h 7d Kc 4s', 3],
+  ['Two Pair', 'Two pairs', 'As Ad 5c 5h 9s', 2],
+  ['One Pair', 'Two of the same rank', 'Ts Td Ac 7h 3s', 1],
+  ['High Card', 'Nothing made — highest card plays', 'Ad Qs 9h 5c 2d', 0],
 ];
+
+/** How often a hand comes up, written the way it is worth reading. */
+function handOdds(category) {
+  const count = HAND_FREQUENCY[category];
+  const pct = (count / SEVEN_CARD_HANDS) * 100;
+  const shown = pct >= 1 ? pct.toFixed(1) : pct.toPrecision(2);
+  const oneIn = Math.round(SEVEN_CARD_HANDS / count);
+  return { pct: `${shown}%`, oneIn: `1 in ${fmt(oneIn)}` };
+}
 
 
 /** Where each hand category sits in the rankings list, best first. */
@@ -2227,7 +2353,7 @@ function paintTableFacts() {
 function openHelp() {
   const list = $('rankList');
   if (!list.childElementCount) {
-    HAND_RANKINGS.forEach(([name, note, cards], i) => {
+    HAND_RANKINGS.forEach(([name, note, cards, category], i) => {
       const row = document.createElement('div');
       row.className = 'rank-row';
 
@@ -2239,7 +2365,8 @@ function openHelp() {
       text.className = 'rank-text';
       const n = document.createElement('div');
       n.className = 'rank-name';
-      n.textContent = name;
+      const odds = handOdds(category);
+      n.innerHTML = `${name} <span class="rank-odds" title="${odds.oneIn}">${odds.pct}</span>`;
       const d = document.createElement('div');
       d.className = 'rank-note';
       d.textContent = note;
@@ -2951,6 +3078,7 @@ initAdmin();
 requestPersistence();
 initSettings();
 initShop();
+initOwned();
 redeemFromUrl();
 initAuthUi();
 watchFeltSpace();
