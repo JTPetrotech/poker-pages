@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvtllo4m';
-import { TableHost } from './host.js?v=mvtllo4m';
-import * as vault from './vault.js?v=mvtllo4m';
-import * as friends from './friends.js?v=mvtllo4m';
-import * as packs from './decks.js?v=mvtllo4m';
-import * as cloud from './cloud.js?v=mvtllo4m';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvtllo4m';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvtllo4m';
+import { HostNet, GuestNet } from './net.js?v=mvtlshay';
+import { TableHost } from './host.js?v=mvtlshay';
+import * as vault from './vault.js?v=mvtlshay';
+import * as friends from './friends.js?v=mvtlshay';
+import * as packs from './decks.js?v=mvtlshay';
+import * as cloud from './cloud.js?v=mvtlshay';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvtlshay';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvtlshay';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 62;
+const BUILD = 63;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -720,9 +720,14 @@ function deckTile(d, ownedList) {
   b.title = owned ? `${d.name} — ${d.rarity}` : `${d.rarity}, not yours yet`;
   // Where a pack advertises its odds, every tile shows its own share, so the
   // 98 and the two 1s are on screen next to the thing they apply to.
-  // Milk is a flat one in a hundred in every pack, so its tiles say so too.
+  // Milk is a flat one in a thousand in every pack, so its tiles say so too.
+  // Anything under a percent keeps a decimal place, or it would round to a
+  // flat 0% and read as impossible rather than rare.
   const odds = d.odds || (d.rarity === 'milk' ? packs.MILK_CHANCE : 0);
-  const chance = odds ? `<span class="odds">${Math.round(odds * 100)}%</span>` : '';
+  const pct = odds * 100;
+  const chance = odds
+    ? `<span class="odds">${pct < 1 ? pct.toFixed(1) : Math.round(pct)}%</span>`
+    : '';
   const free = packs.claimable('decks').has(d.id) ? '<span class="free-tag">free</span>' : '';
   b.innerHTML = `<span class="card back small"></span>`
     + `<span>${owned || d.odds ? d.name : '???'}${chance}${free}</span>`;
@@ -2385,8 +2390,8 @@ function paintTableFacts() {
   note(`Shop sells card skins. A pack costs ${fmt(packs.PACK_PRICE)} chips `
     + 'and always gives you one you do not already have. Everyone at the table '
     + 'sees the skin you are wearing.');
-  note('Every pack holds a milk skin at a flat 1 in 100 and an ultra rare '
-    + 'rarer still, at roughly 1 in 300. The chip pack works the same way, '
+  note('Every pack holds an ultra rare at roughly 1 in 300 and a milk skin '
+    + 'rarer still, at a flat 1 in 1,000. The chip pack works the same way, '
     + 'and your chip travels to the other players just as your cards do.');
   note('Limited is the exception: it draws on fixed odds and does not skip '
     + 'what you already own, so most opens repeat. The Chips tab is a '

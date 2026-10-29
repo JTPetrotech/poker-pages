@@ -1581,13 +1581,10 @@ test('a card skin and a chip skin travel independently', () => {
   eq(t.snapshot('b').seats[0].chip, 'milk');
 });
 
-test('Milk is a tier of its own, under the ultra rare it used to top', () => {
+test('Milk is the top tier, rarer than the ultra rare under it', () => {
   assert(packs.RARITIES.includes('milk'), 'the tier exists');
-  // It was the top tier when nothing sold it. It is a flat 1 in 100 now, and
-  // the ultra rare comes out of the other 99 at about a third of that, so
-  // the order the tiles are sorted by has to put ultra last.
-  eq(packs.RARITIES[packs.RARITIES.length - 1], 'ultra', 'ultra is the top one');
-  eq(packs.RARITIES.indexOf('milk'), packs.RARITIES.length - 2, 'milk sits under it');
+  eq(packs.RARITIES[packs.RARITIES.length - 1], 'milk', 'and it is the top one');
+  eq(packs.RARITIES.indexOf('ultra'), packs.RARITIES.length - 2, 'ultra sits under it');
   eq(packs.deckById('milk').rarity, 'milk');
 });
 
@@ -1603,33 +1600,34 @@ test('every themed pack sells exactly one milk skin', () => {
   eq(chipMilk[0].id, 'cream');
 });
 
-test('the milk tier is a flat one in a hundred, full pack or nearly empty', () => {
-  eq(packs.MILK_CHANCE, 0.01);
-  // Over a hundred evenly spread rolls of a fresh pack, exactly one is milk.
+test('the milk tier is a flat one in a thousand, full pack or nearly empty', () => {
+  eq(packs.MILK_CHANCE, 0.001);
+  // Over a thousand evenly spread rolls of a fresh pack, exactly one is milk.
   let milk = 0;
-  for (let i = 0; i < 100; i++) {
-    if (packs.drawFromPack('cosmic', [], i / 100).rarity === 'milk') milk++;
+  for (let i = 0; i < 1000; i++) {
+    if (packs.drawFromPack('cosmic', [], i / 1000).rarity === 'milk') milk++;
   }
-  eq(milk, 1, 'one open in a hundred');
+  eq(milk, 1, 'one open in a thousand');
 
   // The same with only two left, so the chance does not drift as a pack fills.
   const nearlyDone = ['planet', 'nebula', 'comet', 'rocket'];
   milk = 0;
-  for (let i = 0; i < 100; i++) {
-    if (packs.drawFromPack('cosmic', nearlyDone, i / 100).rarity === 'milk') milk++;
+  for (let i = 0; i < 1000; i++) {
+    if (packs.drawFromPack('cosmic', nearlyDone, i / 1000).rarity === 'milk') milk++;
   }
-  eq(milk, 1, 'still one in a hundred');
+  eq(milk, 1, 'still one in a thousand');
 
   // And the chip pack works the same way.
   milk = 0;
-  for (let i = 0; i < 100; i++) {
-    if (packs.drawChip([], i / 100).rarity === 'milk') milk++;
+  for (let i = 0; i < 1000; i++) {
+    if (packs.drawChip([], i / 1000).rarity === 'milk') milk++;
   }
   eq(milk, 1, 'the chip pack too');
 });
 
-test('an ultra rare is rarer than the milk skin beside it', () => {
-  // Both are in the same pack, so this is the whole claim the shop makes.
+test('the milk skin is rarer than the ultra rare beside it', () => {
+  // Both are in the same pack, so this is the whole claim the shop makes:
+  // milk is the top tier, and the ultra rare under it is still hard.
   let ultra = 0;
   let milk = 0;
   for (let i = 0; i < 10_000; i++) {
@@ -1637,10 +1635,9 @@ test('an ultra rare is rarer than the milk skin beside it', () => {
     if (r === 'ultra') ultra++;
     if (r === 'milk') milk++;
   }
-  eq(milk, 100, 'milk is 1 in 100');
-  assert(ultra > 0, 'and the ultra is still reachable');
-  assert(ultra < milk, `ultra ${ultra} must be rarer than milk ${milk}`);
-  // Harder than it was: it used to be one open in 94.
+  eq(milk, 10, 'milk is 1 in 1,000');
+  assert(ultra > milk, `ultra ${ultra} must be commoner than milk ${milk}`);
+  // And the ultra is still harder than it was: it used to be one open in 94.
   assert(ultra < 10_000 / 94, `${ultra} in 10,000 is harder than 1 in 94`);
 });
 

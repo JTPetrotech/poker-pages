@@ -104,9 +104,10 @@ export const DECKS = [
   { id: 'milk', name: 'Milk', pack: 'limited', rarity: 'milk', odds: 0.01 },
   { id: 'supra', name: 'Supra MK4', pack: 'limited', rarity: 'ultra', odds: 0.01 },
 
-  // One milk skin in every themed pack, at a flat one in a hundred opens.
-  // They share a creamy look so the tier reads across the table, and each
-  // one says which pack it came out of.
+  // One milk skin in every themed pack, at a flat one in a thousand opens —
+  // rarer than that pack's ultra rare, which is the point of the tier. They
+  // share a creamy look so it reads across the table, and each one says
+  // which pack it came out of.
   { id: 'milkyway', name: 'Milky Way', pack: 'cosmic', rarity: 'milk' },
   { id: 'milkfloat', name: 'Milk Float', pack: 'car', rarity: 'milk' },
   { id: 'milkshake', name: 'Milkshake', pack: 'food', rarity: 'milk' },
@@ -120,12 +121,14 @@ export const DECKS = [
 /**
  * Shown on the tiles, rarest last.
  *
- * Milk sits above legendary at its flat one in a hundred, and the ultra rare
- * is above milk because it is drawn out of the other ninety-nine and is now
- * around one in three hundred. The order here is what the tiles are sorted
- * by, so it has to match the real chances rather than the other way about.
+ * Milk is the top tier: one open in a thousand, against roughly one in three
+ * hundred for an ultra rare. The order here is what the tiles are sorted by,
+ * so it has to match the real chances rather than the other way about.
+ *
+ * Limited is the exception, as it is to everything else: its three carry
+ * their own announced odds and Milk is one in a hundred there.
  */
-export const RARITIES = ['common', 'rare', 'legendary', 'milk', 'ultra'];
+export const RARITIES = ['common', 'rare', 'legendary', 'ultra', 'milk'];
 
 /**
  * Chip skins: what the chips themselves look like, as opposed to the card
@@ -140,8 +143,8 @@ export const CHIP_PACK = {
   name: 'Chips',
   blurb: 'What your chips look like, on your bets and on every other screen '
     + 'at the table. Most of them move; every one of them holds still for '
-    + 'anyone whose device asks for less motion. Cream is the milk tier at a '
-    + 'flat 1 in 100, and Eclipse is the ultra rare, rarer still.',
+    + 'anyone whose device asks for less motion. Eclipse is the ultra rare at '
+    + 'about 1 in 300, and Cream is the milk tier above it, at 1 in 1,000.',
 };
 
 export const CHIP_SKINS = [
@@ -173,8 +176,9 @@ export const CHIP_SKINS = [
   { id: 'storm', name: 'Storm', rarity: 'rare' },
   { id: 'ember', name: 'Ember', rarity: 'legendary' },
   { id: 'royal', name: 'Royal', rarity: 'legendary' },
-  // Cream is the chip pack's milk tier. It is not the Milk card skin and has
-  // nothing to do with the claim code: that one is about the cards alone.
+  // Cream is the chip pack's milk tier, and the rarest thing it sells. It is
+  // not the Milk card skin and has nothing to do with the claim code: that
+  // one is about the cards alone.
   { id: 'cream', name: 'Cream', rarity: 'milk' },
   { id: 'eclipse', name: 'Eclipse', rarity: 'ultra' },
 ];
@@ -274,11 +278,13 @@ const WEIGHT = { common: 40, rare: 10, legendary: 3, ultra: 0.3, milk: 0.3 };
 /**
  * The chance of the milk tier, per open, in every pack and in the chip pack.
  *
- * A flat one in a hundred rather than a weight, so it means the same thing
+ * A flat one in a thousand rather than a weight, so it means the same thing
  * whether the pack is full or nearly finished. Everything else shares the
- * other ninety-nine by weight, which is where the ultra rare comes from.
+ * remainder by weight, which is where the ultra rare comes from at about one
+ * in three hundred — so milk is the rarest thing in any pack, which is what
+ * the tier is for. Limited keeps its own announced odds and is untouched.
  */
-export const MILK_CHANCE = 0.01;
+export const MILK_CHANCE = 0.001;
 
 /**
  * Draw from a pool where the milk tier gets its flat chance off the top.
