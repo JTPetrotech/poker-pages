@@ -596,16 +596,52 @@ function freshVault() {
   vault.detach();
 }
 
+test('the milk pack costs more and pays the milk tier far more often', () => {
+  eq(packs.packPrice('milkpack'), 25_000, 'five packs to open one');
+  eq(packs.packPrice('cosmic'), packs.PACK_PRICE, 'the themed packs are unchanged');
+  eq(packs.packMilkChance('milkpack'), 0.02);
+  eq(packs.packMilkChance('cosmic'), packs.MILK_CHANCE);
+
+  let milk = 0;
+  const runs = 200_000;
+  for (let i = 0; i < runs; i++) {
+    if (packs.drawFromPack('milkpack', i / runs).rarity === 'milk') milk++;
+  }
+  const one = runs / milk;
+  assert(one > 45 && one < 55, `milk should be about 1 in 50 here, got 1 in ${one.toFixed(0)}`);
+});
+
+test('the milk pack holds a skin of every tier', () => {
+  const tiers = packs.packContents('milkpack').map((d) => d.rarity);
+  for (const tier of packs.RARITIES) {
+    assert(tiers.includes(tier), `the milk pack should hold a ${tier} one`);
+  }
+});
+
+test('sport has two milk skins and the hockey stick is one of them', () => {
+  const milk = packs.packContents('sport').filter((d) => d.rarity === 'milk');
+  eq(milk.length, 2);
+  assert(milk.some((d) => d.id === 'milkstick'), 'the stick is in the sport pack');
+  // Two of them share the tier's one in a thousand rather than doubling it.
+  let hits = 0;
+  const runs = 200_000;
+  for (let i = 0; i < runs; i++) {
+    if (packs.drawFromPack('sport', i / runs).rarity === 'milk') hits++;
+  }
+  const one = runs / hits;
+  assert(one > 900 && one < 1100, `sport milk should stay 1 in 1,000, got 1 in ${one.toFixed(0)}`);
+});
+
 test('a one-time code pays out once and never again', () => {
   freshVault();
-  eq(vault.codeSpent('bank1m'), false, 'nothing spent on a new vault');
+  eq(vault.codeSpent('amil1m'), false, 'nothing spent on a new vault');
 
-  const after = vault.redeemOnce('bank1m', 1_000_000);
+  const after = vault.redeemOnce('amil1m', 1_000_000);
   eq(after, 1_010_000, 'the million lands on top of the house stake');
   eq(vault.balance(), 1_010_000);
-  eq(vault.codeSpent('bank1m'), true);
+  eq(vault.codeSpent('amil1m'), true);
 
-  eq(vault.redeemOnce('bank1m', 1_000_000), null, 'a second go pays nothing');
+  eq(vault.redeemOnce('amil1m', 1_000_000), null, 'a second go pays nothing');
   eq(vault.balance(), 1_010_000, 'and the balance is untouched');
 });
 
@@ -613,20 +649,20 @@ test('a restored backup does not bring a spent code back', () => {
   // A restore writes over the chips rather than the whole profile, so an old
   // code cannot be used to collect the same million a second time.
   freshVault();
-  vault.redeemOnce('bank1m', 1_000_000);
+  vault.redeemOnce('amil1m', 1_000_000);
   const code = vault.backupCode();
   vault.withdraw(vault.balance());
 
   eq(vault.restoreCode(code), 1_010_000, 'the chips come back');
-  eq(vault.codeSpent('bank1m'), true, 'the code is still spent');
-  eq(vault.redeemOnce('bank1m', 1_000_000), null);
+  eq(vault.codeSpent('amil1m'), true, 'the code is still spent');
+  eq(vault.redeemOnce('amil1m', 1_000_000), null);
 });
 
 test('one-time codes survive being written out and read back', () => {
   freshVault();
-  vault.redeemOnce('bank1m', 1_000_000);
+  vault.redeemOnce('amil1m', 1_000_000);
   vault.detach();                       // drop the in-memory copy
-  eq(vault.codeSpent('bank1m'), true, 'storage remembers it');
+  eq(vault.codeSpent('amil1m'), true, 'storage remembers it');
 });
 
 test('a new vault starts with the house stake', () => {
@@ -975,7 +1011,7 @@ test('a backup code is short and carries chips and hands', () => {
   // what a code that restores everything costs. Scanning the QR is the way
   // to move a profile; typing one this long is the fallback. The QR in Settings carries the
   // same code, so typing it is the fallback rather than the usual way.
-  assert(code.length <= 52, `code should stay typable, got ${code.length}: ${code}`);
+  assert(code.length <= 64, `code should stay typable, got ${code.length}: ${code}`);
   assert(/^[0-9A-Z-]+$/.test(code), 'uppercase and dashes only');
 
   freshVault();
@@ -1615,16 +1651,18 @@ test('Milk is the top tier, rarer than the ultra rare under it', () => {
   eq(packs.deckById('milk').rarity, 'milk');
 });
 
-test('every themed pack sells exactly one milk skin', () => {
+test('every themed pack sells a milk skin, most of them one', () => {
+  // Sport has two of them and the chip pack has two, and in both cases the
+  // pair splits the tier's chance rather than doubling it.
+  const TWO = new Set(['sport']);
   for (const pack of packs.PACKS) {
     if (pack.stated) continue;
     const milk = packs.packContents(pack.id).filter((d) => d.rarity === 'milk');
-    eq(milk.length, 1, `${pack.id} has one`);
+    eq(milk.length, TWO.has(pack.id) ? 2 : 1, `${pack.id} has its milk skin`);
   }
-  // And the chip pack has one of its own.
   const chipMilk = packs.chipPackContents().filter((c) => c.rarity === 'milk');
-  eq(chipMilk.length, 1, 'the chip pack too');
-  eq(chipMilk[0].id, 'cream');
+  eq(chipMilk.length, 2, 'the chip pack has a pair of its own');
+  assert(chipMilk.some((c) => c.id === 'cream'), 'Cream is still one of them');
 });
 
 test('the milk tier is a flat one in a thousand', () => {

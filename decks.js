@@ -13,6 +13,12 @@
 
 export const PACK_PRICE = 5000;
 
+/** What a pack costs: its own price where it has one, else the usual 5,000. */
+export function packPrice(packId) {
+  const pack = PACKS.find((p) => p.id === packId);
+  return pack && pack.price ? pack.price : PACK_PRICE;
+}
+
 /**
  * What the shop pays for a spare, by what the spare is.
  *
@@ -54,6 +60,18 @@ export const PACKS = [
   { id: 'pirate', name: 'Pirate', blurb: 'Below the waterline.' },
   { id: 'garden', name: 'Garden', blurb: 'Things that grow.' },
   { id: 'frost', name: 'Frost', blurb: 'Cold enough to see your breath.' },
+  // The milk pack. Not id 'milk': that is already a card skin, and keeping
+  // the two namespaces clear of each other is worth the longer word.
+  {
+    id: 'milkpack',
+    name: 'Milk',
+    price: 25_000,
+    milkChance: 0.02,
+    blurb: 'Where it all comes from. One open in 50 is the milk skin rather '
+      + 'than one in 1,000, which is twenty times the usual — and the pack '
+      + 'costs five times as much, so a milk skin out of here runs about a '
+      + 'quarter of what one costs anywhere else.',
+  },
   {
     id: 'limited',
     name: 'Limited',
@@ -192,6 +210,17 @@ export const DECKS = [
   { id: 'snowman', name: 'Snowman', pack: 'frost', rarity: 'legendary' },
   { id: 'crystal', name: 'Crystal', pack: 'frost', rarity: 'ultra' },
   { id: 'milkfrost', name: 'Milk Frost', pack: 'frost', rarity: 'milk' },
+
+  // A second milk skin for Sport, so that pack has two of them — each at
+  // half the tier's chance, since the tier's share is split between them.
+  { id: 'milkstick', name: 'Milk Stick', pack: 'sport', rarity: 'milk' },
+
+  { id: 'milkdrop', name: 'Milk Drop', pack: 'milkpack', rarity: 'common' },
+  { id: 'milkbottle', name: 'Bottle', pack: 'milkpack', rarity: 'common' },
+  { id: 'milkcookie', name: 'Cookies and Milk', pack: 'milkpack', rarity: 'rare' },
+  { id: 'milkcow', name: 'Dairy Cow', pack: 'milkpack', rarity: 'legendary' },
+  { id: 'milkcrown', name: 'Milk Crown', pack: 'milkpack', rarity: 'ultra' },
+  { id: 'milkpure', name: 'Pure Milk', pack: 'milkpack', rarity: 'milk' },
 ];
 
 /**
@@ -221,7 +250,8 @@ export const CHIP_PACK = {
   blurb: 'What your chips look like, on your bets and on every other screen '
     + 'at the table. Most of them move; every one of them holds still for '
     + 'anyone whose device asks for less motion. The ultra rares are about '
-    + '1 in 150 and Cream, the milk tier, is 1 in 1,000.',
+    + '1 in 150, and the milk tier — Cream and Malted Milk — is 1 in 1,000 '
+    + 'between the pair of them.',
 };
 
 export const CHIP_SKINS = [
@@ -288,6 +318,17 @@ export const CHIP_SKINS = [
   { id: 'comet', name: 'Comet', rarity: 'legendary' },
   { id: 'pulsar', name: 'Pulsar', rarity: 'ultra' },
   { id: 'obsidian', name: 'Obsidian', rarity: 'ultra' },
+  { id: 'lime', name: 'Lime', rarity: 'common' },
+  { id: 'ash', name: 'Ash', rarity: 'common' },
+  { id: 'plum', name: 'Plum', rarity: 'common' },
+  { id: 'sand', name: 'Sand', rarity: 'common' },
+  { id: 'velvet', name: 'Velvet', rarity: 'rare' },
+  { id: 'glacier', name: 'Glacier', rarity: 'rare' },
+  { id: 'magma', name: 'Magma', rarity: 'legendary' },
+  { id: 'twilight', name: 'Twilight', rarity: 'legendary' },
+  { id: 'halo', name: 'Halo', rarity: 'ultra' },
+  { id: 'vortex', name: 'Vortex', rarity: 'ultra' },
+  { id: 'malt', name: 'Malted Milk', rarity: 'milk' },
 ];
 
 /**
@@ -403,21 +444,30 @@ const WEIGHT = { common: 100, rare: 11, legendary: 2.4, ultra: 1.45, milk: 1.45 
 export const MILK_CHANCE = 0.001;
 
 /**
+ * The milk chance of one pack. Every themed pack runs on the flat one in a
+ * thousand; the Milk pack is the exception and says so on its own entry.
+ */
+export function packMilkChance(packId) {
+  const pack = PACKS.find((p) => p.id === packId);
+  return pack && pack.milkChance ? pack.milkChance : MILK_CHANCE;
+}
+
+/**
  * Draw from a pool where the milk tier gets its flat chance off the top.
  *
  * `roll` is rescaled rather than re-rolled, so one number still decides the
  * whole draw and the odds can be checked exactly. A pool with no milk skin
  * in it at all gives the whole chance back to the rest.
  */
-function drawWithMilk(pool, roll) {
+function drawWithMilk(pool, roll, chance = MILK_CHANCE) {
   if (!pool.length) return null;
   const milk = pool.filter((d) => d.rarity === 'milk');
   const rest = pool.filter((d) => d.rarity !== 'milk');
   const r = Math.min(Math.max(roll, 0), 0.999999);
   if (!rest.length) return pick(milk, r);
   if (!milk.length) return pick(rest, r);
-  if (r < MILK_CHANCE) return pick(milk, r / MILK_CHANCE);
-  return pick(rest, (r - MILK_CHANCE) / (1 - MILK_CHANCE));
+  if (r < chance) return pick(milk, r / chance);
+  return pick(rest, (r - chance) / (1 - chance));
 }
 
 /**
@@ -429,7 +479,7 @@ function drawWithMilk(pool, roll) {
  * goes the right way.
  */
 export function drawFromPack(packId, roll = Math.random()) {
-  return drawWithMilk(packContents(packId), roll);
+  return drawWithMilk(packContents(packId), roll, packMilkChance(packId));
 }
 
 /** Weighted choice from a pool that is already known to be non-empty. */

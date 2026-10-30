@@ -1285,12 +1285,103 @@ function crystal() {
   return c.bytes();
 }
 
+// ------------------------------------------------------------- milkcrown
+
+/**
+ * The milk pack's ultra rare: the coronet a drop throws up when it lands.
+ *
+ * Eleven spikes with a bead on each, leaning outward, over a lit pool. The
+ * front half is drawn brighter than the back so the ring reads as a ring
+ * rather than as a row of spikes.
+ */
+function milkcrown() {
+  const c = canvas();
+  const cx = W / 2;
+  const cyr = 128;                 // where the crown meets the milk
+  const RX = 40;
+  const RY = 13;
+  const SPIKES = 11;
+  const rnd = rand(20260714);
+
+  // Night blue above, warming towards the pool where the light is.
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const t = y / H;
+      const d = Math.min(1, Math.hypot((x - cx) / 86, (y - (cyr - 26)) / 86));
+      const lift = (1 - d) * 20;
+      c.set(x, y, mix(8, 20, t) + lift, mix(22, 48, t) + lift, mix(48, 92, t) + lift);
+    }
+  }
+
+  // The milk itself, with a ripple or two running out from the splash.
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const surf = cyr + Math.sin(x / 15) * 1.3;
+      if (y < surf) continue;
+      const t = (y - surf) / (H - surf);
+      let r = mix(255, 168, t);
+      let g = mix(255, 192, t);
+      let b = mix(255, 226, t);
+      for (const R of [52, 68, 86]) {
+        const er = Math.hypot((x - cx) / R, (y - cyr) / (R * 0.34));
+        if (Math.abs(er - 1) < 0.045) { r += 26; g += 24; b += 18; }
+      }
+      c.set(x, y, Math.min(255, r), Math.min(255, g), Math.min(255, b));
+    }
+  }
+
+  /** A soft white disc — every part of the crown is painted out of these. */
+  const dot = (px, py, r, br) => {
+    for (let y = Math.floor(py - r - 1); y <= py + r + 1; y++) {
+      for (let x = Math.floor(px - r - 1); x <= px + r + 1; x++) {
+        const d = Math.hypot(x - px, y - py);
+        if (d > r) continue;
+        c.blend(x, y, Math.min(255, 252 * br), Math.min(255, 253 * br),
+          Math.min(255, 255 * br + 6), Math.min(1, (r - d) * 1.5));
+      }
+    }
+  };
+
+  // The wall, swept round as one continuous sheet rather than as spikes, so
+  // that what rises between the points is still milk and not a gap.
+  const STEPS = 960;
+  for (let i = 0; i < STEPS; i++) {
+    const a = (i / STEPS) * Math.PI * 2;
+    const spike = Math.pow(Math.abs(Math.cos((SPIKES * a) / 2)), 2.4);
+    const h = 15 + 31 * spike;
+    const bx = cx + Math.cos(a) * RX;
+    const by = cyr + Math.sin(a) * RY;
+    const tx = cx + Math.cos(a) * RX * 1.16;
+    const ty = by - h;
+    // Facing the light: the near half of the ring is the lit half.
+    const br = 0.80 + 0.30 * (0.5 + 0.5 * Math.sin(a));
+    for (let t = 0; t <= 1; t += 0.035) {
+      dot(mix(bx, tx, t), mix(by, ty, t), 3.1 * (1 - t * 0.7), br * (1 - t * 0.08));
+    }
+    if (spike > 0.985) {
+      dot(tx, ty - 2.1, 3.7, br * 1.1);         // the bead on the point
+      dot(tx - 0.8, ty - 2.6, 1.3, 1.12);        // and the light on the bead
+    }
+  }
+
+  // Thrown clear of the rim, because a splash does not stop at the wall.
+  for (let i = 0; i < 7; i++) {
+    const a = rnd() * Math.PI * 2;
+    const r = 46 + rnd() * 22;
+    dot(cx + Math.cos(a) * r, cyr - 34 - rnd() * 40 + Math.sin(a) * 6,
+      1.2 + rnd() * 1.6, 0.95);
+  }
+
+  glow(c, Math.round(cx), cyr - 10, 46, 170, 205, 250, 0.22);
+  return c.bytes();
+}
+
 // ------------------------------------------------------------------ write
 
 fs.mkdirSync(outDir, { recursive: true });
 const pictures = {
   galaxy, strip, melon, stadium, jackpot, milk, supra, aurora, invader, deep, dragoneye,
-  highroller, encore, peacock, kraken, bloom, crystal,
+  highroller, encore, peacock, kraken, bloom, crystal, milkcrown,
 };
 for (const [name, draw] of Object.entries(pictures)) {
   const file = path.join(outDir, `${name}.png`);

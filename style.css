@@ -3469,6 +3469,181 @@ kbd {
   --tok-spin: tok-spin 5.8s linear infinite;
 }
 
+/* ------------------------------------------- sport's second milk skin */
+
+.deck-milkstick {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92) 0 30%, transparent 58%),
+    repeating-linear-gradient(118deg, rgba(120, 160, 200, 0.18) 0 2px, transparent 2px 11px),
+    linear-gradient(160deg, #fdfeff 0%, #e2ecf6 100%);
+  --deck-edge: #b6cfe4;
+  --deck-glyph: "\1F3D2";
+}
+
+/* ------------------------------------------------------- the milk pack */
+
+.deck-milkdrop {
+  --deck-bg:
+    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.95) 0 24%, transparent 52%),
+    radial-gradient(60% 40% at 50% 86%, rgba(255, 255, 255, 0.5), transparent 70%),
+    linear-gradient(170deg, #9fc4e4 0%, #5b86ae 100%);
+  --deck-edge: #e8f3fb;
+  --deck-glyph: "\1F4A7";
+}
+.deck-milkbottle {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.88) 0 30%, transparent 58%),
+    repeating-linear-gradient(90deg, rgba(118, 160, 196, 0.22) 0 3px, transparent 3px 12px),
+    linear-gradient(170deg, #f6fbff 0%, #cfdfee 100%);
+  --deck-edge: #8fb4d2;
+  --deck-glyph: "\1F37C";
+}
+.deck-milkcookie {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 248, 235, 0.85) 0 28%, transparent 56%),
+    radial-gradient(3px 3px at 26% 30%, #40250f 50%, transparent 51%),
+    radial-gradient(2.6px 2.6px at 72% 24%, #40250f 50%, transparent 51%),
+    radial-gradient(3px 3px at 34% 76%, #40250f 50%, transparent 51%),
+    radial-gradient(2.4px 2.4px at 70% 70%, #40250f 50%, transparent 51%),
+    linear-gradient(170deg, #d6a267 0%, #9c6a36 100%);
+  --deck-edge: #f4e3c8;
+  --deck-glyph: "\1F36A";
+}
+.deck-milkcow {
+  --deck-bg:
+    radial-gradient(28% 22% at 26% 24%, #15181c 0 70%, transparent 72%),
+    radial-gradient(22% 18% at 74% 36%, #15181c 0 70%, transparent 72%),
+    radial-gradient(26% 20% at 60% 78%, #15181c 0 70%, transparent 72%),
+    radial-gradient(18% 14% at 20% 72%, #15181c 0 70%, transparent 72%),
+    linear-gradient(170deg, #ffffff 0%, #e6e9ee 100%);
+  --deck-edge: #2b3038;
+  --deck-glyph: "\1F404";
+}
+.deck-milkcrown {
+  --deck-bg: url("backs/milkcrown.png") center / cover no-repeat;
+  --deck-edge: #cfe4ff;
+  --deck-glyph: "";
+}
+/* Pure Milk: no pattern to speak of, which is the whole idea of it. */
+.deck-milkpure {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.96) 0 34%, transparent 62%),
+    conic-gradient(from 40deg at 50% 50%, rgba(226, 238, 250, 0.9), rgba(255, 255, 255, 0.95),
+                   rgba(226, 238, 250, 0.9), rgba(255, 255, 255, 0.95), rgba(226, 238, 250, 0.9)),
+    linear-gradient(160deg, #ffffff 0%, #f1f7fd 100%);
+  --deck-edge: #d8e7f5;
+  --deck-glyph: "\1F90D";
+}
+
+/* --------------------------------------------------- chips, seventh batch */
+
+.chipskin-lime {
+  --tok-bg: radial-gradient(circle at 32% 28%, #d8f58a, #76a92c 82%);
+  --tok-edge: #eaffb4;
+  --tok-face:
+    conic-gradient(from 0deg, rgba(255,255,255,0) 0 22%, rgba(255,255,255,0.55) 32%,
+                   rgba(255,255,255,0) 42%, rgba(255,255,255,0) 72%,
+                   rgba(255,255,255,0.45) 82%, rgba(255,255,255,0) 92%);
+  --tok-inset: 2px;
+}
+.chipskin-ash {
+  --tok-bg: radial-gradient(circle at 34% 30%, #9aa3ad, #4a5059 84%);
+  --tok-edge: #cfd6de;
+  --tok-face:
+    repeating-conic-gradient(from 0deg, rgba(255,255,255,0.3) 0 6deg, rgba(255,255,255,0) 6deg 18deg);
+  --tok-inset: 2px;
+}
+.chipskin-plum {
+  --tok-bg: radial-gradient(circle at 32% 28%, #b07ad0, #4a1f66 84%);
+  --tok-edge: #e2c3f2;
+  --tok-face:
+    conic-gradient(from 20deg, rgba(255,255,255,0) 0 26%, rgba(255,255,255,0.5) 36%,
+                   rgba(255,255,255,0) 46%, rgba(255,255,255,0) 76%,
+                   rgba(255,255,255,0.4) 86%, rgba(255,255,255,0) 96%);
+  --tok-inset: 2px;
+}
+.chipskin-sand {
+  --tok-bg: radial-gradient(circle at 34% 28%, #f3e0b4, #c3a068 84%);
+  --tok-edge: #fff4d8;
+  --tok-face:
+    repeating-linear-gradient(28deg, rgba(255,255,255,0.4) 0 2px, rgba(255,255,255,0) 2px 7px);
+  --tok-inset: 2px;
+}
+.chipskin-velvet {
+  --tok-bg: radial-gradient(circle at 30% 26%, #a32a4e, #42081c 86%);
+  --tok-edge: #f0c0d0;
+  --tok-glow: 0 0 6px rgba(220, 110, 150, 0.45);
+  --tok-face:
+    conic-gradient(from 0deg, rgba(255,210,230,0) 0 18%, rgba(255,210,230,0.6) 30%,
+                   rgba(255,210,230,0) 42%, rgba(255,210,230,0) 68%,
+                   rgba(255,210,230,0.5) 80%, rgba(255,210,230,0) 92%);
+  --tok-inset: 1px;
+}
+.chipskin-glacier {
+  --tok-bg: radial-gradient(circle at 34% 26%, #e8fbff, #6ba8c8 84%);
+  --tok-edge: #ffffff;
+  --tok-glow: 0 0 7px rgba(180, 230, 255, 0.6);
+  --tok-face:
+    repeating-linear-gradient(118deg, rgba(255,255,255,0.65) 0 2px, rgba(255,255,255,0) 2px 9px);
+  --tok-inset: 1px;
+}
+.chipskin-magma {
+  --tok-bg: radial-gradient(circle at 36% 30%, #ffd27a 0 12%, #e2561a 46%, #4a0d06 92%);
+  --tok-edge: #ffb14d;
+  --tok-glow: 0 0 10px rgba(255, 130, 40, 0.7);
+  --tok-face:
+    conic-gradient(from 0deg, rgba(255,200,110,0) 0 14%, rgba(255,200,110,0.85) 26%,
+                   rgba(255,200,110,0) 38%, rgba(255,160,60,0) 64%,
+                   rgba(255,160,60,0.8) 76%, rgba(255,160,60,0) 88%);
+  --tok-inset: 1px;
+  --tok-spin: tok-spin 7.5s linear infinite;
+}
+.chipskin-twilight {
+  --tok-bg: radial-gradient(circle at 36% 26%, #ffb27a 0 10%, #8a4b9c 44%, #1b1e52 92%);
+  --tok-edge: #d7b6ff;
+  --tok-glow: 0 0 9px rgba(170, 130, 255, 0.6);
+  --tok-face:
+    conic-gradient(from 180deg, rgba(255,220,180,0) 0 20%, rgba(255,220,180,0.7) 32%,
+                   rgba(255,220,180,0) 44%, rgba(190,160,255,0) 70%,
+                   rgba(190,160,255,0.7) 82%, rgba(190,160,255,0) 94%);
+  --tok-inset: 1px;
+  --tok-spin: tok-spin 8.5s linear infinite;
+}
+/* Halo and Vortex are ultras: both spin, one calmly and one not. */
+.chipskin-halo {
+  --tok-bg: radial-gradient(circle, #10121c 0 42%, #ffe6a0 52%, #d8a63c 62%, #10121c 74%);
+  --tok-edge: #ffeec0;
+  --tok-glow: 0 0 13px rgba(255, 220, 140, 0.9);
+  --tok-face:
+    conic-gradient(from 0deg, rgba(255,240,200,0) 0 44%, rgba(255,240,200,0.95) 50%,
+                   rgba(255,240,200,0) 56%, rgba(255,240,200,0) 94%,
+                   rgba(255,240,200,0.9) 100%);
+  --tok-inset: -3px;
+  --tok-spin: tok-spin 6s linear infinite;
+}
+.chipskin-vortex {
+  --tok-bg: radial-gradient(circle, #000308 0 8%, #2a1d6b 34%, #6a3fd0 62%, #0b0a24 100%);
+  --tok-edge: #b79cff;
+  --tok-glow: 0 0 14px rgba(150, 110, 255, 0.95);
+  --tok-face:
+    repeating-conic-gradient(from 0deg, rgba(220, 200, 255, 0.85) 0 4deg,
+                             rgba(220, 200, 255, 0) 4deg 26deg);
+  --tok-inset: -4px;
+  --tok-spin: tok-spin 1.9s linear infinite;
+}
+/* The second milk chip, and malt is what milk tastes of when it tries. */
+.chipskin-malt {
+  --tok-bg: radial-gradient(circle at 36% 28%, #fff6e8, #d8b183 82%);
+  --tok-edge: #fff3df;
+  --tok-glow: 0 0 7px rgba(255, 240, 215, 0.85);
+  --tok-face:
+    conic-gradient(from 0deg, rgba(255,255,255,0) 0 16%, rgba(168,124,74,0.75) 30%,
+                   rgba(255,255,255,0) 44%, rgba(255,255,255,0) 66%,
+                   rgba(186,142,92,0.7) 80%, rgba(255,255,255,0) 94%);
+  --tok-inset: 1px;
+  --tok-spin: tok-spin 6.8s linear infinite;
+}
+
 /* --------------------------------------------- seeing what you are buying */
 
 /* The pickers used to show a 32px card and a 26px chip, which is too small

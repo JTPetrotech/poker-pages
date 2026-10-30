@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvuirogd';
-import { TableHost } from './host.js?v=mvuirogd';
-import * as vault from './vault.js?v=mvuirogd';
-import * as friends from './friends.js?v=mvuirogd';
-import * as packs from './decks.js?v=mvuirogd';
-import * as cloud from './cloud.js?v=mvuirogd';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvuirogd';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvuirogd';
+import { HostNet, GuestNet } from './net.js?v=mvuj7psp';
+import { TableHost } from './host.js?v=mvuj7psp';
+import * as vault from './vault.js?v=mvuj7psp';
+import * as friends from './friends.js?v=mvuj7psp';
+import * as packs from './decks.js?v=mvuj7psp';
+import * as cloud from './cloud.js?v=mvuj7psp';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvuj7psp';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvuj7psp';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 73;
+const BUILD = 74;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -40,8 +40,8 @@ const ADMIN_KEY = 'pn.admin.v1';
  */
 const CASH_CODES = [
   {
-    id: 'bank1m',
-    digest: '81a9b3873ca8d8f43f82712a07284d5b71230aa1ab2016def65c55512e93eaef',
+    id: 'amil1m',
+    digest: '4a11b1689f7da321ebf9766313c94319c76d70be4918be387cd62ab26c09b839',
     chips: 1_000_000,
   },
 ];
@@ -617,12 +617,16 @@ function byRarity(a, b) {
  * Collection sells one back for SPARE_PRICE. Limited works the same way, on
  * its own announced odds, because 98 in 100 only means 98 in 100 if it is
  * allowed to repeat.
+ *
+ * Most packs cost the same 5,000; the Milk pack sets its own price, so the
+ * price comes from the pack rather than from a constant.
  */
 function buyPack(pack) {
-  if (vault.balance() < packs.PACK_PRICE) {
-    return { ok: false, why: `A pack costs ${fmt(packs.PACK_PRICE)} chips and your vault has ${fmt(vault.balance())}.` };
+  const price = packs.packPrice(pack.id);
+  if (vault.balance() < price) {
+    return { ok: false, why: `That pack costs ${fmt(price)} chips and your vault has ${fmt(vault.balance())}.` };
   }
-  if (!vault.spend(packs.PACK_PRICE)) {
+  if (!vault.spend(price)) {
     return { ok: false, why: 'Those chips are not in your vault any more.' };
   }
   paintVault();
@@ -776,7 +780,7 @@ function deckTile(d, ownedList) {
   // — and at 0.1% that is the only tier whose number needs the decimal.
   // Anything under a percent keeps a decimal place, or it would round to a
   // flat 0% and read as impossible rather than rare.
-  const odds = d.odds || (d.rarity === 'milk' ? packs.MILK_CHANCE : 0);
+  const odds = d.odds || (d.rarity === 'milk' ? packs.packMilkChance(d.pack) : 0);
   const pct = odds * 100;
   const chance = odds
     ? `<span class="odds">${pct < 1 ? pct.toFixed(1) : Math.round(pct)}%</span>`
@@ -845,7 +849,7 @@ function paintDecks() {
 
     const buy = document.createElement('button');
     buy.className = 'pack-buy';
-    buy.textContent = `Open — ${fmt(packs.PACK_PRICE)}`;
+    buy.textContent = `Open — ${fmt(packs.packPrice(pack.id))}`;
     buy.addEventListener('click', () => {
       const result = buyPack(pack);
       if (!result.ok) {
@@ -862,7 +866,7 @@ function paintDecks() {
     head.appendChild(buy);
     row.appendChild(head);
 
-    if (pack.blurb && pack.stated) {
+    if (pack.blurb && (pack.stated || pack.price)) {
       const why = document.createElement('p');
       why.className = 'pack-blurb';
       why.textContent = pack.blurb;
@@ -2725,14 +2729,16 @@ function paintTableFacts() {
 
   note('Tap the Vault chip to move chips between your vault and the table, '
     + 'either way. Tap another seat to send chips to that player.');
-  note(`Shop sells card skins. A pack costs ${fmt(packs.PACK_PRICE)} chips `
-    + 'and draws from everything in it, so it can repeat one that is already '
+  note(`Shop sells card skins. Most packs cost ${fmt(packs.PACK_PRICE)} chips `
+    + 'and draw from everything in them, so one can repeat a skin that is already '
     + 'yours. That copy is a spare, and Collection buys it back by rarity: '
     + `${fmt(packs.SPARE_PRICES.common)} for a common up to `
     + `${fmt(packs.SPARE_PRICES.milk)} for a milk skin. Everyone at the table `
     + 'sees the skin you are wearing.');
   note('Roughly 1 in 20 opens is a rare, 1 in 90 a legendary, 1 in 150 an '
-    + 'ultra rare and 1 in 1,000 the milk skin. The chip pack works the same '
+    + 'ultra rare and 1 in 1,000 the milk skin — except in the Milk pack, '
+    + 'which costs 25,000 and runs the milk tier at 1 in 50. The chip pack '
+    + 'works like the themed ones, '
     + 'way, and your chip travels to the other players as your cards do.');
   note('Limited is the exception: it runs on announced odds rather than '
     + 'weights, and 98 opens in 100 are Bad. The Chips tab is a separate '
