@@ -596,6 +596,39 @@ function freshVault() {
   vault.detach();
 }
 
+test('a one-time code pays out once and never again', () => {
+  freshVault();
+  eq(vault.codeSpent('bank1m'), false, 'nothing spent on a new vault');
+
+  const after = vault.redeemOnce('bank1m', 1_000_000);
+  eq(after, 1_010_000, 'the million lands on top of the house stake');
+  eq(vault.balance(), 1_010_000);
+  eq(vault.codeSpent('bank1m'), true);
+
+  eq(vault.redeemOnce('bank1m', 1_000_000), null, 'a second go pays nothing');
+  eq(vault.balance(), 1_010_000, 'and the balance is untouched');
+});
+
+test('a restored backup does not bring a spent code back', () => {
+  // A restore writes over the chips rather than the whole profile, so an old
+  // code cannot be used to collect the same million a second time.
+  freshVault();
+  vault.redeemOnce('bank1m', 1_000_000);
+  const code = vault.backupCode();
+  vault.withdraw(vault.balance());
+
+  eq(vault.restoreCode(code), 1_010_000, 'the chips come back');
+  eq(vault.codeSpent('bank1m'), true, 'the code is still spent');
+  eq(vault.redeemOnce('bank1m', 1_000_000), null);
+});
+
+test('one-time codes survive being written out and read back', () => {
+  freshVault();
+  vault.redeemOnce('bank1m', 1_000_000);
+  vault.detach();                       // drop the in-memory copy
+  eq(vault.codeSpent('bank1m'), true, 'storage remembers it');
+});
+
 test('a new vault starts with the house stake', () => {
   freshVault();
   eq(vault.balance(), 10000);

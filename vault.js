@@ -7,7 +7,7 @@
  * you cash out.
  */
 
-import { DECK_IDS, CHIP_IDS, sparePrice } from './decks.js?v=mvu6fv1u';
+import { DECK_IDS, CHIP_IDS, sparePrice } from './decks.js?v=mvuirogd';
 
 const KEY = 'pn.profile.v1';
 
@@ -43,11 +43,19 @@ const BLANK = {
   // rather than for moving to another device.
   deckSpares: {},
   chipSpares: {},
+  // One-time codes this profile has already been paid for, by their short
+  // id rather than the code itself. Restoring a backup does not clear them:
+  // a restore writes over the chips, not the whole profile, so an old code
+  // cannot be used to collect a second time.
+  codesUsed: [],
   created: null,
 };
 
 /** Past this a count is meaningless, and it keeps the arithmetic small. */
 const MAX_SPARES = 99_999;
+
+/** There will never be hundreds of one-time codes; this is just a sane cap. */
+const MAX_CODES = 200;
 
 let cache = null;
 let remote = null;        // { uid, save(profile) } once signed in
@@ -84,6 +92,9 @@ function readStored() {
     profile.chipSkins = tidyIds(profile.chipSkins, CHIP_IDS);
     profile.deckSpares = tidySpares(profile.deckSpares, DECK_IDS);
     profile.chipSpares = tidySpares(profile.chipSpares, CHIP_IDS);
+    profile.codesUsed = Array.isArray(profile.codesUsed)
+      ? [...new Set(profile.codesUsed.filter((c) => typeof c === 'string'))].slice(0, MAX_CODES)
+      : [];
     return profile;
   } catch {
     return { ...BLANK, created: Date.now() };
@@ -151,6 +162,27 @@ export function withdraw(amount) {
   p.vault -= take;
   write(p);
   return take;
+}
+
+/** Whether a one-time code has already paid out to this profile. */
+export function codeSpent(id) {
+  return read().codesUsed.includes(id);
+}
+
+/**
+ * Pay out a one-time code, once. Returns the new balance, or null when this
+ * profile has had it already.
+ *
+ * The code is written down as spent in the same write as the chips arriving,
+ * so a crash between the two cannot leave it collectable twice.
+ */
+export function redeemOnce(id, amount) {
+  const p = read();
+  if (p.codesUsed.includes(id)) return null;
+  p.codesUsed = [...p.codesUsed, id];
+  p.vault = Math.min(MAX_VAULT, p.vault + Math.max(0, Math.floor(amount)));
+  write(p);
+  return p.vault;
 }
 
 /** Put chips back after cashing out. */

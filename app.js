@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvu6fv1u';
-import { TableHost } from './host.js?v=mvu6fv1u';
-import * as vault from './vault.js?v=mvu6fv1u';
-import * as friends from './friends.js?v=mvu6fv1u';
-import * as packs from './decks.js?v=mvu6fv1u';
-import * as cloud from './cloud.js?v=mvu6fv1u';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvu6fv1u';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvu6fv1u';
+import { HostNet, GuestNet } from './net.js?v=mvuirogd';
+import { TableHost } from './host.js?v=mvuirogd';
+import * as vault from './vault.js?v=mvuirogd';
+import * as friends from './friends.js?v=mvuirogd';
+import * as packs from './decks.js?v=mvuirogd';
+import * as cloud from './cloud.js?v=mvuirogd';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvuirogd';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvuirogd';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 72;
+const BUILD = 73;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -33,16 +33,60 @@ const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 const ADMIN_DIGEST = '78ae4ad356a45391a051a4bda7c2dbd1940068b4c3edd9a674279d52b8ac4409';
 const ADMIN_KEY = 'pn.admin.v1';
 
+/**
+ * One-time chip codes, matched by digest for the same reason as the admin
+ * code: a static site ships its own source, so a code spelled out in it is a
+ * code everybody already has. `id` is what the vault writes down as spent.
+ */
+const CASH_CODES = [
+  {
+    id: 'bank1m',
+    digest: '81a9b3873ca8d8f43f82712a07284d5b71230aa1ab2016def65c55512e93eaef',
+    chips: 1_000_000,
+  },
+];
+
+/** Hex SHA-256 of some typed text, or null where there is no crypto to do it. */
+async function digestOf(text) {
+  try {
+    const bytes = new TextEncoder().encode(text);
+    const digest = await crypto.subtle.digest('SHA-256', bytes);
+    return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return null;    // insecure origin: behave as no match
+  }
+}
+
 /** True when the typed text is the admin code. */
 async function matchesUnlock(text) {
-  try {
-    const bytes = new TextEncoder().encode(text.toLowerCase());
-    const digest = await crypto.subtle.digest('SHA-256', bytes);
-    const hex = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
-    return hex === ADMIN_DIGEST;
-  } catch {
-    return false;   // no subtle crypto (insecure origin): behave as no match
+  return await digestOf(text.toLowerCase()) === ADMIN_DIGEST;
+}
+
+/**
+ * The one-time chip code the typed text is, if it is one. Dashes, spaces and
+ * capitals are all forgiven — scanning a code is exact, typing one is not.
+ */
+async function matchesCash(text) {
+  const hex = await digestOf(text.toLowerCase().replace(/[^a-z0-9]/g, ''));
+  if (!hex) return null;
+  return CASH_CODES.find((c) => c.digest === hex) || null;
+}
+
+/**
+ * Pay out a one-time chip code. Returns 'ok' when it paid, 'used' when this
+ * profile has already had it, and false when the text is not one of them.
+ */
+async function applyCash(text) {
+  const grant = await matchesCash(text);
+  if (!grant) return false;
+  const balance = vault.redeemOnce(grant.id, grant.chips);
+  if (balance === null) {
+    toast('That code has already been used on this vault.');
+    return 'used';
   }
+  paintVault();
+  toast(`${fmt(grant.chips)} chips. Your vault is ${fmt(balance)}.`);
+  return 'ok';
 }
 
 function isAdmin() {
@@ -193,7 +237,10 @@ function redeemFromUrl() {
   if (!hash.startsWith(CLAIM_PREFIX)) return;
   const code = decodeURIComponent(hash.slice(CLAIM_PREFIX.length));
   history.replaceState(null, '', location.pathname + location.search);
-  if (!applyClaim(code)) toast('That is not a code we know.');
+  if (applyClaim(code)) return;
+  applyCash(code).then((paid) => {
+    if (!paid) toast('That is not a code we know.');
+  });
 }
 
 function inviteLink() {
@@ -1321,6 +1368,16 @@ async function redeem(box) {
   if (applyClaim(text)) {
     box.value = '';
     box.classList.add('ok');
+    return;
+  }
+
+  // Then a one-time chip code. A spent one flashes red: it is a real code,
+  // but nothing is coming of it, and green would say otherwise.
+  const paid = await applyCash(text);
+  if (paid) {
+    if (paid === 'ok') box.value = '';
+    box.classList.add(paid === 'ok' ? 'ok' : 'bad');
+    setTimeout(() => box.classList.remove('ok', 'bad'), 1600);
     return;
   }
 
