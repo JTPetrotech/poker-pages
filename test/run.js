@@ -632,6 +632,30 @@ test('sport has two milk skins and the hockey stick is one of them', () => {
   assert(one > 900 && one < 1100, `sport milk should stay 1 in 1,000, got 1 in ${one.toFixed(0)}`);
 });
 
+test('the free skins can carry a spare like any other', () => {
+  // Classic and Pink are never in the owned lists until something puts them
+  // there, which is what admin's doubling button does before adding a spare.
+  freshVault();
+  eq(vault.ownsDeck(packs.FREE_DECK), false, 'free, so not listed');
+  eq(vault.grantDeck(packs.FREE_DECK), true);
+  eq(vault.addDeck(packs.FREE_DECK), false, 'the second one is a spare');
+  eq(vault.spareCount('deck', packs.FREE_DECK), 1);
+  eq(vault.sellSpares('deck', packs.FREE_DECK).paid, packs.SPARE_PRICES.free);
+});
+
+test('doubling every skin leaves one spare of each, worth the sum of them', () => {
+  freshVault();
+  for (const d of packs.DECKS) { vault.grantDeck(d.id); vault.addDeck(d.id); }
+  for (const c of packs.CHIP_SKINS) { vault.grantChip(c.id); vault.addChip(c.id); }
+
+  eq(vault.spareTotal(), packs.DECKS.length + packs.CHIP_SKINS.length);
+  for (const d of packs.DECKS) eq(vault.spareCount('deck', d.id), 1, `one spare ${d.id}`);
+
+  const want = [...packs.DECKS, ...packs.CHIP_SKINS]
+    .reduce((sum, s) => sum + packs.SPARE_PRICES[s.rarity], 0);
+  eq(vault.spareValue(), want, 'each spare priced by its own tier');
+});
+
 test('a one-time code pays out once and never again', () => {
   freshVault();
   eq(vault.codeSpent('amil1m'), false, 'nothing spent on a new vault');

@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mvuj7psp';
-import { TableHost } from './host.js?v=mvuj7psp';
-import * as vault from './vault.js?v=mvuj7psp';
-import * as friends from './friends.js?v=mvuj7psp';
-import * as packs from './decks.js?v=mvuj7psp';
-import * as cloud from './cloud.js?v=mvuj7psp';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvuj7psp';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvuj7psp';
+import { HostNet, GuestNet } from './net.js?v=mvujavtx';
+import { TableHost } from './host.js?v=mvujavtx';
+import * as vault from './vault.js?v=mvujavtx';
+import * as friends from './friends.js?v=mvujavtx';
+import * as packs from './decks.js?v=mvujavtx';
+import * as cloud from './cloud.js?v=mvujavtx';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mvujavtx';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mvujavtx';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 74;
+const BUILD = 75;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -1472,6 +1472,29 @@ function adminMsg(text, good) {
  * collection is the point of the packs, and emptying it in one click is a
  * thing you cannot undo.
  */
+/**
+ * Hand yourself one more of each of these skins.
+ *
+ * The first copy joins the collection and the next one is a spare, so the
+ * skins you were missing arrive owned and doubled in one press, and a second
+ * press stacks another spare on everything. It is the only way to see the
+ * selling side of Collection without opening a few hundred packs.
+ *
+ * Classic and Pink are in here too. They are never in the owned lists
+ * normally, so the grant puts them there first and the spare lands after.
+ */
+function giveDoubles(decks, chips) {
+  for (const d of decks) {
+    vault.grantDeck(d.id);
+    vault.addDeck(d.id);
+  }
+  for (const c of chips) {
+    vault.grantChip(c.id);
+    vault.addChip(c.id);
+  }
+  return decks.length + chips.length;
+}
+
 function paintAdminSkins() {
   const host = $('adminSkins');
   if (!host) return;
@@ -1592,6 +1615,23 @@ function initAdmin() {
 
   // The whole catalogue in one press. These are grants rather than pack
   // pulls, so nothing here turns into a spare to sell.
+  $('adminDouble').addEventListener('click', () => {
+    const n = giveDoubles(packs.DECKS, packs.CHIP_SKINS);
+    adminMsg(`${n} skins, each with a spare now. Press it again for another, `
+      + `and your spares are worth ${fmt(vault.spareValue())}.`, true);
+    paintAdminSkins();
+  });
+
+  $('adminMilkAll').addEventListener('click', () => {
+    const n = giveDoubles(
+      packs.DECKS.filter((d) => d.rarity === 'milk'),
+      packs.CHIP_SKINS.filter((c) => c.rarity === 'milk'),
+    );
+    adminMsg(`All ${n} milk skins are yours, each with a spare. `
+      + `Your spares are worth ${fmt(vault.spareValue())}.`, true);
+    paintAdminSkins();
+  });
+
   $('adminAll').addEventListener('click', () => {
     let added = 0;
     for (const d of packs.DECKS) if (vault.grantDeck(d.id)) added++;
