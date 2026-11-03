@@ -3707,6 +3707,200 @@ kbd {
 
 .idea-clear { margin: 12px 0 0; font-size: 12px; }
 
+/* ------------------------------------------------------ desert and dinos */
+
+.deck-cactus {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.3) 0 32%, transparent 60%),
+    repeating-linear-gradient(90deg, rgba(255, 240, 200, 0.16) 0 2px, transparent 2px 10px),
+    linear-gradient(170deg, #3f7f46 0%, #1d4a2a 100%);
+  --deck-edge: #9fd8a6;
+  --deck-glyph: "\1F335";
+}
+.deck-dune {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 246, 220, 0.6) 0 30%, transparent 58%),
+    repeating-linear-gradient(28deg, rgba(150, 100, 48, 0.22) 0 3px, transparent 3px 13px),
+    linear-gradient(170deg, #efcf93 0%, #c08f4c 100%);
+  --deck-edge: #8a6230;
+  --deck-glyph: "\1F3DC\FE0F";
+}
+.deck-scorpion {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.42) 0 32%, transparent 62%),
+    radial-gradient(60% 40% at 50% 96%, rgba(214, 150, 70, 0.4), transparent 72%),
+    linear-gradient(170deg, #6a4522 0%, #241306 100%);
+  --deck-edge: #e0a84e;
+  --deck-glyph: "\1F982";
+}
+.deck-oasis {
+  --deck-bg:
+    radial-gradient(circle at 50% 66%, rgba(90, 190, 220, 0.75) 0 22%, transparent 44%),
+    radial-gradient(70% 36% at 50% 14%, rgba(255, 226, 160, 0.5), transparent 70%),
+    linear-gradient(170deg, #e8c78a 0%, #a3763c 100%);
+  --deck-edge: #63c3dc;
+  --deck-glyph: "\1F334";
+}
+.deck-mirage {
+  --deck-bg: url("backs/mirage.png") center / cover no-repeat;
+  --deck-edge: #f0c073;
+  --deck-glyph: "";
+}
+.deck-milksand {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92) 0 30%, transparent 58%),
+    repeating-linear-gradient(24deg, rgba(206, 170, 112, 0.22) 0 2px, transparent 2px 10px),
+    linear-gradient(160deg, #fffdf6 0%, #f0e3cb 100%);
+  --deck-edge: #ddc69b;
+  --deck-glyph: "\231B";
+}
+
+.deck-egg {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.26) 0 32%, transparent 60%),
+    radial-gradient(2.4px 2.4px at 26% 28%, #8a6a3a 50%, transparent 51%),
+    radial-gradient(2px 2px at 72% 36%, #8a6a3a 50%, transparent 51%),
+    radial-gradient(2.4px 2.4px at 36% 74%, #8a6a3a 50%, transparent 51%),
+    radial-gradient(1.8px 1.8px at 70% 70%, #8a6a3a 50%, transparent 51%),
+    linear-gradient(170deg, #f3e4c8 0%, #cdb089 100%);
+  --deck-edge: #8d7246;
+  --deck-glyph: "\1F95A";
+}
+.deck-fern {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.3) 0 32%, transparent 60%),
+    repeating-linear-gradient(118deg, rgba(180, 230, 150, 0.2) 0 2px, transparent 2px 9px),
+    linear-gradient(170deg, #2f6b3c 0%, #123520 100%);
+  --deck-edge: #86c98f;
+  --deck-glyph: "\1F33F";
+}
+.deck-bones {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(240, 236, 220, 0.5) 0 30%, transparent 58%),
+    repeating-linear-gradient(0deg, rgba(60, 50, 38, 0.3) 0 3px, transparent 3px 12px),
+    linear-gradient(170deg, #b9ad92 0%, #6e6350 100%);
+  --deck-edge: #efe9d6;
+  --deck-glyph: "\1F9B4";
+}
+.deck-rex {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.4) 0 32%, transparent 62%),
+    radial-gradient(80% 40% at 50% 100%, rgba(226, 92, 40, 0.5), transparent 70%),
+    linear-gradient(170deg, #4a5e32 0%, #16200f 100%);
+  --deck-edge: #c6e07a;
+  --deck-glyph: "\1F996";
+}
+.deck-longneck {
+  --deck-bg: url("backs/longneck.png") center / cover no-repeat;
+  --deck-edge: #f0a35c;
+  --deck-glyph: "";
+}
+.deck-milkegg {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92) 0 30%, transparent 58%),
+    radial-gradient(2.2px 2.2px at 28% 30%, rgba(176, 196, 220, 0.8) 50%, transparent 51%),
+    radial-gradient(2px 2px at 70% 66%, rgba(176, 196, 220, 0.8) 50%, transparent 51%),
+    linear-gradient(160deg, #ffffff 0%, #eef3f9 100%);
+  --deck-edge: #ccdcea;
+  --deck-glyph: "\1F423";
+}
+
+/* ---------------------------------------------------- chips, eighth batch */
+
+.chipskin-olive {
+  --tok-bg: radial-gradient(circle at 32% 28%, #b7c178, #5d6630 84%);
+  --tok-edge: #dfe6ad;
+  --tok-face:
+    repeating-conic-gradient(from 10deg, rgba(255,255,255,0.3) 0 8deg, rgba(255,255,255,0) 8deg 24deg);
+  --tok-inset: 2px;
+}
+.chipskin-blush {
+  --tok-bg: radial-gradient(circle at 32% 26%, #ffd9df, #e08a9c 84%);
+  --tok-edge: #fff1f4;
+  --tok-face:
+    conic-gradient(from 0deg, rgba(255,255,255,0) 0 24%, rgba(255,255,255,0.6) 34%,
+                   rgba(255,255,255,0) 44%, rgba(255,255,255,0) 74%,
+                   rgba(255,255,255,0.5) 84%, rgba(255,255,255,0) 94%);
+  --tok-inset: 2px;
+}
+.chipskin-pewter {
+  --tok-bg: radial-gradient(circle at 34% 30%, #c3c8cf, #6d7480 84%);
+  --tok-edge: #e6eaf0;
+  --tok-face:
+    repeating-linear-gradient(42deg, rgba(255,255,255,0.35) 0 2px, rgba(255,255,255,0) 2px 8px);
+  --tok-inset: 2px;
+}
+.chipskin-wheat {
+  --tok-bg: radial-gradient(circle at 34% 28%, #f6e4b2, #c9a257 84%);
+  --tok-edge: #fff6d9;
+  --tok-face:
+    repeating-linear-gradient(80deg, rgba(140,100,40,0.3) 0 2px, rgba(255,255,255,0) 2px 9px);
+  --tok-inset: 2px;
+}
+.chipskin-topaz {
+  --tok-bg: radial-gradient(circle at 30% 26%, #ffd98a, #b06a12 86%);
+  --tok-edge: #ffeec0;
+  --tok-glow: 0 0 7px rgba(255, 200, 110, 0.6);
+  --tok-face:
+    conic-gradient(from 30deg, rgba(255,240,200,0) 0 18%, rgba(255,240,200,0.7) 30%,
+                   rgba(255,240,200,0) 42%, rgba(255,240,200,0) 68%,
+                   rgba(255,240,200,0.6) 80%, rgba(255,240,200,0) 92%);
+  --tok-inset: 1px;
+}
+.chipskin-lilac {
+  --tok-bg: radial-gradient(circle at 32% 26%, #e4d4ff, #9472c8 84%);
+  --tok-edge: #f4ecff;
+  --tok-glow: 0 0 7px rgba(200, 170, 255, 0.55);
+  --tok-face:
+    repeating-conic-gradient(from 0deg, rgba(255,255,255,0.4) 0 6deg, rgba(255,255,255,0) 6deg 20deg);
+  --tok-inset: 1px;
+}
+.chipskin-inferno {
+  --tok-bg: radial-gradient(circle at 50% 70%, #fff0a0 0 8%, #ff6a1a 38%, #7a1006 84%);
+  --tok-edge: #ffb062;
+  --tok-glow: 0 0 11px rgba(255, 110, 30, 0.8);
+  --tok-face:
+    conic-gradient(from 200deg, rgba(255,230,160,0) 0 12%, rgba(255,230,160,0.9) 24%,
+                   rgba(255,160,60,0) 40%, rgba(255,160,60,0) 62%,
+                   rgba(255,200,100,0.85) 74%, rgba(255,200,100,0) 88%);
+  --tok-inset: 1px;
+  --tok-spin: tok-spin 4.2s linear infinite;
+}
+/* Black Hole: the ultra. All of the light is at the edge of it. */
+.chipskin-blackhole {
+  --tok-bg: radial-gradient(circle, #000000 0 44%, #ffb14d 50%, #7a2fd0 60%, #05030c 84%);
+  --tok-edge: #ffcf8a;
+  --tok-glow: 0 0 15px rgba(255, 170, 70, 0.9);
+  --tok-face:
+    conic-gradient(from 0deg, rgba(255,210,150,0) 0 40%, rgba(255,210,150,0.9) 50%,
+                   rgba(255,210,150,0) 60%, rgba(180,130,255,0) 90%,
+                   rgba(180,130,255,0.85) 100%);
+  --tok-inset: -4px;
+  --tok-spin: tok-spin 2.6s linear infinite;
+}
+
+/* ------------------------------------------------------ the ideas button */
+
+/*
+ * Bigger than the rest of the row on purpose: a suggestion only arrives if
+ * the way to send one is obvious.
+ */
+.big-ideas {
+  font-size: 15px;
+  font-weight: 650;
+  padding: 11px 18px;
+}
+.corner-pill.big-ideas {
+  color: #0d6b3f;
+  border-color: rgba(46, 160, 100, 0.55);
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.26);
+}
+.ghost.big-ideas {
+  color: var(--green);
+  border-color: var(--green);
+}
+.ghost.big-ideas:hover { color: #fff; background: var(--green); border-color: var(--green); }
+
 /* --------------------------------------------- seeing what you are buying */
 
 /* The pickers used to show a 32px card and a 26px chip, which is too small

@@ -1376,12 +1376,177 @@ function milkcrown() {
   return c.bytes();
 }
 
+// ---------------------------------------------------------------- mirage
+
+/** The desert ultra: a sun over dunes, cut by the heat coming off them. */
+function mirage() {
+  const c = canvas();
+  const horizon = 118;
+  const rnd = rand(20260903);
+
+  // Sky: hot white at the horizon, burnt orange going up.
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const t = Math.min(1, Math.max(0, y / horizon));
+      c.set(x, y, mix(214, 255, t), mix(108, 226, t), mix(48, 150, t));
+    }
+  }
+
+  // The sun, sitting on the horizon rather than above it.
+  const sx = W / 2;
+  const sy = horizon - 26;
+  for (let y = 0; y < horizon; y++) {
+    for (let x = 0; x < W; x++) {
+      const d = Math.hypot(x - sx, y - sy) / 36;
+      if (d > 1) continue;
+      c.blend(x, y, 255, mix(250, 196, d), mix(226, 90, d), 1);
+    }
+  }
+  glow(c, Math.round(sx), Math.round(sy), 58, 255, 210, 130, 0.45);
+
+  // Heat bands: the mirage itself, slicing the sun where the air shakes.
+  for (let y = horizon - 34; y < horizon; y += 1) {
+    const t = (y - (horizon - 34)) / 34;
+    if (Math.sin(y * 1.5) < 0.1) continue;
+    for (let x = 0; x < W; x++) {
+      const shift = Math.sin(y * 0.8 + x * 0.05) * 2.5 * t;
+      c.blend(x, y, 255, 244, 214, 0.22 + shift * 0.04 + t * 0.2);
+    }
+  }
+
+  // Dunes, each one lighter on top and darker in the lee.
+  const dunes = [
+    { base: horizon + 2, amp: 7, freq: 0.045, phase: 0.4, top: [226, 168, 92], bot: [150, 96, 44] },
+    { base: horizon + 22, amp: 9, freq: 0.035, phase: 2.1, top: [206, 142, 74], bot: [112, 66, 30] },
+    { base: horizon + 46, amp: 11, freq: 0.028, phase: 4.6, top: [176, 112, 56], bot: [74, 40, 18] },
+  ];
+  for (const d of dunes) {
+    for (let x = 0; x < W; x++) {
+      const crest = d.base + Math.sin(x * d.freq + d.phase) * d.amp;
+      for (let y = Math.floor(crest); y < H; y++) {
+        const t = Math.min(1, (y - crest) / 46);
+        c.set(x, y, mix(d.top[0], d.bot[0], t), mix(d.top[1], d.bot[1], t), mix(d.top[2], d.bot[2], t));
+      }
+      // The lit edge of the crest, which is what makes it a dune.
+      c.blend(x, Math.floor(crest), 255, 226, 172, 0.75);
+    }
+  }
+
+  // A palm, because a mirage is a promise of one.
+  const px = 96;
+  const py = horizon + 20;
+  for (let i = 0; i <= 40; i++) {
+    const t = i / 40;
+    const x = px + Math.sin(t * 1.1) * 7;
+    const y = py - t * 40;
+    for (let w = -1.6; w <= 1.6; w += 0.5) c.blend(Math.round(x + w), Math.round(y), 52, 30, 14, 0.95);
+  }
+  const hx = px + Math.sin(1.1) * 7;
+  const hy = py - 40;
+  for (let f = 0; f < 6; f++) {
+    const a = -Math.PI + (f / 5) * Math.PI;
+    for (let i = 0; i <= 22; i++) {
+      const t = i / 22;
+      const x = hx + Math.cos(a) * t * 16;
+      const y = hy + Math.sin(a) * t * 11 + t * t * 7;
+      for (let w = -1.2; w <= 1.2; w += 0.6) {
+        c.blend(Math.round(x), Math.round(y + w), 38, 58, 26, 0.95);
+      }
+    }
+  }
+
+  for (let i = 0; i < 26; i++) {
+    const x = Math.floor(rnd() * W);
+    const y = horizon + 4 + Math.floor(rnd() * (H - horizon - 6));
+    c.blend(x, y, 255, 236, 196, rnd() * 0.5);
+  }
+  return c.bytes();
+}
+
+// -------------------------------------------------------------- longneck
+
+/** The dinosaur ultra: one long neck against a low sun. */
+function longneck() {
+  const c = canvas();
+  const ground = 150;
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const t = y / ground;
+      c.set(x, y, mix(44, 236, t), mix(16, 118, t), mix(52, 56, t));
+    }
+  }
+
+  // The sun behind everything, so the animal reads as a shape cut out of it.
+  const sx = W / 2;
+  const sy = 96;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const d = Math.hypot(x - sx, y - sy) / 46;
+      if (d > 1) continue;
+      c.blend(x, y, 255, mix(238, 170, d), mix(170, 60, d), 1);
+    }
+  }
+  glow(c, Math.round(sx), Math.round(sy), 64, 255, 190, 110, 0.4);
+
+  /** A tapered line of dark, which every part of the animal is made of. */
+  const limb = (x0, y0, x1, y1, cx1, cy1, r0, r1) => {
+    for (let i = 0; i <= 90; i++) {
+      const t = i / 90;
+      const u = 1 - t;
+      const x = u * u * x0 + 2 * u * t * cx1 + t * t * x1;
+      const y = u * u * y0 + 2 * u * t * cy1 + t * t * y1;
+      const r = mix(r0, r1, t);
+      for (let dy = -r; dy <= r; dy += 0.5) {
+        for (let dx = -r; dx <= r; dx += 0.5) {
+          if (dx * dx + dy * dy > r * r) continue;
+          c.blend(Math.round(x + dx), Math.round(y + dy), 26, 14, 24, 1);
+        }
+      }
+    }
+  };
+
+  // Body, then the neck up and the tail away, then four legs under it.
+  for (let y = 100; y <= 136; y++) {
+    for (let x = 32; x <= 92; x++) {
+      const d = Math.hypot((x - 62) / 28, (y - 118) / 17);
+      if (d <= 1) c.blend(x, y, 26, 14, 24, 1);
+    }
+  }
+  limb(80, 108, 104, 54, 100, 86, 8.5, 4);          // neck
+  limb(38, 114, 6, 92, 18, 124, 8, 1.4);            // tail
+  for (const [lx, lean] of [[46, -2], [56, 1], [72, -1], [82, 2]]) {
+    limb(lx, 128, lx + lean, ground, lx + lean, 140, 6.5, 5);
+  }
+  // Head: a wedge on the end of the neck, with the eye left as a gap.
+  for (let y = 46; y <= 62; y++) {
+    for (let x = 96; x <= 122; x++) {
+      const d = Math.hypot((x - 106) / 11, (y - 54) / 5.5);
+      if (d <= 1) c.blend(x, y, 26, 14, 24, 1);
+    }
+  }
+  c.blend(110, 52, 255, 222, 150, 0.95);
+  c.blend(111, 52, 255, 222, 150, 0.95);
+
+  // The ground it is standing on, and a hill or two behind.
+  for (let x = 0; x < W; x++) {
+    const hill = ground - 10 - Math.sin(x * 0.05 + 1.2) * 5 - Math.sin(x * 0.11) * 3;
+    for (let y = Math.floor(hill); y < H; y++) {
+      const t = Math.min(1, (y - hill) / 40);
+      c.set(x, y, mix(78, 30, t), mix(32, 12, t), mix(44, 22, t));
+    }
+  }
+  for (let x = 0; x < W; x++) c.blend(x, Math.floor(ground - 10), 255, 170, 110, 0.35);
+  return c.bytes();
+}
+
 // ------------------------------------------------------------------ write
 
 fs.mkdirSync(outDir, { recursive: true });
 const pictures = {
   galaxy, strip, melon, stadium, jackpot, milk, supra, aurora, invader, deep, dragoneye,
   highroller, encore, peacock, kraken, bloom, crystal, milkcrown,
+  mirage, longneck,
 };
 for (const [name, draw] of Object.entries(pictures)) {
   const file = path.join(outDir, `${name}.png`);

@@ -1308,6 +1308,23 @@ test('chips leave the vault before a design arrives', () => {
   eq(vault.balance(), before - packs.PACK_PRICE, 'a refused spend takes nothing');
 });
 
+test('a code carries the whole catalogue, however big it grows', () => {
+  // One bit per skin in a fixed-width field. When the catalogue outgrows the
+  // field the newest skins fall off the end quietly, so this is the test that
+  // says when to mint the next version letter.
+  freshVault();
+  for (const id of packs.DECK_IDS) vault.grantDeck(id);
+  for (const id of packs.CHIP_IDS) vault.grantChip(id);
+  const code = vault.backupCode();
+
+  freshVault();
+  assert(vault.restoreCode(code) !== null, 'the code reads back');
+  eq(vault.decks().length, packs.DECK_IDS.length, 'every card skin came across');
+  eq(vault.chipSkins().length, packs.CHIP_IDS.length, 'every chip skin too');
+  assert(vault.ownsDeck(packs.DECK_IDS.at(-1)), 'including the newest card skin');
+  assert(vault.ownsChip(packs.CHIP_IDS.at(-1)), 'and the newest chip');
+});
+
 test('a backup code carries the card backs you bought', () => {
   globalThis.localStorage.clear();
   vault.detach();
@@ -2254,7 +2271,7 @@ test('the two new packs are six each, one ultra apiece', () => {
 });
 
 test('the newest packs are six each, one ultra apiece', () => {
-  for (const id of ['casino', 'music', 'wild', 'pirate', 'garden', 'frost']) {
+  for (const id of ['wild', 'pirate', 'garden', 'frost', 'desert', 'dino']) {
     const contents = packs.packContents(id);
     eq(contents.length, 6, `${id} has six`);
     eq(contents.filter((d) => d.rarity === 'ultra').length, 1, `${id} has one ultra`);

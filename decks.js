@@ -60,6 +60,8 @@ export const PACKS = [
   { id: 'pirate', name: 'Pirate', blurb: 'Below the waterline.' },
   { id: 'garden', name: 'Garden', blurb: 'Things that grow.' },
   { id: 'frost', name: 'Frost', blurb: 'Cold enough to see your breath.' },
+  { id: 'desert', name: 'Desert', blurb: 'Hot, and a long way from anywhere.' },
+  { id: 'dino', name: 'Dinosaurs', blurb: 'A very long time ago.' },
   // The milk pack. Not id 'milk': that is already a card skin, and keeping
   // the two namespaces clear of each other is worth the longer word.
   {
@@ -221,6 +223,20 @@ export const DECKS = [
   { id: 'milkcow', name: 'Dairy Cow', pack: 'milkpack', rarity: 'legendary' },
   { id: 'milkcrown', name: 'Milk Crown', pack: 'milkpack', rarity: 'ultra' },
   { id: 'milkpure', name: 'Pure Milk', pack: 'milkpack', rarity: 'milk' },
+
+  { id: 'cactus', name: 'Cactus', pack: 'desert', rarity: 'common' },
+  { id: 'dune', name: 'Dune', pack: 'desert', rarity: 'common' },
+  { id: 'scorpion', name: 'Scorpion', pack: 'desert', rarity: 'rare' },
+  { id: 'oasis', name: 'Oasis', pack: 'desert', rarity: 'legendary' },
+  { id: 'mirage', name: 'Mirage', pack: 'desert', rarity: 'ultra' },
+  { id: 'milksand', name: 'Milk Sands', pack: 'desert', rarity: 'milk' },
+
+  { id: 'egg', name: 'Egg', pack: 'dino', rarity: 'common' },
+  { id: 'fern', name: 'Fern', pack: 'dino', rarity: 'common' },
+  { id: 'bones', name: 'Bones', pack: 'dino', rarity: 'rare' },
+  { id: 'rex', name: 'Rex', pack: 'dino', rarity: 'legendary' },
+  { id: 'longneck', name: 'Longneck', pack: 'dino', rarity: 'ultra' },
+  { id: 'milkegg', name: 'Milk Egg', pack: 'dino', rarity: 'milk' },
 ];
 
 /**
@@ -329,6 +345,14 @@ export const CHIP_SKINS = [
   { id: 'halo', name: 'Halo', rarity: 'ultra' },
   { id: 'vortex', name: 'Vortex', rarity: 'ultra' },
   { id: 'malt', name: 'Malted Milk', rarity: 'milk' },
+  { id: 'olive', name: 'Olive', rarity: 'common' },
+  { id: 'blush', name: 'Blush', rarity: 'common' },
+  { id: 'pewter', name: 'Pewter', rarity: 'common' },
+  { id: 'wheat', name: 'Wheat', rarity: 'common' },
+  { id: 'topaz', name: 'Topaz', rarity: 'rare' },
+  { id: 'lilac', name: 'Lilac', rarity: 'rare' },
+  { id: 'inferno', name: 'Inferno', rarity: 'legendary' },
+  { id: 'blackhole', name: 'Black Hole', rarity: 'ultra' },
 ];
 
 /**
