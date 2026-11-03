@@ -1078,6 +1078,24 @@ input { font: inherit; }
 
 .modal-card.wide { max-width: 460px; }
 
+/*
+ * Shop and Collection are shelves rather than dialogs.
+ *
+ * At 380px a row held three skins, and 96 card skins meant thirty rows of
+ * scrolling. Given the room, a row holds eight or nine and a whole tier is
+ * on screen at once. A phone is unaffected: the card is width 100% either
+ * way and the grid wraps to whatever actually fits.
+ */
+.modal-card.shelf { max-width: 900px; }
+
+/* Text does not want the extra width even where the tiles do. */
+.shelf .modal-sub,
+.shelf .deck-note,
+.shelf .pack-blurb,
+.shelf .deck-pull,
+.shelf .bulk-row,
+.shelf .rank-foot { max-width: 68ch; }
+
 .rank-list { display: flex; flex-direction: column; gap: 7px; }
 
 .rank-row {
@@ -3649,16 +3667,16 @@ kbd {
 /* The pickers used to show a 32px card and a 26px chip, which is too small
    to tell two patterns apart, let alone enjoy one. The table itself is not
    touched: these only apply inside a tile. */
-.deck-opt .card.small { width: 46px; height: 65px; border-radius: 7px; }
-.deck-opt .card.small.back::after { font-size: 21px; }
-.deck-opt .token.big { width: 38px; height: 38px; border-width: 2.5px; }
+.deck-opt .card.small { width: 58px; height: 82px; border-radius: 8px; }
+.deck-opt .card.small.back::after { font-size: 27px; }
+.deck-opt .token.big { width: 48px; height: 48px; border-width: 3px; }
 
 /* The one you have picked, shown at a size worth looking at. */
 .pick-row { display: flex; gap: 12px; align-items: center; text-align: left; }
 .pick-face { flex: none; display: flex; align-items: center; justify-content: center; }
-.pick-face .card.small { width: 72px; height: 101px; border-radius: 10px; }
-.pick-face .card.small.back::after { font-size: 34px; }
-.pick-face .token.big { width: 60px; height: 60px; border-width: 3px; }
+.pick-face .card.small { width: 92px; height: 130px; border-radius: 12px; }
+.pick-face .card.small.back::after { font-size: 42px; }
+.pick-face .token.big { width: 76px; height: 76px; border-width: 3.5px; }
 .pick-text { flex: 1; min-width: 0; }
 
 /* Narrowing the collection to one tier at a time. */

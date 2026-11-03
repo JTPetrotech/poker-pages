@@ -7,7 +7,7 @@
  * you cash out.
  */
 
-import { DECK_IDS, CHIP_IDS, sparePrice } from './decks.js?v=mvujavtx';
+import { DECK_IDS, CHIP_IDS, sparePrice } from './decks.js?v=mw09u9qm';
 
 const KEY = 'pn.profile.v1';
 
