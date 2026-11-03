@@ -2000,6 +2000,72 @@ test('a seizure mid-hand says so when it is queued and when it lands', () => {
   eq(landed.amount, 300);
 });
 
+test('a suggestion reaches the host and nobody else', () => {
+  const sent = [];
+  const inbox = [];
+  const host = new TableHost({
+    code: 'IDEA',
+    options: { startingStack: 1000 },
+    deliver: (token, msg) => sent.push({ token, msg }),
+    onIdea: (entry) => inbox.push(entry),
+  });
+  host.handle('a', { t: 'hello', name: 'Ann' });
+  host.handle('b', { t: 'hello', name: 'Bo' });
+  host.handle('b', { t: 'sit', name: 'Bo', seat: 1, buyIn: 1000 });
+
+  sent.length = 0;
+  host.handle('b', { t: 'idea', id: 'i7', text: '  a pack of dogs  ' });
+
+  eq(inbox.length, 1, 'the host gets it');
+  eq(inbox[0].text, 'a pack of dogs', 'trimmed');
+  eq(inbox[0].from, 'Bo', 'and who said it');
+  assert(inbox[0].at > 0, 'and when');
+
+  const ack = sent.filter((m) => m.msg.t === 'ideaok');
+  eq(ack.length, 1, 'the sender is told it landed');
+  eq(ack[0].token, 'b');
+  eq(ack[0].msg.id, 'i7', 'by the id it went out with');
+  // It is not chat: nobody else hears about it.
+  assert(!sent.some((m) => m.token === 'a'), 'the table is not told');
+});
+
+test('an empty suggestion is nothing and a long one is cut', () => {
+  const sent = [];
+  const inbox = [];
+  const host = new TableHost({
+    code: 'IDEA',
+    options: { startingStack: 1000 },
+    deliver: (token, msg) => sent.push({ token, msg }),
+    onIdea: (entry) => inbox.push(entry),
+  });
+  host.handle('a', { t: 'hello', name: 'Ann' });
+
+  for (const bad of [{ t: 'idea' }, { t: 'idea', text: '   ' }, { t: 'idea', text: null }]) {
+    host.handle('a', bad);
+  }
+  eq(inbox.length, 0, 'nothing empty is filed');
+
+  host.handle('a', { t: 'idea', id: 'x', text: 'z'.repeat(900) });
+  eq(inbox.length, 1);
+  eq(inbox[0].text.length, 400, 'cut to 400');
+  eq(inbox[0].from, 'spectator', 'someone who is not seated is still heard');
+});
+
+test('a host with nowhere to file a suggestion still answers', () => {
+  // onIdea is optional: a table built without one must not throw.
+  const sent = [];
+  const host = new TableHost({
+    code: 'IDEA',
+    options: { startingStack: 1000 },
+    deliver: (token, msg) => sent.push({ token, msg }),
+  });
+  host.handle('a', { t: 'hello', name: 'Ann' });
+  sent.length = 0;
+  host.handle('a', { t: 'idea', id: 'q', text: 'more milk' });
+  eq(sent.filter((m) => m.msg.t === 'ideaok').length, 1);
+  assert(!sent.some((m) => m.msg.t === 'error'), 'and does not fall over');
+});
+
 test('a chip gift reaches the other player and tells the sender', () => {
   const sent = [];
   const host = new TableHost({

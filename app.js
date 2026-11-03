@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mw09u9qm';
-import { TableHost } from './host.js?v=mw09u9qm';
-import * as vault from './vault.js?v=mw09u9qm';
-import * as friends from './friends.js?v=mw09u9qm';
-import * as packs from './decks.js?v=mw09u9qm';
-import * as cloud from './cloud.js?v=mw09u9qm';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mw09u9qm';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mw09u9qm';
+import { HostNet, GuestNet } from './net.js?v=mw0a3a23';
+import { TableHost } from './host.js?v=mw0a3a23';
+import * as vault from './vault.js?v=mw0a3a23';
+import * as friends from './friends.js?v=mw0a3a23';
+import * as packs from './decks.js?v=mw0a3a23';
+import * as cloud from './cloud.js?v=mw0a3a23';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mw0a3a23';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mw0a3a23';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 76;
+const BUILD = 77;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -475,6 +475,180 @@ async function chooseImage(file) {
 }
 
 
+
+/**
+ * Suggestions.
+ *
+ * `IDEA_KEY` is what you have written: your own list, so you can see what
+ * you have already asked for. `INBOX_KEY` is what has been sent to you,
+ * which fills up on whoever is hosting. There is no server to post these
+ * to, so a suggestion travels the only road there is — the table — and
+ * waits here until you are on one.
+ */
+const IDEA_KEY = 'pn.ideas.v1';
+const INBOX_KEY = 'pn.inbox.v1';
+const IDEA_MAX = 400;
+const IDEA_KEEP = 60;
+
+function readList(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list.filter((e) => e && typeof e.text === 'string') : [];
+  } catch {
+    return [];   // unreadable storage reads as an empty list
+  }
+}
+
+function writeList(key, list) {
+  try {
+    localStorage.setItem(key, JSON.stringify(list.slice(-IDEA_KEEP)));
+  } catch { /* private mode: it just won't stick */ }
+}
+
+/** A suggestion that reached this device, because this device is hosting. */
+function noteIdea(entry) {
+  writeList(INBOX_KEY, [...readList(INBOX_KEY), entry]);
+  if (!$('ideaModal').hidden) paintIdeas();
+  toast(`${entry.from} sent you an idea.`);
+}
+
+/** Hand the host everything that has not got there yet. */
+function flushIdeas() {
+  const mine = readIdeas();
+  let any = false;
+  for (const idea of mine) {
+    if (idea.sent) continue;
+    send({ t: 'idea', id: idea.id, text: idea.text, name: app.name });
+    any = true;
+  }
+  return any;
+}
+
+function readIdeas() {
+  return readList(IDEA_KEY);
+}
+
+/** Mark one of your own as delivered, by the id it went out with. */
+function markIdeaSent(id) {
+  const mine = readIdeas();
+  const hit = mine.find((e) => e.id === id);
+  if (!hit || hit.sent) return;
+  hit.sent = true;
+  writeList(IDEA_KEY, mine);
+  if (!$('ideaModal').hidden) paintIdeas();
+}
+
+function when(at) {
+  const d = new Date(at);
+  return Number.isFinite(d.getTime()) ? d.toLocaleDateString() : '';
+}
+
+function paintIdeas() {
+  const list = $('ideaList');
+  const inbox = readList(INBOX_KEY).slice().reverse();
+  const mine = readIdeas().slice().reverse();
+  list.innerHTML = '';
+
+  const section = (title, rows, render) => {
+    if (!rows.length) return;
+    const head = document.createElement('p');
+    head.className = 'idea-head';
+    head.innerHTML = `<strong>${title}</strong> <span class="pack-count">${rows.length}</span>`;
+    list.appendChild(head);
+    for (const row of rows) list.appendChild(render(row));
+  };
+
+  // Both the name and the text came off the network, so neither is ever
+  // written as HTML.
+  const row = (tagText, tagClass, e) => {
+    const el = document.createElement('div');
+    el.className = 'idea-row';
+    const tag = document.createElement('span');
+    tag.className = tagClass;
+    tag.textContent = tagText;
+    const at = document.createElement('span');
+    at.className = 'idea-when';
+    at.textContent = when(e.at);
+    const body = document.createElement('p');
+    body.className = 'idea-text';
+    body.textContent = e.text;
+    el.append(tag, at, body);
+    return el;
+  };
+
+  section('Sent to you', inbox, (e) => row(String(e.from || 'someone'), 'idea-from', e));
+  section('Yours', mine, (e) => row(
+    e.sent ? 'sent' : 'waiting for a table',
+    `idea-state${e.sent ? ' ok' : ''}`,
+    e,
+  ));
+
+  const empty = !inbox.length && !mine.length;
+  show($('ideaEmpty'), empty);
+}
+
+function ideaMsg(text, good) {
+  const el = $('ideaMsg');
+  el.textContent = text || '';
+  el.className = `backup-msg ${good ? 'good' : 'bad'}`;
+  show(el, !!text);
+}
+
+/**
+ * Keep what has been typed, then try to deliver it.
+ *
+ * It is written down before it is sent, so a suggestion survives a dropped
+ * connection and a closed tab — the next table you join carries it.
+ */
+function sendIdea() {
+  const box = $('ideaText');
+  const text = box.value.trim().slice(0, IDEA_MAX);
+  if (!text) {
+    ideaMsg('Type an idea first.', false);
+    return;
+  }
+  const idea = { id: `i${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`,
+    text, at: Date.now(), sent: false };
+  writeList(IDEA_KEY, [...readIdeas(), idea]);
+  box.value = '';
+
+  const live = app.isHost || !!app.net;
+  if (live) {
+    send({ t: 'idea', id: idea.id, text: idea.text, name: app.name });
+    ideaMsg('Sent. Thank you.', true);
+  } else {
+    ideaMsg('Saved. It goes over as soon as you are at a table.', true);
+  }
+  paintIdeas();
+}
+
+function openIdeas() {
+  ideaMsg('', true);
+  $('ideaText').value = '';
+  paintIdeas();
+  show($('ideaModal'), true);
+  $('ideaText').focus();
+}
+
+function initIdeas() {
+  $('lobbyIdeas').addEventListener('click', openIdeas);
+  $('ideasBtn').addEventListener('click', openIdeas);
+  $('ideaSend').addEventListener('click', sendIdea);
+  $('ideaClear').addEventListener('click', () => {
+    writeList(INBOX_KEY, []);
+    paintIdeas();
+    ideaMsg('Cleared what was sent to you.', true);
+  });
+  $('ideaClose').addEventListener('click', () => show($('ideaModal'), false));
+  $('ideaModal').addEventListener('click', (e) => {
+    if (e.target === $('ideaModal')) show($('ideaModal'), false);
+  });
+  // Ctrl+Enter sends, the way every other box of this shape does.
+  $('ideaText').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) sendIdea();
+  });
+}
 
 function readLook() {
   try {
@@ -1941,6 +2115,7 @@ async function hostTable(options) {
         if (token === store.token) onMessage(msg);
         else net.sendTo(token, msg);
       },
+      onIdea: noteIdea,
     });
     app.host.start();
     setConn(true);
@@ -2021,9 +2196,15 @@ function onMessage(msg) {
       // next sit down.
       send({ t: 'deck', deck: myDeck() });
       send({ t: 'chip', chip: myChip() });
+      // Anything written down in the lobby rides along now there is a host
+      // to hand it to.
+      flushIdeas();
       enterGame();
       break;
     }
+    case 'ideaok':
+      markIdeaSent(msg.id);
+      break;
     case 'state': {
       if (typeof msg.now === 'number') app.clockOffset = msg.now - Date.now();
       render(msg.state);
@@ -3520,6 +3701,7 @@ requestPersistence();
 initSettings();
 initShop();
 initOwned();
+initIdeas();
 redeemFromUrl();
 initAuthUi();
 watchFeltSpace();

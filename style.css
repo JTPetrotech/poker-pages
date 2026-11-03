@@ -3662,6 +3662,51 @@ kbd {
   --tok-spin: tok-spin 6.8s linear infinite;
 }
 
+/* ------------------------------------------------------------ suggestions */
+
+.idea-box {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-1);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+.idea-box:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.idea-send { margin: 8px 0 0; }
+
+.idea-list { display: flex; flex-direction: column; gap: 8px; margin: 14px 0 0; }
+.idea-head { margin: 6px 0 0; font-size: 13px; }
+
+.idea-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-1);
+}
+.idea-from { font-size: 12px; font-weight: 650; color: var(--chip); }
+.idea-when { font-size: 11px; color: var(--muted); text-align: right; }
+.idea-state { font-size: 11px; font-weight: 650; color: var(--muted); }
+.idea-state.ok { color: var(--green); }
+.idea-text {
+  grid-column: 1 / -1;
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.idea-clear { margin: 12px 0 0; font-size: 12px; }
+
 /* --------------------------------------------- seeing what you are buying */
 
 /* The pickers used to show a 32px card and a 26px chip, which is too small

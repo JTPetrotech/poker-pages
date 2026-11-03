@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mw09u9qm" />
+<link rel="stylesheet" href="style.css?v=mw0a3a23" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
@@ -83,6 +83,7 @@
     <button id="lobbyFriends" class="corner-pill" title="Friends">Friends</button>
     <button id="lobbyDecks" class="corner-pill" title="Shop">Shop</button>
     <button id="lobbyOwned" class="corner-pill" title="Collection">Collection</button>
+    <button id="lobbyIdeas" class="corner-pill" title="Suggestions">Ideas</button>
   </div>
   <button id="lobbyGear" class="corner-gear" aria-label="Appearance" title="Appearance">&#9881;</button>
   <div class="lobby-card">
@@ -246,6 +247,7 @@
     <button id="friendsBtn" class="ghost">Friends</button>
     <button id="decksBtn" class="ghost">Shop</button>
     <button id="ownedBtn" class="ghost">Collection</button>
+    <button id="ideasBtn" class="ghost">Ideas</button>
     <button id="settingsBtn" class="ghost gear" aria-label="Appearance">&#9881;</button>
   </header>
 
@@ -334,6 +336,31 @@
 
     <div id="buildTag" class="build-tag">Update <span class="build-no" id="buildNo">0</span></div>
   </footer>
+</div>
+
+<!-- -------------------------------------------------------- suggestions -->
+<div id="ideaModal" class="modal" hidden>
+  <div class="modal-card wide" role="dialog" aria-modal="true" aria-labelledby="ideaTitle">
+    <button id="ideaClose" class="modal-x" aria-label="Close">&times;</button>
+    <h2 id="ideaTitle">Suggestions</h2>
+    <p class="modal-sub">
+      Anything you want in the game. It goes to whoever is hosting the table,
+      and waits here until you are on one.
+    </p>
+
+    <textarea id="ideaText" class="idea-box" rows="4" maxlength="400"
+              placeholder="A pack of&hellip;"></textarea>
+    <button id="ideaSend" class="primary small idea-send" type="button">Send it</button>
+    <p id="ideaMsg" class="backup-msg" hidden></p>
+
+    <p id="ideaEmpty" class="pack-blurb" hidden>
+      Nothing yet. Type an idea above and it is kept here.
+    </p>
+    <div id="ideaList" class="idea-list"></div>
+    <button id="ideaClear" class="linkish idea-clear" type="button">
+      Clear what was sent to you
+    </button>
+  </div>
 </div>
 
 <!-- ------------------------------------------------------------ seat dialog -->
@@ -720,6 +747,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mw09u9qm"></script>
+<script type="module" src="app.js?v=mw0a3a23"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
-import { Table } from './engine/game.js?v=mw09u9qm';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mw09u9qm';
-import { safeDeck, safeChip, deckById, chipById, DECKS, CHIP_SKINS } from './decks.js?v=mw09u9qm';
+import { Table } from './engine/game.js?v=mw0a3a23';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mw0a3a23';
+import { safeDeck, safeChip, deckById, chipById, DECKS, CHIP_SKINS } from './decks.js?v=mw0a3a23';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;
@@ -24,9 +24,12 @@ function cleanName(raw) {
  * WebRTC.
  */
 export class TableHost {
-  constructor({ code, options = {}, deliver }) {
+  constructor({ code, options = {}, deliver, onIdea = null }) {
     this.code = code;
     this.deliver = deliver;
+    // Where a suggestion goes once it reaches the host: the host's own
+    // screen, since there is no server for it to be filed with.
+    this.onIdea = onIdea;
     this.members = new Set();   // tokens currently attached
     this.startAt = 0;
     this.lastActingKey = '';
@@ -252,6 +255,19 @@ export class TableHost {
         if (!text) return;
         const p = table.playerById(token);
         this.broadcast({ t: 'chat', from: p ? p.name : 'spectator', text, at: Date.now() });
+        return;
+      }
+      // A suggestion goes to the host alone rather than to the table: it is
+      // for whoever can act on it, and it is not a thing to be shouted.
+      case 'idea': {
+        const text = String(msg.text || '').trim().slice(0, 400);
+        if (!text) return;
+        // Seated, they are whoever is in that seat; standing in the lobby,
+        // they are whatever name they gave, since there is no seat to ask.
+        const p = table.playerById(token);
+        const from = p ? p.name : cleanName(msg.name || 'spectator');
+        this.onIdea?.({ from, text, at: Date.now() });
+        this.deliver(token, { t: 'ideaok', id: String(msg.id || '').slice(0, 40) });
         return;
       }
       default:
