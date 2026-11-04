@@ -62,6 +62,8 @@ export const PACKS = [
   { id: 'frost', name: 'Frost', blurb: 'Cold enough to see your breath.' },
   { id: 'desert', name: 'Desert', blurb: 'Hot, and a long way from anywhere.' },
   { id: 'dino', name: 'Dinosaurs', blurb: 'A very long time ago.' },
+  { id: 'castle', name: 'Castle', blurb: 'Stone, and whoever is holding it.' },
+  { id: 'circus', name: 'Circus', blurb: 'In town for three nights only.' },
   // The milk pack. Not id 'milk': that is already a card skin, and keeping
   // the two namespaces clear of each other is worth the longer word.
   {
@@ -237,6 +239,20 @@ export const DECKS = [
   { id: 'rex', name: 'Rex', pack: 'dino', rarity: 'legendary' },
   { id: 'longneck', name: 'Longneck', pack: 'dino', rarity: 'ultra' },
   { id: 'milkegg', name: 'Milk Egg', pack: 'dino', rarity: 'milk' },
+
+  { id: 'banner', name: 'Banner', pack: 'castle', rarity: 'common' },
+  { id: 'gate', name: 'Gate', pack: 'castle', rarity: 'common' },
+  { id: 'helm', name: 'Helm', pack: 'castle', rarity: 'rare' },
+  { id: 'throne', name: 'Throne', pack: 'castle', rarity: 'legendary' },
+  { id: 'citadel', name: 'Citadel', pack: 'castle', rarity: 'ultra' },
+  { id: 'milkmoat', name: 'Milk Moat', pack: 'castle', rarity: 'milk' },
+
+  { id: 'tent', name: 'Tent', pack: 'circus', rarity: 'common' },
+  { id: 'balloon', name: 'Balloon', pack: 'circus', rarity: 'common' },
+  { id: 'juggle', name: 'Juggle', pack: 'circus', rarity: 'rare' },
+  { id: 'trapeze', name: 'Trapeze', pack: 'circus', rarity: 'legendary' },
+  { id: 'bigtop', name: 'Big Top', pack: 'circus', rarity: 'ultra' },
+  { id: 'milkpop', name: 'Milk Popcorn', pack: 'circus', rarity: 'milk' },
 ];
 
 /**
@@ -353,6 +369,14 @@ export const CHIP_SKINS = [
   { id: 'lilac', name: 'Lilac', rarity: 'rare' },
   { id: 'inferno', name: 'Inferno', rarity: 'legendary' },
   { id: 'blackhole', name: 'Black Hole', rarity: 'ultra' },
+  { id: 'flint', name: 'Flint', rarity: 'common' },
+  { id: 'maize', name: 'Maize', rarity: 'common' },
+  { id: 'sable', name: 'Sable', rarity: 'common' },
+  { id: 'teal', name: 'Teal', rarity: 'common' },
+  { id: 'opal', name: 'Opal', rarity: 'rare' },
+  { id: 'garnet', name: 'Garnet', rarity: 'rare' },
+  { id: 'cinder', name: 'Cinder', rarity: 'legendary' },
+  { id: 'kaleido', name: 'Kaleidoscope', rarity: 'ultra' },
 ];
 
 /**

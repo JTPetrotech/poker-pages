@@ -1540,13 +1540,178 @@ function longneck() {
   return c.bytes();
 }
 
+// --------------------------------------------------------------- citadel
+
+/**
+ * The castle ultra.
+ *
+ * A silhouette against a lit sky rather than stone picked out in the dark:
+ * at 58 pixels across, a shape is all that survives, and the lit windows are
+ * what say the place is held rather than ruined.
+ */
+function citadel() {
+  const c = canvas();
+  const rnd = rand(20261104);
+  const ground = 154;
+
+  // Deep overhead, and bright enough near the horizon for black to read.
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const t = Math.pow(Math.min(1, y / ground), 1.4);
+      c.set(x, y, mix(14, 150, t), mix(18, 142, t), mix(48, 168, t));
+    }
+  }
+  for (let i = 0; i < 70; i++) {
+    const x = Math.floor(rnd() * W);
+    const y = Math.floor(rnd() * 96);
+    c.blend(x, y, 236, 240, 255, rnd() * 0.85);
+  }
+
+  const mx = 34;
+  const my = 40;
+  glow(c, mx, my, 54, 226, 232, 255, 0.5);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const d = Math.hypot(x - mx, y - my) / 21;
+      if (d <= 1) c.blend(x, y, 255, 252, mix(232, 204, d), 1);
+    }
+  }
+
+  const dark = (x, y) => {
+    if (x < 0 || x >= W || y < 0 || y >= H) return;
+    c.set(x, y, 22, 18, 34);
+  };
+
+  /** A block with battlements on it, which is the whole of castle drawing. */
+  const block = (x0, x1, top, step) => {
+    for (let y = top; y <= ground + 6; y++) {
+      for (let x = x0; x <= x1; x++) dark(x, y);
+    }
+    for (let x = x0; x <= x1; x++) {
+      if (Math.floor((x - x0) / step) % 2) continue;
+      for (let y = top - 7; y < top; y++) dark(x, y);
+    }
+  };
+
+  block(10, 122, 116, 6);        // the curtain wall, right across
+  block(12, 40, 88, 5);          // left tower
+  block(92, 120, 92, 5);         // right tower
+  block(52, 84, 52, 6);          // the keep, over everything
+
+  // A pennant on the keep, so the top of it is not a flat line.
+  for (let y = 34; y < 54; y++) dark(68, y);
+  for (let i = 0; i < 11; i++) {
+    for (let j = 0; j < 7 - Math.abs(i - 3); j++) c.set(69 + i, 35 + j + Math.floor(i / 4), 196, 52, 60);
+  }
+
+  // Lit windows. Narrow and tall, the way a castle's are.
+  for (const [wx, wy] of [[22, 104], [31, 130], [62, 70], [73, 92], [100, 108], [109, 132]]) {
+    for (let y = wy; y < wy + 8; y++) {
+      for (let x = wx; x < wx + 3; x++) c.blend(x, y, 255, 202, 104, 1);
+    }
+    glow(c, wx + 1, wy + 4, 10, 255, 184, 84, 0.6);
+  }
+
+  // The rock, darker still than the walls.
+  for (let x = 0; x < W; x++) {
+    const edge = ground + 4 + Math.sin(x * 0.07 + 1.1) * 4 + Math.sin(x * 0.19) * 2;
+    for (let y = Math.floor(edge); y < H; y++) c.set(x, y, 12, 10, 20);
+    c.blend(x, Math.floor(edge), 150, 150, 180, 0.35);
+  }
+  return c.bytes();
+}
+
+// ---------------------------------------------------------------- bigtop
+
+/** The circus ultra: a striped tent, lit up, three nights only. */
+function bigtop() {
+  const c = canvas();
+  const rnd = rand(20261105);
+  const ground = 158;
+  const cx = W / 2;
+  const peak = 40;
+  const halfW = 55;
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const t = y / H;
+      c.set(x, y, mix(20, 70, t), mix(16, 32, t), mix(48, 66, t));
+    }
+  }
+  for (let i = 0; i < 60; i++) {
+    c.blend(Math.floor(rnd() * W), Math.floor(rnd() * 108), 240, 242, 255, rnd() * 0.75);
+  }
+
+  // How wide the tent is at each height. The power is what gives it the
+  // bell shape rather than a plain triangle.
+  const halfAt = (y) => halfW * Math.pow((y - peak) / (ground - peak), 0.74);
+
+  for (let y = peak; y <= ground; y++) {
+    const half = halfAt(y);
+    for (let x = Math.round(cx - half); x <= Math.round(cx + half); x++) {
+      // The stripes fan out from the peak rather than running straight down.
+      const a = Math.atan2(x - cx, (y - peak) + 7);
+      const red = Math.floor((a + Math.PI) / (Math.PI / 11)) % 2 === 0;
+      const lit = 0.68 + 0.32 * (1 - Math.abs(x - cx) / (half + 1));
+      if (red) c.set(x, y, 214 * lit, 56 * lit, 64 * lit);
+      else c.set(x, y, 248 * lit, 240 * lit, 226 * lit);
+    }
+  }
+
+  // The way in, and the light coming out of it.
+  const doorH = 42;
+  for (let y = ground - doorH; y <= ground; y++) {
+    const t = (y - (ground - doorH)) / doorH;
+    const w = 16 * Math.sin(Math.min(1, t * 1.7) * Math.PI * 0.5);
+    for (let x = Math.round(cx - w); x <= Math.round(cx + w); x++) {
+      // Lit from inside: the light is the point of a way in.
+      const across = Math.abs(x - cx) / (w + 1);
+      const warm = (1 - across * 0.55) * (0.45 + 0.55 * t);
+      c.set(x, y, mix(96, 255, warm), mix(44, 212, warm), mix(36, 140, warm));
+    }
+    // The flaps either side of it, pulled back and dark.
+    for (const side of [-1, 1]) {
+      const x = Math.round(cx + side * (w + 1));
+      c.set(x, y, 92, 28, 32);
+    }
+  }
+  glow(c, Math.round(cx), ground - 10, 30, 255, 196, 110, 0.5);
+
+  // Bulbs along the near edge of the roof, and the pole and flag above.
+  for (let i = 0; i <= 14; i++) {
+    const t = i / 14;
+    const y = Math.round(peak + 6 + t * (ground - peak - 10));
+    for (const side of [-1, 1]) {
+      const x = Math.round(cx + side * halfAt(y));
+      c.blend(x, y, 255, 230, 160, 1);
+      glow(c, x, y, 5, 255, 212, 120, 0.55);
+    }
+  }
+  for (let y = peak - 22; y < peak + 2; y++) c.blend(Math.round(cx), y, 236, 238, 244, 1);
+  for (let i = 0; i < 13; i++) {
+    for (let j = 0; j < 9 - Math.abs(i - 4); j++) {
+      c.blend(Math.round(cx) + 1 + i, peak - 21 + j + Math.floor(i / 3), 226, 64, 74, 1);
+    }
+  }
+  glow(c, Math.round(cx), peak + 4, 26, 255, 228, 180, 0.3);
+
+  // The grass it is pitched on.
+  for (let x = 0; x < W; x++) {
+    for (let y = ground + 1; y < H; y++) {
+      const t = Math.min(1, (y - ground) / 28);
+      c.set(x, y, mix(34, 14, t), mix(52, 22, t), mix(34, 18, t));
+    }
+  }
+  return c.bytes();
+}
+
 // ------------------------------------------------------------------ write
 
 fs.mkdirSync(outDir, { recursive: true });
 const pictures = {
   galaxy, strip, melon, stadium, jackpot, milk, supra, aurora, invader, deep, dragoneye,
   highroller, encore, peacock, kraken, bloom, crystal, milkcrown,
-  mirage, longneck,
+  mirage, longneck, citadel, bigtop,
 };
 for (const [name, draw] of Object.entries(pictures)) {
   const file = path.join(outDir, `${name}.png`);

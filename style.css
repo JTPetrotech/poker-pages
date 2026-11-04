@@ -3762,6 +3762,181 @@ kbd {
   line-height: 1.55;
 }
 
+/* ---------------------------------------------------- castle and circus */
+
+.deck-banner {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.32) 0 32%, transparent 60%),
+    repeating-linear-gradient(90deg, #9e2b2b 0 11px, #e8c45c 11px 22px);
+  --deck-edge: #f3d87f;
+  --deck-glyph: "\1F6A9";
+}
+.deck-gate {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.3) 0 32%, transparent 60%),
+    radial-gradient(2.6px 2.6px at 30% 26%, #d8c89a 50%, transparent 51%),
+    radial-gradient(2.6px 2.6px at 70% 26%, #d8c89a 50%, transparent 51%),
+    radial-gradient(2.6px 2.6px at 30% 72%, #d8c89a 50%, transparent 51%),
+    radial-gradient(2.6px 2.6px at 70% 72%, #d8c89a 50%, transparent 51%),
+    repeating-linear-gradient(90deg, rgba(60, 36, 16, 0.4) 0 2px, transparent 2px 13px),
+    linear-gradient(170deg, #7c5027 0%, #40260f 100%);
+  --deck-edge: #c9a876;
+  --deck-glyph: "\1F6AA";
+}
+.deck-helm {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.4) 0 28%, transparent 56%),
+    linear-gradient(118deg, #8e9aa8 0%, #d7dee6 38%, #6c7784 62%, #aeb8c4 100%);
+  --deck-edge: #eef3f8;
+  --deck-glyph: "\26D1\FE0F";
+}
+.deck-throne {
+  --deck-bg:
+    radial-gradient(circle at 50% 46%, rgba(255, 216, 128, 0.5) 0 26%, transparent 54%),
+    repeating-conic-gradient(from 0deg at 50% 50%, rgba(255, 214, 126, 0.14) 0 9deg, transparent 9deg 18deg),
+    linear-gradient(170deg, #4a1f63 0%, #1d0b2c 100%);
+  --deck-edge: #ffd77e;
+  --deck-glyph: "\1FA91";
+}
+.deck-citadel {
+  --deck-bg: url("backs/citadel.png") center / cover no-repeat;
+  --deck-edge: #ffca74;
+  --deck-glyph: "";
+}
+.deck-milkmoat {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92) 0 30%, transparent 58%),
+    radial-gradient(circle at 50% 50%, rgba(168, 206, 226, 0.5) 38%, transparent 56%),
+    linear-gradient(160deg, #ffffff 0%, #e8f1f6 100%);
+  --deck-edge: #c3dbe8;
+  --deck-glyph: "\1F3F0";
+}
+
+.deck-tent {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.26) 0 30%, transparent 58%),
+    repeating-conic-gradient(from 0deg at 50% 8%, #d8453f 0 12deg, #fbf1e2 12deg 24deg);
+  --deck-edge: #ffd9a6;
+  --deck-glyph: "\1F3AA";
+}
+.deck-balloon {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.4) 0 28%, transparent 56%),
+    radial-gradient(22% 16% at 24% 24%, #f25c5c 60%, transparent 62%),
+    radial-gradient(22% 16% at 74% 36%, #49a7e8 60%, transparent 62%),
+    radial-gradient(22% 16% at 32% 74%, #f2c94c 60%, transparent 62%),
+    radial-gradient(22% 16% at 72% 82%, #6fcf6f 60%, transparent 62%),
+    linear-gradient(170deg, #2d6fa8 0%, #16324d 100%);
+  --deck-edge: #9fd4ff;
+  --deck-glyph: "\1F388";
+}
+.deck-juggle {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.3) 0 32%, transparent 60%),
+    repeating-radial-gradient(circle at 50% 96%, rgba(255, 220, 120, 0.22) 0 2px, transparent 2px 14px),
+    linear-gradient(170deg, #1f7a72 0%, #0b332f 100%);
+  --deck-edge: #7fe4d8;
+  --deck-glyph: "\1F939";
+}
+.deck-trapeze {
+  --deck-bg:
+    radial-gradient(circle at 50% 22%, rgba(255, 226, 150, 0.55) 0 14%, transparent 46%),
+    linear-gradient(180deg, rgba(255, 214, 120, 0.35) 0 2px, transparent 2px),
+    linear-gradient(170deg, #182a52 0%, #070d1e 100%);
+  --deck-edge: #ffd98a;
+  --deck-glyph: "\1F938";
+}
+.deck-bigtop {
+  --deck-bg: url("backs/bigtop.png") center / cover no-repeat;
+  --deck-edge: #ffc98c;
+  --deck-glyph: "";
+}
+.deck-milkpop {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.9) 0 30%, transparent 58%),
+    radial-gradient(3px 3px at 28% 30%, #f6e6b8 50%, transparent 51%),
+    radial-gradient(3px 3px at 70% 40%, #f6e6b8 50%, transparent 51%),
+    radial-gradient(3px 3px at 36% 72%, #f6e6b8 50%, transparent 51%),
+    radial-gradient(3px 3px at 68% 76%, #f6e6b8 50%, transparent 51%),
+    linear-gradient(160deg, #ffffff 0%, #fbf4e4 100%);
+  --deck-edge: #e8dcbd;
+  --deck-glyph: "\1F37F";
+}
+
+/* ----------------------------------------------------- chips, ninth batch */
+
+.chipskin-flint {
+  --tok-bg: radial-gradient(circle at 34% 28%, #7f8a97, #343c47 84%);
+  --tok-edge: #b4c0cd;
+  --tok-face:
+    repeating-linear-gradient(118deg, rgba(255,255,255,0.3) 0 2px, rgba(255,255,255,0) 2px 9px);
+  --tok-inset: 2px;
+}
+.chipskin-maize {
+  --tok-bg: radial-gradient(circle at 32% 26%, #ffe28a, #c98f22 84%);
+  --tok-edge: #fff2c2;
+  --tok-face:
+    repeating-conic-gradient(from 6deg, rgba(255,255,255,0.32) 0 7deg, rgba(255,255,255,0) 7deg 21deg);
+  --tok-inset: 2px;
+}
+.chipskin-sable {
+  --tok-bg: radial-gradient(circle at 34% 28%, #4a4650, #15131a 84%);
+  --tok-edge: #8d8796;
+  --tok-face:
+    conic-gradient(from 20deg, rgba(255,255,255,0) 0 30%, rgba(255,255,255,0.3) 42%,
+                   rgba(255,255,255,0) 54%);
+  --tok-inset: 2px;
+}
+.chipskin-teal {
+  --tok-bg: radial-gradient(circle at 32% 26%, #7fd8d0, #1b6a68 84%);
+  --tok-edge: #c2f2ec;
+  --tok-face:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.3) 0 2px, rgba(255,255,255,0) 2px 8px);
+  --tok-inset: 2px;
+}
+.chipskin-opal {
+  --tok-bg:
+    conic-gradient(from 0deg, #cfe9ff, #ffd9ef 22%, #e4ffd9 46%, #fff3c6 68%, #d9e4ff 88%, #cfe9ff);
+  --tok-edge: #ffffff;
+  --tok-glow: 0 0 8px rgba(210, 235, 255, 0.7);
+  --tok-face:
+    radial-gradient(circle at 36% 30%, rgba(255,255,255,0.75) 0 18%, rgba(255,255,255,0) 46%);
+  --tok-inset: 1px;
+}
+.chipskin-garnet {
+  --tok-bg: radial-gradient(circle at 32% 26%, #d4596b, #5c0d1c 86%);
+  --tok-edge: #ff9fae;
+  --tok-glow: 0 0 7px rgba(220, 70, 95, 0.6);
+  --tok-face:
+    repeating-conic-gradient(from 12deg, rgba(255,190,200,0.4) 0 5deg, rgba(255,190,200,0) 5deg 18deg);
+  --tok-inset: 1px;
+}
+.chipskin-cinder {
+  --tok-bg: radial-gradient(circle at 36% 30%, #4e4640, #171311 84%);
+  --tok-edge: #ff9a52;
+  --tok-glow: 0 0 10px rgba(255, 120, 40, 0.65);
+  --tok-face:
+    repeating-conic-gradient(from 0deg, rgba(255,120,36,0.85) 0 2deg, rgba(255,120,36,0) 2deg 26deg);
+  --tok-inset: 1px;
+  --tok-spin: tok-spin 6.5s linear infinite;
+}
+/* Kaleidoscope: the ultra. Every colour, folded and turning. */
+.chipskin-kaleido {
+  --tok-bg:
+    conic-gradient(from 0deg,
+      #ff4d6d 0 30deg, #ffb703 30deg 60deg, #8ac926 60deg 90deg,
+      #1fb6c1 90deg 120deg, #4361ee 120deg 150deg, #9b5de5 150deg 180deg,
+      #ff4d6d 180deg 210deg, #ffb703 210deg 240deg, #8ac926 240deg 270deg,
+      #1fb6c1 270deg 300deg, #4361ee 300deg 330deg, #9b5de5 330deg 360deg);
+  --tok-edge: #ffffff;
+  --tok-glow: 0 0 13px rgba(255, 255, 255, 0.75);
+  --tok-face:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.9) 0 12%, rgba(255,255,255,0) 26%),
+    repeating-conic-gradient(from 15deg, rgba(255,255,255,0.4) 0 4deg, rgba(255,255,255,0) 4deg 30deg);
+  --tok-inset: 0px;
+  --tok-spin: tok-spin 5.5s linear infinite;
+}
+
 /* ------------------------------------------------------ desert and dinos */
 
 .deck-cactus {

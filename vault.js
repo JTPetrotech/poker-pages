@@ -7,7 +7,7 @@
  * you cash out.
  */
 
-import { DECK_IDS, CHIP_IDS, sparePrice } from './decks.js?v=mw1nlfjn';
+import { DECK_IDS, CHIP_IDS, sparePrice } from './decks.js?v=mw2lwh8d';
 
 const KEY = 'pn.profile.v1';
 
@@ -540,14 +540,20 @@ const MAX_CODED_HANDS = 32 ** 3 - 1;
  * catalogue outgrew the first width when the ultra rares were added. Codes
  * written at the old width keep reading at the old width.
  */
-const DECK_FIELD = { C: 4, D: 5, E: 5, F: 5, G: 7, H: 9, J: 11, K: 13, M: 16, N: 18, P: 22 };
+const DECK_FIELD = {
+  C: 4, D: 5, E: 5, F: 5, G: 7, H: 9, J: 11, K: 13, M: 16, N: 18, P: 22, Q: 26,
+};
 // E onwards carry chip skins. Each letter is a width, and a new one is
 // minted whenever a catalogue outgrows the field it was written into.
-const CHIP_FIELD = { E: 2, F: 4, G: 4, H: 4, J: 6, K: 8, M: 10, N: 12, P: 16 };
+const CHIP_FIELD = { E: 2, F: 4, G: 4, H: 4, J: 6, K: 8, M: 10, N: 12, P: 16, Q: 20 };
 // J, not I: the alphabet below leaves out I, L, O and U so nothing can be
 // confused with 1 or 0, and a version letter has to be one of its own
 // characters or the code could not be read back.
-const DECK_VERSION = 'P';
+// P was filled exactly — 108 card skins in 110 bits — so Castle and Circus
+// needed a wider field. Q is 130 bits and 100, which is room for a couple
+// more packs before the next letter. Every older code still reads at its own
+// width: the letter at the front says which.
+const DECK_VERSION = 'Q';
 
 /**
  * How many skins the current code width can carry. A skin past this point

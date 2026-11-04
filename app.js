@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mw1nlfjn';
-import { TableHost, safePic, PIC_MAX } from './host.js?v=mw1nlfjn';
-import * as vault from './vault.js?v=mw1nlfjn';
-import * as friends from './friends.js?v=mw1nlfjn';
-import * as packs from './decks.js?v=mw1nlfjn';
-import * as cloud from './cloud.js?v=mw1nlfjn';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mw1nlfjn';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mw1nlfjn';
+import { HostNet, GuestNet } from './net.js?v=mw2lwh8d';
+import { TableHost, safePic, PIC_MAX } from './host.js?v=mw2lwh8d';
+import * as vault from './vault.js?v=mw2lwh8d';
+import * as friends from './friends.js?v=mw2lwh8d';
+import * as packs from './decks.js?v=mw2lwh8d';
+import * as cloud from './cloud.js?v=mw2lwh8d';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mw2lwh8d';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mw2lwh8d';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 82;
+const BUILD = 83;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 

@@ -1061,11 +1061,12 @@ test('a backup code is short and carries chips and hands', () => {
   for (let i = 0; i < 42; i++) vault.recordHand({ pot: 100 });
   const code = vault.backupCode();
   // It was twelve characters when it carried only chips. The two
-  // collections cost twenty-six between them, one bit per skin, which is
-  // what a code that restores everything costs. Scanning the QR is the way
-  // to move a profile; typing one this long is the fallback. The QR in Settings carries the
-  // same code, so typing it is the fallback rather than the usual way.
-  assert(code.length <= 64, `code should stay typable, got ${code.length}: ${code}`);
+  // collections cost forty-six between them at version Q, one bit per skin,
+  // which is what a code that restores every skin you own costs. The QR in
+  // Settings carries the same code, so typing it is the fallback rather than
+  // the usual way — but it has to stay typable, so this is the ceiling that
+  // says when a growing catalogue has become somebody's afternoon.
+  assert(code.length <= 80, `code should stay typable, got ${code.length}: ${code}`);
   assert(/^[0-9A-Z-]+$/.test(code), 'uppercase and dashes only');
 
   freshVault();
@@ -2351,7 +2352,7 @@ test('the two new packs are six each, one ultra apiece', () => {
 });
 
 test('the newest packs are six each, one ultra apiece', () => {
-  for (const id of ['wild', 'pirate', 'garden', 'frost', 'desert', 'dino']) {
+  for (const id of ['garden', 'frost', 'desert', 'dino', 'castle', 'circus']) {
     const contents = packs.packContents(id);
     eq(contents.length, 6, `${id} has six`);
     eq(contents.filter((d) => d.rarity === 'ultra').length, 1, `${id} has one ultra`);
