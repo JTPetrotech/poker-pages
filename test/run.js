@@ -689,6 +689,36 @@ test('one-time codes survive being written out and read back', () => {
   eq(vault.codeSpent('amil1m'), true, 'storage remembers it');
 });
 
+test('the trap code takes the lot and says what it took', () => {
+  freshVault();
+  vault.deposit(772_000);
+  eq(vault.balance(), 782_000);
+  eq(vault.burnAll(), 782_000, 'it reports what it took');
+  eq(vault.balance(), 0, 'and leaves nothing behind');
+  eq(vault.burnAll(), 0, 'a second go finds an empty vault');
+});
+
+test('the trap code takes the chips and nothing else', () => {
+  freshVault();
+  vault.grantDeck('nebula');
+  vault.addDeck('nebula');             // a second copy, so there is a spare
+  vault.grantChip('topaz');
+  vault.burnAll();
+  eq(vault.balance(), 0);
+  eq(vault.ownsDeck('nebula'), true, 'the collection survives it');
+  eq(vault.ownsChip('topaz'), true);
+  eq(vault.spareCount('deck', 'nebula'), 1, 'and so do the spares');
+});
+
+test('the trap code cannot reach chips that are out on a table', () => {
+  freshVault();
+  vault.withdraw(4000);
+  vault.setAtTable('ABCD', 4000);
+  eq(vault.burnAll(), 6000, 'only what was sitting in the vault');
+  eq(vault.recoverStranded(), 4000, 'the stack in play comes home as usual');
+  eq(vault.balance(), 4000);
+});
+
 test('a new vault starts with the house stake', () => {
   freshVault();
   eq(vault.balance(), 10000);

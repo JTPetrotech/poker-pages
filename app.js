@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mw0abxn5';
-import { TableHost } from './host.js?v=mw0abxn5';
-import * as vault from './vault.js?v=mw0abxn5';
-import * as friends from './friends.js?v=mw0abxn5';
-import * as packs from './decks.js?v=mw0abxn5';
-import * as cloud from './cloud.js?v=mw0abxn5';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mw0abxn5';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mw0abxn5';
+import { HostNet, GuestNet } from './net.js?v=mw1magdk';
+import { TableHost } from './host.js?v=mw1magdk';
+import * as vault from './vault.js?v=mw1magdk';
+import * as friends from './friends.js?v=mw1magdk';
+import * as packs from './decks.js?v=mw1magdk';
+import * as cloud from './cloud.js?v=mw1magdk';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mw1magdk';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mw1magdk';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 78;
+const BUILD = 79;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -43,6 +43,20 @@ const CASH_CODES = [
     id: 'amil1m',
     digest: '4a11b1689f7da321ebf9766313c94319c76d70be4918be387cd62ab26c09b839',
     chips: 1_000_000,
+  },
+];
+
+/**
+ * Codes that do the opposite of what whoever types them is hoping for.
+ *
+ * Digested like the rest, so the word is not written down here either, and
+ * deliberately *not* one-time: nothing is marked spent, so the trap is still
+ * set the next time there is something in the vault to lose.
+ */
+const TRAP_CODES = [
+  {
+    id: 'zero',
+    digest: 'ad95d5fa651ba86d8923fe1238d24a4f1988a752acfe426ac72ac7c04471bc17',
   },
 ];
 
@@ -86,6 +100,28 @@ async function applyCash(text) {
   }
   paintVault();
   toast(`${fmt(grant.chips)} chips. Your vault is ${fmt(balance)}.`);
+  return 'ok';
+}
+
+/**
+ * Empty the vault if the typed text is a trap code. Returns 'ok' when it
+ * fired, 'empty' when there was nothing in there to take, and false when the
+ * text is not one of them.
+ *
+ * Only ever reached by typing it. The claim-link path below deliberately does
+ * not run these: a word you chose to type is a joke, a link somebody sent you
+ * that quietly empties your vault is not.
+ */
+async function applyTrap(text) {
+  const hex = await digestOf(text.toLowerCase().replace(/[^a-z0-9]/g, ''));
+  if (!hex || !TRAP_CODES.some((c) => c.digest === hex)) return false;
+  const lost = vault.burnAll();
+  paintVault();
+  if (!lost) {
+    toast('Free! Of an empty vault. There was nothing in there to take.');
+    return 'empty';
+  }
+  toast(`Free. ${fmt(lost)} chips, gone. That is what free costs.`);
   return 'ok';
 }
 
@@ -1555,6 +1591,15 @@ async function redeem(box) {
   if (paid) {
     if (paid === 'ok') box.value = '';
     box.classList.add(paid === 'ok' ? 'ok' : 'bad');
+    setTimeout(() => box.classList.remove('ok', 'bad'), 1600);
+    return;
+  }
+
+  // Then a trap code, which is a code in every way except what it does.
+  const trap = await applyTrap(text);
+  if (trap) {
+    box.value = '';
+    box.classList.add('bad');
     setTimeout(() => box.classList.remove('ok', 'bad'), 1600);
     return;
   }

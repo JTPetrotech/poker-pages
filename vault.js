@@ -7,7 +7,7 @@
  * you cash out.
  */
 
-import { DECK_IDS, CHIP_IDS, sparePrice } from './decks.js?v=mw0abxn5';
+import { DECK_IDS, CHIP_IDS, sparePrice } from './decks.js?v=mw1magdk';
 
 const KEY = 'pn.profile.v1';
 
@@ -192,6 +192,25 @@ export function deposit(amount) {
   p.vault = Math.min(MAX_VAULT, p.vault + add);
   write(p);
   return p.vault;
+}
+
+/**
+ * Take every chip out of the vault and keep none of them. Returns how many
+ * there were to take.
+ *
+ * There is no undo. The only way back is a backup code written down before
+ * it happened, or chips earned again from scratch. The collections are left
+ * alone: this takes the money, not the skins.
+ *
+ * Chips sitting on a table are not in the vault and so are not here to take.
+ * They come home when the hand ends, however empty they find the place.
+ */
+export function burnAll() {
+  const p = read();
+  const lost = p.vault;
+  p.vault = 0;
+  write(p);
+  return lost;
 }
 
 // ------------------------------------------------------------ card backs
