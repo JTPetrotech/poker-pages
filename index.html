@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mw1mhbzu" />
+<link rel="stylesheet" href="style.css?v=mw1mmek0" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
@@ -84,7 +84,7 @@
     <button id="lobbyDecks" class="corner-pill" title="Shop">Shop</button>
     <button id="lobbyOwned" class="corner-pill" title="Collection">Collection</button>
     <button id="lobbyIdeas" class="corner-pill big-ideas" title="Suggestions">
-      &#128161; Ideas</button>
+      &#128161; Suggestions</button>
   </div>
   <button id="lobbyGear" class="corner-gear" aria-label="Appearance" title="Appearance">&#9881;</button>
   <div class="lobby-card">
@@ -248,7 +248,7 @@
     <button id="friendsBtn" class="ghost">Friends</button>
     <button id="decksBtn" class="ghost">Shop</button>
     <button id="ownedBtn" class="ghost">Collection</button>
-    <button id="ideasBtn" class="ghost big-ideas">&#128161; Ideas</button>
+    <button id="ideasBtn" class="ghost big-ideas">&#128161; Suggestions</button>
     <button id="settingsBtn" class="ghost gear" aria-label="Appearance">&#9881;</button>
   </header>
 
@@ -345,8 +345,8 @@
     <button id="ideaClose" class="modal-x" aria-label="Close">&times;</button>
     <h2 id="ideaTitle">Suggestions</h2>
     <p class="modal-sub">
-      Anything you want in the game. It goes to whoever is hosting the table,
-      and waits here until you are on one. Copy the lot to hand to Claude.
+      Anything you want in the game. It goes to whoever is hosting the table
+      and lands in their chat, and waits here until you are on one.
     </p>
 
     <textarea id="ideaText" class="idea-box" rows="4" maxlength="400"
@@ -355,12 +355,12 @@
     <p id="ideaMsg" class="backup-msg" hidden></p>
 
     <p id="ideaEmpty" class="pack-blurb" hidden>
-      Nothing yet. Type an idea above and it is kept here.
+      Nothing yet. Type a suggestion above and it is kept here.
     </p>
     <div id="ideaList" class="idea-list"></div>
 
     <div class="idea-foot">
-      <button id="ideaCopy" class="ghost small idea-copy" type="button">Copy all for Claude</button>
+      <button id="ideaCopy" class="ghost small idea-copy" type="button">Copy all</button>
       <button id="ideaClear" class="linkish idea-clear" type="button">
         Clear what was sent to you
       </button>
@@ -753,6 +753,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mw1mhbzu"></script>
+<script type="module" src="app.js?v=mw1mmek0"></script>
 </body>
 </html>

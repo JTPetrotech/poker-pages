@@ -663,6 +663,18 @@ input { font: inherit; }
 .chat-line .who { color: var(--accent); font-weight: 650; }
 .chat-line.system { color: var(--muted); font-style: italic; }
 
+/* What a suggestion is called where it lands, so it is not table talk. */
+.chat-line .chat-tag {
+  display: inline-block;
+  margin-right: 5px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(46, 160, 100, 0.18);
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .chat-form { display: flex; gap: 6px; padding: 10px; border-top: 1px solid var(--line); }
 .chat-form input {
   flex: 1;
@@ -3717,7 +3729,7 @@ kbd {
 }
 .idea-foot .idea-clear { margin: 0; }
 /* Fixed, so saying "Copied" on it does not shuffle the row about. */
-.idea-copy { min-width: 172px; }
+.idea-copy { min-width: 150px; }
 
 /* Only shown where the clipboard is not allowed, to be copied by hand. */
 .idea-out {

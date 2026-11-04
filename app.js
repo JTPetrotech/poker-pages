@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mw1mhbzu';
-import { TableHost } from './host.js?v=mw1mhbzu';
-import * as vault from './vault.js?v=mw1mhbzu';
-import * as friends from './friends.js?v=mw1mhbzu';
-import * as packs from './decks.js?v=mw1mhbzu';
-import * as cloud from './cloud.js?v=mw1mhbzu';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mw1mhbzu';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mw1mhbzu';
+import { HostNet, GuestNet } from './net.js?v=mw1mmek0';
+import { TableHost } from './host.js?v=mw1mmek0';
+import * as vault from './vault.js?v=mw1mmek0';
+import * as friends from './friends.js?v=mw1mmek0';
+import * as packs from './decks.js?v=mw1mmek0';
+import * as cloud from './cloud.js?v=mw1mmek0';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mw1mmek0';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mw1mmek0';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 80;
+const BUILD = 81;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -542,11 +542,21 @@ function writeList(key, list) {
   } catch { /* private mode: it just won't stick */ }
 }
 
-/** A suggestion that reached this device, because this device is hosting. */
+/**
+ * A suggestion that reached this device, because this device is hosting.
+ *
+ * It is said in full in the chat rather than announced there — being told
+ * somebody suggested something, and having to go and open a box to find out
+ * what, is two steps where one will do. It is kept in the box as well, since
+ * chat scrolls away and a suggestion is worth keeping.
+ *
+ * Only this screen shows it. Nothing is broadcast: it was sent to the host,
+ * not to the table.
+ */
 function noteIdea(entry) {
   writeList(INBOX_KEY, [...readList(INBOX_KEY), entry]);
   if (!$('ideaModal').hidden) paintIdeas();
-  toast(`${entry.from} sent you an idea.`);
+  addChat(entry.from, entry.text, false, 'suggestion');
 }
 
 /** Hand the host everything that has not got there yet. */
@@ -643,11 +653,11 @@ function ideasAsText() {
 }
 
 /**
- * Put the whole box on the clipboard, ready to paste into a chat with Claude.
+ * Put the whole box on the clipboard, to paste wherever it is wanted.
  *
- * Nothing here can reach anyone on its own — a static site has no server to
+ * Nothing here can post itself anywhere — a static site has no server to
  * send from, and a key that could send would be a key everybody has. So the
- * road is one button and a paste, which is short enough.
+ * road out is one button and a paste, which is short enough.
  */
 async function copyIdeas() {
   const count = readList(INBOX_KEY).length + readIdeas().length;
@@ -723,7 +733,7 @@ function sendIdea() {
   const box = $('ideaText');
   const text = box.value.trim().slice(0, IDEA_MAX);
   if (!text) {
-    ideaMsg('Type an idea first.', false);
+    ideaMsg('Type a suggestion first.', false);
     return;
   }
   const idea = { id: `i${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`,
@@ -3740,7 +3750,13 @@ function cardEl(card, hidden, highlight, deck) {
   return el;
 }
 
-function addChat(from, text, system) {
+/**
+ * Add a line to the chat on this screen. Nothing here sends anything.
+ *
+ * `tag` puts a word in front of the name — "suggestion" — for a line that
+ * arrived some other way than somebody talking at the table.
+ */
+function addChat(from, text, system, tag) {
   if (!system && $('panel').classList.contains('hidden')) {
     app.unread = true;
     show($('chatDot'), true);
@@ -3752,6 +3768,14 @@ function addChat(from, text, system) {
   if (system) {
     d.textContent = text;
   } else {
+    // Both the name and the text can have come off the network, so neither
+    // is ever written as HTML.
+    if (tag) {
+      const label = document.createElement('span');
+      label.className = 'chat-tag';
+      label.textContent = tag;
+      d.append(label);
+    }
     const who = document.createElement('span');
     who.className = 'who';
     who.textContent = `${from}: `;
