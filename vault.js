@@ -7,7 +7,7 @@
  * you cash out.
  */
 
-import { DECK_IDS, CHIP_IDS, sparePrice } from './decks.js?v=mw2lwh8d';
+import { DECK_IDS, CHIP_IDS, sparePrice } from './decks.js?v=mw2lzmp0';
 
 const KEY = 'pn.profile.v1';
 
@@ -371,6 +371,24 @@ export function giveSpare(kind, id) {
  * Returns null when there was nothing to sell, so the caller can say so
  * rather than claiming a sale of nothing.
  */
+/**
+ * Give up the copy in your collection, not a spare.
+ *
+ * This is the one way a skin leaves a collection, and it exists so that a
+ * skin can be given to somebody who has not got one when you have no double
+ * to spare. Returns false where there is nothing to give: a skin you never
+ * had, or one of the free ones, which are not in either list and so are
+ * always yours whatever happens here.
+ */
+export function dropSkin(kind, id) {
+  const listKey = kind === 'chip' ? 'chipSkins' : 'decks';
+  const p = read();
+  if (!p[listKey].includes(id)) return false;
+  p[listKey] = p[listKey].filter((x) => x !== id);
+  write(p);
+  return true;
+}
+
 export function sellAllSpares() {
   const p = read();
   let sold = 0;

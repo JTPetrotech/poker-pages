@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mw2lwh8d';
-import { TableHost, safePic, PIC_MAX } from './host.js?v=mw2lwh8d';
-import * as vault from './vault.js?v=mw2lwh8d';
-import * as friends from './friends.js?v=mw2lwh8d';
-import * as packs from './decks.js?v=mw2lwh8d';
-import * as cloud from './cloud.js?v=mw2lwh8d';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mw2lwh8d';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mw2lwh8d';
+import { HostNet, GuestNet } from './net.js?v=mw2lzmp0';
+import { TableHost, safePic, PIC_MAX } from './host.js?v=mw2lzmp0';
+import * as vault from './vault.js?v=mw2lzmp0';
+import * as friends from './friends.js?v=mw2lzmp0';
+import * as packs from './decks.js?v=mw2lzmp0';
+import * as cloud from './cloud.js?v=mw2lzmp0';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mw2lzmp0';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mw2lzmp0';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 83;
+const BUILD = 84;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -1401,16 +1401,31 @@ function rowBtn(row, label, onClick, cls = 'sell-btn') {
   return b;
 }
 
+/** A line of plain words in the sell row, where a button would be. */
+function rowNote(row, text, cls = 'gift-note') {
+  const el = document.createElement('span');
+  el.className = cls;
+  el.textContent = text;
+  row.appendChild(el);
+  return el;
+}
+
 /**
  * The sell and gift buttons under a picked skin.
  *
- * Only spares are ever on offer, to sell or to give. The copy in your
- * collection is not, so nothing you tap in here can cost you a skin you are
- * down to one of.
+ * Selling is for spares only — nothing you tap can cost you chips you did
+ * not mean to take. Giving is not: a spare goes first where there is one,
+ * and where there is not you can hand over the copy you own, which is the
+ * whole point of giving a skin to somebody who has not got it. That one
+ * asks first, because it does not come back.
  */
 function sellRow(host) {
   const spare = vault.spareCount(ownedPick.kind, ownedPick.id);
-  if (!spare) return;
+  const owned = ownedPick.kind === 'chip'
+    ? vault.ownsChip(ownedPick.id)
+    : vault.ownsDeck(ownedPick.id);
+  // The free ones are in neither list and cannot be given away at all.
+  if (!spare && !owned) return;
 
   const row = document.createElement('span');
   row.className = 'sell-row';
@@ -1433,6 +1448,21 @@ function sellRow(host) {
     return;
   }
 
+  if (ownedPick.leaving) {
+    // The last one. Say so plainly, before it goes.
+    rowNote(row, 'Give away the only one you have?', 'gift-warn');
+    rowBtn(row, 'Yes, give it', () => {
+      ownedPick = { ...ownedPick, leaving: false, giving: true };
+      paintOwned();
+    }, 'sell-btn gift-btn');
+    rowBtn(row, 'Keep it', () => {
+      ownedPick = { ...ownedPick, leaving: false };
+      paintOwned();
+    });
+    host.appendChild(row);
+    return;
+  }
+
   const sell = (howMany, label) => rowBtn(row, label, () => {
     const done = vault.sellSpares(ownedPick.kind, ownedPick.id, howMany);
     if (!done) return;
@@ -1441,14 +1471,22 @@ function sellRow(host) {
     paintOwned();
   });
 
-  const each = packs.sparePrice(ownedPick.kind, ownedPick.id);
-  sell(1, `Sell one — ${fmt(each)}`);
-  if (spare > 1) sell(spare, `Sell all ${spare} — ${fmt(spare * each)}`);
+  if (spare) {
+    const each = packs.sparePrice(ownedPick.kind, ownedPick.id);
+    sell(1, `Sell one — ${fmt(each)}`);
+    if (spare > 1) sell(spare, `Sell all ${spare} — ${fmt(spare * each)}`);
+  }
+
   if (giftTargets().length) {
-    rowBtn(row, 'Gift one', () => {
-      ownedPick = { ...ownedPick, sold: null, justWorn: false, giving: true };
+    rowBtn(row, spare ? 'Gift one' : 'Give it away', () => {
+      ownedPick = { ...ownedPick, sold: null, justWorn: false,
+        giving: !!spare, leaving: !spare };
       paintOwned();
     }, 'sell-btn gift-btn');
+  } else {
+    rowNote(row, app.code
+      ? 'Skins go to whoever else is sitting down. Nobody is yet.'
+      : 'You can give this to somebody at a table.');
   }
   host.appendChild(row);
 }
@@ -2531,13 +2569,19 @@ function onMessage(msg) {
       paintOwned();
       break;
     }
-    // Ours arrived, so now the spare leaves. Doing it in this order means a
-    // gift the table turned down costs nothing.
+    // Ours arrived, so now ours leaves. Doing it in this order means a gift
+    // the table turned down costs nothing. The spare goes first where there
+    // is one; where there is not, it is the copy in the collection, which is
+    // what "give it away" means.
     case 'giftsent': {
-      const gone = vault.giveSpare(msg.kind, msg.id);
+      const gone = vault.giveSpare(msg.kind, msg.id) || vault.dropSkin(msg.kind, msg.id);
       toast(gone
         ? `${msg.name} sent to ${msg.to}.`
-        : `${msg.to} has it — you had no spare left to send.`);
+        : `${msg.to} has it — you had none left to send.`);
+      // If it was the one being worn, it is not any more. Both of these
+      // check what is owned on the way out and fall back to the free one.
+      if (msg.kind === 'chip') wearChip(myChip());
+      else wearDeck(myDeck());
       paintOwned();
       break;
     }

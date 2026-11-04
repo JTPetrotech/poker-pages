@@ -3246,6 +3246,12 @@ kbd {
 .admin-all { margin: 0 0 10px; }
 
 /* Giving a spare away rather than selling it. */
+/* Said where the gift buttons would be. Gifting used to show only when you
+   had a spare and were sat with somebody, which is two things that rarely
+   happen at once — so it looked like the game could not do it at all. */
+.gift-note { font-size: 11px; color: var(--muted); align-self: center; }
+.gift-warn { font-size: 11px; font-weight: 700; color: #b0472f; align-self: center; }
+
 .sell-btn.gift-btn { border-color: var(--accent); color: var(--accent); }
 .sell-btn.gift-btn:hover { background: var(--accent); color: #fff; }
 

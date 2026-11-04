@@ -719,6 +719,39 @@ test('the trap code cannot reach chips that are out on a table', () => {
   eq(vault.balance(), 4000);
 });
 
+test('a skin can be given away, spare or not, but a free one never', () => {
+  freshVault();
+  vault.grantDeck('nebula');
+  vault.addDeck('nebula');                 // and a spare of it
+  eq(vault.spareCount('deck', 'nebula'), 1);
+
+  // The spare is what goes first, and the collection keeps its copy.
+  assert(vault.giveSpare('deck', 'nebula'), 'the spare goes');
+  eq(vault.spareCount('deck', 'nebula'), 0);
+  assert(vault.ownsDeck('nebula'), 'and the one you wear is still yours');
+
+  // With no spare left, giving it away is giving up the one you have.
+  eq(vault.giveSpare('deck', 'nebula'), false, 'there is no second spare');
+  assert(vault.dropSkin('deck', 'nebula'), 'so the owned copy goes instead');
+  eq(vault.ownsDeck('nebula'), false, 'and is gone');
+  eq(vault.dropSkin('deck', 'nebula'), false, 'twice over is nothing');
+
+  // Classic and Pink are in neither list, so there is nothing to give.
+  eq(vault.dropSkin('deck', 'classic'), false, 'the free card back stays');
+  eq(vault.dropSkin('chip', 'pink'), false, 'and the free chip');
+  eq(vault.dropSkin('deck', 'notaskin'), false, 'and nothing made up');
+});
+
+test('giving a chip skin away leaves the card skins alone', () => {
+  freshVault();
+  vault.grantChip('topaz');
+  vault.grantDeck('comet');
+  assert(vault.dropSkin('chip', 'topaz'));
+  eq(vault.ownsChip('topaz'), false);
+  eq(vault.ownsDeck('comet'), true, 'the other collection is untouched');
+  eq(vault.decks().length, 1);
+});
+
 test('a new vault starts with the house stake', () => {
   freshVault();
   eq(vault.balance(), 10000);
