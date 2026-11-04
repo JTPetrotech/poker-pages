@@ -3707,6 +3707,26 @@ kbd {
 
 .idea-clear { margin: 12px 0 0; font-size: 12px; }
 
+.idea-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin: 14px 0 0;
+}
+.idea-foot .idea-clear { margin: 0; }
+/* Fixed, so saying "Copied" on it does not shuffle the row about. */
+.idea-copy { min-width: 172px; }
+
+/* Only shown where the clipboard is not allowed, to be copied by hand. */
+.idea-out {
+  margin: 10px 0 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 /* ------------------------------------------------------ desert and dinos */
 
 .deck-cactus {

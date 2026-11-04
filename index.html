@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mw1magdk" />
+<link rel="stylesheet" href="style.css?v=mw1mhbzu" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
@@ -346,7 +346,7 @@
     <h2 id="ideaTitle">Suggestions</h2>
     <p class="modal-sub">
       Anything you want in the game. It goes to whoever is hosting the table,
-      and waits here until you are on one.
+      and waits here until you are on one. Copy the lot to hand to Claude.
     </p>
 
     <textarea id="ideaText" class="idea-box" rows="4" maxlength="400"
@@ -358,9 +358,14 @@
       Nothing yet. Type an idea above and it is kept here.
     </p>
     <div id="ideaList" class="idea-list"></div>
-    <button id="ideaClear" class="linkish idea-clear" type="button">
-      Clear what was sent to you
-    </button>
+
+    <div class="idea-foot">
+      <button id="ideaCopy" class="ghost small idea-copy" type="button">Copy all for Claude</button>
+      <button id="ideaClear" class="linkish idea-clear" type="button">
+        Clear what was sent to you
+      </button>
+    </div>
+    <textarea id="ideaOut" class="idea-box idea-out" rows="7" readonly hidden></textarea>
   </div>
 </div>
 
@@ -748,6 +753,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mw1magdk"></script>
+<script type="module" src="app.js?v=mw1mhbzu"></script>
 </body>
 </html>

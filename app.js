@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mw1magdk';
-import { TableHost } from './host.js?v=mw1magdk';
-import * as vault from './vault.js?v=mw1magdk';
-import * as friends from './friends.js?v=mw1magdk';
-import * as packs from './decks.js?v=mw1magdk';
-import * as cloud from './cloud.js?v=mw1magdk';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mw1magdk';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mw1magdk';
+import { HostNet, GuestNet } from './net.js?v=mw1mhbzu';
+import { TableHost } from './host.js?v=mw1mhbzu';
+import * as vault from './vault.js?v=mw1mhbzu';
+import * as friends from './friends.js?v=mw1mhbzu';
+import * as packs from './decks.js?v=mw1mhbzu';
+import * as cloud from './cloud.js?v=mw1mhbzu';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mw1mhbzu';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mw1mhbzu';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 79;
+const BUILD = 80;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -624,6 +624,88 @@ function paintIdeas() {
   show($('ideaEmpty'), empty);
 }
 
+/**
+ * Everything in the box as plain text, both what was sent to you and what you
+ * wrote yourself, newest last so it reads in the order it happened.
+ */
+function ideasAsText() {
+  const inbox = readList(INBOX_KEY);
+  const mine = readIdeas();
+  const lines = [`Side Pot suggestions \u2014 update ${BUILD}`];
+  const block = (title, rows, tag) => {
+    if (!rows.length) return;
+    lines.push('', title);
+    for (const e of rows) lines.push(`- ${tag(e)} ${e.text}`);
+  };
+  block('Sent to me at the table:', inbox, (e) => `[${e.from || 'someone'}, ${when(e.at)}]`);
+  block('Mine:', mine, (e) => `[${when(e.at)}]`);
+  return lines.join('\n');
+}
+
+/**
+ * Put the whole box on the clipboard, ready to paste into a chat with Claude.
+ *
+ * Nothing here can reach anyone on its own — a static site has no server to
+ * send from, and a key that could send would be a key everybody has. So the
+ * road is one button and a paste, which is short enough.
+ */
+async function copyIdeas() {
+  const count = readList(INBOX_KEY).length + readIdeas().length;
+  const btn = $('ideaCopy');
+  if (!count) {
+    saysBriefly(btn, 'Nothing to copy yet');
+    return;
+  }
+  const out = $('ideaOut');
+  out.value = ideasAsText();
+  if (await copyBox(out)) {
+    show(out, false);
+    saysBriefly(btn, count === 1 ? 'Copied it' : `Copied all ${count}`);
+  } else {
+    // Neither way was allowed: leave it on screen to be copied by hand.
+    show(out, true);
+    out.focus();
+    out.select();
+    saysBriefly(btn, 'Copy it from below');
+  }
+}
+
+/**
+ * Answer on the button itself rather than in the message line at the top of
+ * the card, which is a long way from the thumb that just pressed it.
+ */
+function saysBriefly(btn, text) {
+  if (btn.dataset.said) return;          // already saying something
+  btn.dataset.said = btn.textContent;
+  btn.textContent = text;
+  setTimeout(() => {
+    btn.textContent = btn.dataset.said;
+    delete btn.dataset.said;
+  }, 1900);
+}
+
+/**
+ * Copy a box's text, by whichever of the two ways this browser allows.
+ *
+ * The modern one is refused where the page does not hold focus; the old one
+ * needs the text on screen and selected first, so the box is shown for the
+ * attempt and hidden again by the caller if it worked.
+ */
+async function copyBox(box) {
+  try {
+    await navigator.clipboard.writeText(box.value);
+    return true;
+  } catch { /* fall through to the older way */ }
+  try {
+    show(box, true);
+    box.focus();
+    box.select();
+    return document.execCommand('copy');
+  } catch {
+    return false;
+  }
+}
+
 function ideaMsg(text, good) {
   const el = $('ideaMsg');
   el.textContent = text || '';
@@ -662,6 +744,7 @@ function sendIdea() {
 function openIdeas() {
   ideaMsg('', true);
   $('ideaText').value = '';
+  show($('ideaOut'), false);
   paintIdeas();
   show($('ideaModal'), true);
   $('ideaText').focus();
@@ -671,6 +754,7 @@ function initIdeas() {
   $('lobbyIdeas').addEventListener('click', openIdeas);
   $('ideasBtn').addEventListener('click', openIdeas);
   $('ideaSend').addEventListener('click', sendIdea);
+  $('ideaCopy').addEventListener('click', copyIdeas);
   $('ideaClear').addEventListener('click', () => {
     writeList(INBOX_KEY, []);
     paintIdeas();
