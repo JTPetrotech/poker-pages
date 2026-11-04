@@ -1,6 +1,6 @@
-import { Table } from './engine/game.js?v=mw1mmek0';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mw1mmek0';
-import { safeDeck, safeChip, deckById, chipById, DECKS, CHIP_SKINS } from './decks.js?v=mw1mmek0';
+import { Table } from './engine/game.js?v=mw1nlfjn';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mw1nlfjn';
+import { safeDeck, safeChip, deckById, chipById, DECKS, CHIP_SKINS } from './decks.js?v=mw1nlfjn';
 
 export const ACTION_TIMEOUT_MS = 45_000;
 const HANDOVER_DELAY_MS = 6_000;
@@ -10,6 +10,28 @@ function clampInt(value, min, max, fallback) {
   const n = Math.floor(Number(value));
   if (!Number.isFinite(n)) return fallback;
   return Math.min(max, Math.max(min, n));
+}
+
+/**
+ * How long a picture may be as the data URL that carries it: about 90KB of
+ * image once the base64 is undone.
+ *
+ * It goes over the same data channel as the cards, and it is only ever shown
+ * at thumbnail size or turned into a 132x186 card back, so there is nothing
+ * to be had from more.
+ */
+export const PIC_MAX = 120_000;
+
+// Only the formats a browser decodes as a plain bitmap. SVG is deliberately
+// not among them: it is a document rather than a picture, and this one is
+// about to be put on somebody else's screen.
+const PIC_SHAPE = /^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/;
+
+/** A picture that is safe to show, or null. Anything else is not a picture. */
+export function safePic(value) {
+  const pic = typeof value === 'string' ? value : '';
+  if (!pic || pic.length > PIC_MAX) return null;
+  return PIC_SHAPE.test(pic) ? pic : null;
 }
 
 function cleanName(raw) {
@@ -261,12 +283,15 @@ export class TableHost {
       // for whoever can act on it, and it is not a thing to be shouted.
       case 'idea': {
         const text = String(msg.text || '').trim().slice(0, 400);
-        if (!text) return;
+        // A picture on its own is a suggestion too: "make this a skin" does
+        // not need any words to go with it.
+        const pic = safePic(msg.pic);
+        if (!text && !pic) return;
         // Seated, they are whoever is in that seat; standing in the lobby,
         // they are whatever name they gave, since there is no seat to ask.
         const p = table.playerById(token);
         const from = p ? p.name : cleanName(msg.name || 'spectator');
-        this.onIdea?.({ from, text, at: Date.now() });
+        this.onIdea?.({ from, text, pic, at: Date.now() });
         this.deliver(token, { t: 'ideaok', id: String(msg.id || '').slice(0, 40) });
         return;
       }

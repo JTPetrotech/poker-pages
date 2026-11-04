@@ -63,6 +63,33 @@ function importedPaths(src) {
 }
 
 let broken = false;
+
+/*
+ * Two things with the same name at the top of one module.
+ *
+ * The test suite never loads app.js — it is full of window and document — so
+ * a clash there passes every test and ships a blank page. That shipped once.
+ * `node --check` does not catch it in a module, because a duplicate name is
+ * found when a module is linked rather than when it is parsed, so this reads
+ * the declarations itself. Anything hard against the left margin is top
+ * level, which is the only place a clash can hide for long.
+ */
+const DECL = /^(?:export\s+)?(?:async\s+)?(?:function\*?|const|let|class)\s+([A-Za-z_$][\w$]*)/;
+for (const rel of FILES) {
+  const file = path.join(root, rel);
+  if (!fs.existsSync(file)) continue;
+  const seen = new Map();
+  fs.readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+    const name = DECL.exec(line)?.[1];
+    if (!name) return;
+    if (seen.has(name)) {
+      console.error(`  NAME USED TWICE: ${rel} declares "${name}" on lines ${seen.get(name)} and ${i + 1}`);
+      broken = true;
+    }
+    seen.set(name, i + 1);
+  });
+}
+
 for (const [file, checks] of Object.entries(REQUIRED)) {
   const full = path.join(root, file);
   if (!fs.existsSync(full)) continue;
@@ -77,7 +104,7 @@ for (const [file, checks] of Object.entries(REQUIRED)) {
 }
 
 if (broken) {
-  console.error('Refusing to build with a missing import.');
+  console.error('Refusing to build.');
   process.exit(1);
 }
 

@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mw1mmek0" />
+<link rel="stylesheet" href="style.css?v=mw1nlfjn" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
@@ -345,12 +345,21 @@
     <button id="ideaClose" class="modal-x" aria-label="Close">&times;</button>
     <h2 id="ideaTitle">Suggestions</h2>
     <p class="modal-sub">
-      Anything you want in the game. It goes to whoever is hosting the table
-      and lands in their chat, and waits here until you are on one.
+      Anything you want in the game, and a picture with it if you want that
+      picture made into a skin. It goes to whoever is hosting the table and
+      lands in their chat, and waits here until you are on one.
     </p>
 
     <textarea id="ideaText" class="idea-box" rows="4" maxlength="400"
               placeholder="A pack of&hellip;"></textarea>
+
+    <div class="idea-tools">
+      <button id="ideaPicBtn" class="ghost small" type="button">Add a picture</button>
+      <button id="ideaPicDrop" class="linkish" type="button" hidden>Remove it</button>
+    </div>
+    <input type="file" id="ideaPic" accept="image/*" hidden />
+    <div id="ideaPicSlot" class="idea-pic-slot" hidden></div>
+
     <button id="ideaSend" class="primary small idea-send" type="button">Send it</button>
     <p id="ideaMsg" class="backup-msg" hidden></p>
 
@@ -753,6 +762,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mw1mmek0"></script>
+<script type="module" src="app.js?v=mw1nlfjn"></script>
 </body>
 </html>

@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mw1mmek0';
-import { TableHost } from './host.js?v=mw1mmek0';
-import * as vault from './vault.js?v=mw1mmek0';
-import * as friends from './friends.js?v=mw1mmek0';
-import * as packs from './decks.js?v=mw1mmek0';
-import * as cloud from './cloud.js?v=mw1mmek0';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mw1mmek0';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mw1mmek0';
+import { HostNet, GuestNet } from './net.js?v=mw1nlfjn';
+import { TableHost, safePic, PIC_MAX } from './host.js?v=mw1nlfjn';
+import * as vault from './vault.js?v=mw1nlfjn';
+import * as friends from './friends.js?v=mw1nlfjn';
+import * as packs from './decks.js?v=mw1nlfjn';
+import * as cloud from './cloud.js?v=mw1nlfjn';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mw1nlfjn';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mw1nlfjn';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 81;
+const BUILD = 82;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -456,26 +456,31 @@ function storedImage() {
  * simply be refused. Scaled to fit a large screen and re-encoded as JPEG, a
  * background lands comfortably inside the budget.
  */
-function shrinkImage(file, maxW = 1920, maxH = 1200) {
+function shrinkImage(file, maxW = 1920, maxH = 1200, budget = 2_600_000) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
       URL.revokeObjectURL(url);
-      const scale = Math.min(1, maxW / img.width, maxH / img.height);
-      const w = Math.max(1, Math.round(img.width * scale));
-      const h = Math.max(1, Math.round(img.height * scale));
       const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const fit = Math.min(1, maxW / img.width, maxH / img.height);
+      const render = (scale) => {
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      };
 
-      // Step the quality down until it fits, rather than failing outright.
-      for (const q of [0.82, 0.7, 0.58, 0.45]) {
-        const data = canvas.toDataURL('image/jpeg', q);
-        if (data.length < 2_600_000) return resolve(data);
+      // Step the quality down until it fits, and then the size, rather than
+      // failing outright. A table background has megabytes to play with; a
+      // picture that has to travel to the host has far less.
+      for (const step of [1, 0.72, 0.5, 0.34]) {
+        render(fit * step);
+        for (const q of [0.82, 0.7, 0.58, 0.45, 0.34]) {
+          const data = canvas.toDataURL('image/jpeg', q);
+          if (data.length <= budget) return resolve(data);
+        }
       }
-      resolve(canvas.toDataURL('image/jpeg', 0.35));
+      reject(new Error('That picture will not shrink small enough.'));
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
@@ -525,21 +530,60 @@ const IDEA_KEY = 'pn.ideas.v1';
 const INBOX_KEY = 'pn.inbox.v1';
 const IDEA_MAX = 400;
 const IDEA_KEEP = 60;
+/** How many of those keep their picture. The words are the cheap part. */
+const PIC_KEEP = 8;
+
+/** The picture waiting to go out with whatever is typed next, if any. */
+let pendingPic = null;
 
 function readList(key) {
   try {
     const raw = localStorage.getItem(key);
     const list = raw ? JSON.parse(raw) : [];
-    return Array.isArray(list) ? list.filter((e) => e && typeof e.text === 'string') : [];
+    if (!Array.isArray(list)) return [];
+    // A picture out of storage ends up in an <img> just as one off the
+    // network does, and storage is editable by hand, so it is checked the
+    // same way.
+    return list
+      .filter((e) => e && typeof e.text === 'string')
+      .map((e) => (e.pic ? { ...e, pic: safePic(e.pic) } : e));
   } catch {
     return [];   // unreadable storage reads as an empty list
   }
 }
 
-function writeList(key, list) {
+function storeList(key, list) {
   try {
-    localStorage.setItem(key, JSON.stringify(list.slice(-IDEA_KEEP)));
-  } catch { /* private mode: it just won't stick */ }
+    localStorage.setItem(key, JSON.stringify(list));
+    return true;
+  } catch {
+    return false;   // private mode, or no room left
+  }
+}
+
+/**
+ * Keep the last few dozen suggestions, and the pictures of only the newest
+ * few of those.
+ *
+ * Browser storage is a few megabytes in all and a picture is most of a
+ * hundred kilobytes, so they cannot all stay. Where even that does not fit,
+ * pictures are given up oldest first: losing a picture is a pity, losing the
+ * whole list because one picture would not fit is worse.
+ */
+function writeList(key, list) {
+  const kept = list.slice(-IDEA_KEEP);
+  let pics = 0;
+  const out = [];
+  for (let i = kept.length - 1; i >= 0; i--) {
+    const e = kept[i];
+    out.unshift(!e.pic || ++pics <= PIC_KEEP ? e : { ...e, pic: null });
+  }
+  if (storeList(key, out)) return;
+  for (let i = 0; i < out.length; i++) {
+    if (!out[i].pic) continue;
+    out[i] = { ...out[i], pic: null };
+    if (storeList(key, out)) return;
+  }
 }
 
 /**
@@ -556,7 +600,39 @@ function writeList(key, list) {
 function noteIdea(entry) {
   writeList(INBOX_KEY, [...readList(INBOX_KEY), entry]);
   if (!$('ideaModal').hidden) paintIdeas();
-  addChat(entry.from, entry.text, false, 'suggestion');
+  const line = addChat(entry.from, entry.text || 'a picture', false, 'suggestion');
+  if (entry.pic) {
+    const thumb = picThumb(entry.pic, entry.from);
+    thumb.firstChild.addEventListener('load', keepChatAtBottom);
+    line.append(thumb);
+  }
+}
+
+/**
+ * A picture in a list. Clicking one saves it, which is how a picture gets
+ * out of the browser and into whatever is going to make a skin of it.
+ */
+function picThumb(src, who) {
+  const kind = /^data:image\/(\w+)/.exec(src)?.[1] || 'jpeg';
+  const a = document.createElement('a');
+  a.className = 'idea-pic';
+  a.href = src;
+  a.download = `suggestion-${String(who || 'someone').replace(/[^\w-]/g, '') || 'someone'}`
+    + `.${kind === 'jpeg' ? 'jpg' : kind}`;
+  a.title = 'Click to save this picture';
+  const img = document.createElement('img');
+  img.src = src;
+  img.alt = 'Picture sent with this suggestion';
+  a.append(img);
+  return a;
+}
+
+/** A picture finishes loading after the line is placed; stay at the end. */
+function keepChatAtBottom() {
+  const list = $('chatList');
+  if (list.scrollHeight - list.scrollTop - list.clientHeight < 240) {
+    list.scrollTop = list.scrollHeight;
+  }
 }
 
 /** Hand the host everything that has not got there yet. */
@@ -565,7 +641,7 @@ function flushIdeas() {
   let any = false;
   for (const idea of mine) {
     if (idea.sent) continue;
-    send({ t: 'idea', id: idea.id, text: idea.text, name: app.name });
+    send({ t: 'idea', id: idea.id, text: idea.text, pic: idea.pic || null, name: app.name });
     any = true;
   }
   return any;
@@ -620,6 +696,7 @@ function paintIdeas() {
     body.className = 'idea-text';
     body.textContent = e.text;
     el.append(tag, at, body);
+    if (e.pic) el.append(picThumb(e.pic, e.from));
     return el;
   };
 
@@ -645,7 +722,7 @@ function ideasAsText() {
   const block = (title, rows, tag) => {
     if (!rows.length) return;
     lines.push('', title);
-    for (const e of rows) lines.push(`- ${tag(e)} ${e.text}`);
+    for (const e of rows) lines.push(`- ${tag(e)}${e.pic ? ' (picture)' : ''} ${e.text}`.trimEnd());
   };
   block('Sent to me at the table:', inbox, (e) => `[${e.from || 'someone'}, ${when(e.at)}]`);
   block('Mine:', mine, (e) => `[${when(e.at)}]`);
@@ -732,18 +809,20 @@ function ideaMsg(text, good) {
 function sendIdea() {
   const box = $('ideaText');
   const text = box.value.trim().slice(0, IDEA_MAX);
-  if (!text) {
-    ideaMsg('Type a suggestion first.', false);
+  const pic = pendingPic;
+  if (!text && !pic) {
+    ideaMsg('Type a suggestion first, or add a picture.', false);
     return;
   }
   const idea = { id: `i${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`,
-    text, at: Date.now(), sent: false };
+    text, pic, at: Date.now(), sent: false };
   writeList(IDEA_KEY, [...readIdeas(), idea]);
   box.value = '';
+  clearIdeaPic();
 
   const live = app.isHost || !!app.net;
   if (live) {
-    send({ t: 'idea', id: idea.id, text: idea.text, name: app.name });
+    send({ t: 'idea', id: idea.id, text: idea.text, pic: idea.pic || null, name: app.name });
     ideaMsg('Sent. Thank you.', true);
   } else {
     ideaMsg('Saved. It goes over as soon as you are at a table.', true);
@@ -751,9 +830,46 @@ function sendIdea() {
   paintIdeas();
 }
 
+/**
+ * Take a picture to send with a suggestion.
+ *
+ * It is shrunk hard before it goes anywhere: it travels over the same data
+ * channel as the cards, and a card back is 132 x 186, so 640 across is
+ * already more than anything will ever show.
+ */
+async function chooseIdeaPic(file) {
+  if (!file) return;
+  ideaMsg('Shrinking the picture\u2026', true);
+  try {
+    pendingPic = safePic(await shrinkImage(file, 640, 640, PIC_MAX));
+    if (!pendingPic) throw new Error('That file could not be read as a picture.');
+    ideaMsg('Picture ready. Say what you want made of it.', true);
+  } catch (err) {
+    pendingPic = null;
+    ideaMsg(err.message, false);
+  }
+  paintIdeaPic();
+}
+
+function paintIdeaPic() {
+  const slot = $('ideaPicSlot');
+  slot.innerHTML = '';
+  if (pendingPic) slot.append(picThumb(pendingPic, 'yours'));
+  show(slot, !!pendingPic);
+  show($('ideaPicDrop'), !!pendingPic);
+  $('ideaPicBtn').textContent = pendingPic ? 'Use a different picture' : 'Add a picture';
+}
+
+function clearIdeaPic() {
+  pendingPic = null;
+  $('ideaPic').value = '';   // so choosing the same file again still counts
+  paintIdeaPic();
+}
+
 function openIdeas() {
   ideaMsg('', true);
   $('ideaText').value = '';
+  clearIdeaPic();
   show($('ideaOut'), false);
   paintIdeas();
   show($('ideaModal'), true);
@@ -765,6 +881,9 @@ function initIdeas() {
   $('ideasBtn').addEventListener('click', openIdeas);
   $('ideaSend').addEventListener('click', sendIdea);
   $('ideaCopy').addEventListener('click', copyIdeas);
+  $('ideaPicBtn').addEventListener('click', () => $('ideaPic').click());
+  $('ideaPic').addEventListener('change', (e) => chooseIdeaPic(e.target.files[0]));
+  $('ideaPicDrop').addEventListener('click', clearIdeaPic);
   $('ideaClear').addEventListener('click', () => {
     writeList(INBOX_KEY, []);
     paintIdeas();
@@ -3784,6 +3903,7 @@ function addChat(from, text, system, tag) {
   list.appendChild(d);
   while (list.childElementCount > 200) list.firstElementChild.remove();
   if (atBottom) list.scrollTop = list.scrollHeight;
+  return d;      // so a caller can hang a picture off it
 }
 
 function toast(message) {

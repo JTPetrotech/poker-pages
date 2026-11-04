@@ -3719,6 +3719,29 @@ kbd {
 
 .idea-clear { margin: 12px 0 0; font-size: 12px; }
 
+.idea-tools { display: flex; align-items: center; gap: 14px; margin: 9px 0 0; }
+.idea-pic-slot { margin: 2px 0 0; }
+
+/* A picture in the box. Clicking one saves it, which is how it gets out of
+   the browser and into whatever is going to make a skin of it. */
+.idea-pic {
+  display: inline-block;
+  margin: 7px 0 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  line-height: 0;
+  background: var(--bg-1);
+}
+.idea-pic img { display: block; max-width: 152px; max-height: 114px; }
+.idea-pic:hover { border-color: var(--green); }
+/* In a chat line it goes under the words, not in the middle of them. */
+.chat-line .idea-pic { display: block; margin-top: 6px; }
+.chat-line .idea-pic img { max-width: 128px; max-height: 94px; }
+
+/* The row is a two-column grid; a picture spans both and sits beneath. */
+.idea-row .idea-pic { grid-column: 1 / -1; }
+
 .idea-foot {
   display: flex;
   align-items: center;

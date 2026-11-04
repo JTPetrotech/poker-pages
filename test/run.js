@@ -5,7 +5,7 @@ import { decide, equity, chen, BOT_STYLES } from '../bot.js';
 import * as vault from '../vault.js';
 import * as friends from '../friends.js';
 import * as packs from '../decks.js';
-import { TableHost } from '../host.js';
+import { TableHost, safePic, PIC_MAX } from '../host.js';
 
 let passed = 0;
 let failed = 0;
@@ -2096,6 +2096,56 @@ test('an empty suggestion is nothing and a long one is cut', () => {
   eq(inbox.length, 1);
   eq(inbox[0].text.length, 400, 'cut to 400');
   eq(inbox[0].from, 'spectator', 'someone who is not seated is still heard');
+});
+
+test('a picture sent with a suggestion has to be a picture', () => {
+  const png = `data:image/png;base64,${'A'.repeat(64)}`;
+  const jpg = `data:image/jpeg;base64,${'B'.repeat(40)}==`;
+  eq(safePic(png), png, 'a png is a picture');
+  eq(safePic(jpg), jpg, 'and so is a jpeg');
+  eq(safePic(`data:image/webp;base64,${'C'.repeat(20)}=`), `data:image/webp;base64,${'C'.repeat(20)}=`);
+
+  // It is about to be put on somebody else's screen, so everything that is
+  // not plainly a bitmap is refused.
+  eq(safePic('data:image/svg+xml;base64,PHN2Zz48L3N2Zz4='), null, 'svg is a document');
+  eq(safePic('data:text/html;base64,PGI+aGk8L2I+'), null, 'nor is html');
+  eq(safePic('https://example.com/cat.png'), null, 'nor a link somewhere else');
+  eq(safePic(`data:image/png;base64,${'A'.repeat(40)}<script>`), null, 'nor one with anything extra');
+  eq(safePic(`data:image/png;base64,${'A'.repeat(PIC_MAX)}`), null, 'nor one too big to carry');
+  eq(safePic(7), null, 'nor something that is not text at all');
+  eq(safePic(null), null);
+  eq(safePic(''), null);
+});
+
+test('a suggestion can be a picture with no words at all', () => {
+  const sent = [];
+  const inbox = [];
+  const host = new TableHost({
+    code: 'IDEA',
+    options: { startingStack: 1000 },
+    deliver: (token, msg) => sent.push({ token, msg }),
+    onIdea: (entry) => inbox.push(entry),
+  });
+  host.handle('a', { t: 'hello', name: 'Ann' });
+  host.handle('b', { t: 'hello', name: 'Bo' });
+  sent.length = 0;
+
+  const pic = `data:image/png;base64,${'A'.repeat(64)}`;
+  host.handle('b', { t: 'idea', id: 'p1', text: '', pic });
+  eq(inbox.length, 1, 'a picture on its own is a suggestion');
+  eq(inbox[0].pic, pic, 'and it arrives whole');
+  eq(inbox[0].text, '', 'with no words');
+  eq(sent.filter((m) => m.msg.t === 'ideaok').length, 1, 'and is acknowledged');
+  assert(!sent.some((m) => m.token === 'a'), 'and still goes to nobody else');
+
+  // A bad picture is dropped, but words that came with it are not.
+  host.handle('b', { t: 'idea', id: 'p2', text: 'make this a skin', pic: 'data:text/html,<b>' });
+  eq(inbox.length, 2, 'the words still land');
+  eq(inbox[1].pic, null, 'the picture does not');
+
+  // Nothing usable in either half is still nothing.
+  host.handle('b', { t: 'idea', id: 'p3', text: '  ', pic: 'nonsense' });
+  eq(inbox.length, 2, 'and an empty one is still empty');
 });
 
 test('a host with nowhere to file a suggestion still answers', () => {
