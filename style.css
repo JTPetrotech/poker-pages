@@ -3249,6 +3249,32 @@ kbd {
 /* Said where the gift buttons would be. Gifting used to show only when you
    had a spare and were sat with somebody, which is two things that rarely
    happen at once — so it looked like the game could not do it at all. */
+/* Picking what kind of table this is, before anything else about it. */
+.mode-pick { display: grid; gap: 8px; margin: 0 0 14px; }
+.mode-opt {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.mode-opt:hover { border-color: var(--green); }
+.mode-opt input { margin-top: 2px; flex: none; }
+.mode-opt span { font-size: 12px; color: var(--muted); line-height: 1.45; }
+.mode-opt strong { display: block; font-size: 13px; color: var(--text); }
+.mode-opt:has(input:checked) { border-color: var(--green); background: rgba(46, 160, 100, 0.06); }
+
+/* Level, blinds and the clock, in the header where the badges live. */
+.chip.tourney {
+  color: #8a4a12;
+  border-color: rgba(214, 142, 42, 0.5);
+  background: rgba(255, 210, 130, 0.18);
+  font-variant-numeric: tabular-nums;
+}
+.chip.tourney.done { color: #0d6b3f; border-color: rgba(46, 160, 100, 0.55); background: rgba(46, 160, 100, 0.12); }
+
 .gift-note { font-size: 11px; color: var(--muted); align-self: center; }
 .gift-warn { font-size: 11px; font-weight: 700; color: #b0472f; align-self: center; }
 

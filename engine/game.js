@@ -1,5 +1,5 @@
-import { makeDeck, shuffle } from './cards.js?v=mw2lzmp0';
-import { bestHand, compareScores } from './hand.js?v=mw2lzmp0';
+import { makeDeck, shuffle } from './cards.js?v=mwq16enq';
+import { bestHand, compareScores } from './hand.js?v=mwq16enq';
 
 export const STAGES = ['idle', 'preflop', 'flop', 'turn', 'river', 'showdown', 'handover'];
 
@@ -19,6 +19,10 @@ export class Table {
     // A cap stops anyone sitting down with an absurd stack from their vault.
     this.maxBuyIn = opts.maxBuyIn ?? this.startingStack * 10;
     this.maxSeats = opts.maxSeats ?? 9;
+    // Tournament bookkeeping, or null at a cash table. The table itself
+    // plays the same either way — this rides along in the snapshot so every
+    // screen can show the level and the clock, and the host owns it.
+    this.tourney = opts.tourney ?? null;
     this.hostId = opts.hostId || null;
     // Meanie: running out of time shoves your stack instead of folding it.
     this.meanie = opts.meanie !== false;
@@ -862,6 +866,7 @@ export class Table {
       startingStack: this.startingStack,
       maxBuyIn: this.maxBuyIn,
       meanie: this.meanie,
+      tourney: this.tourney,
       community: this.community,
       pot: this.displayPot(),
       potTotal: this.potTotal,

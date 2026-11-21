@@ -2197,6 +2197,214 @@ test('a host with nowhere to file a suggestion still answers', () => {
   assert(!sent.some((m) => m.msg.t === 'error'), 'and does not fall over');
 });
 
+// ------------------------------------------------------------- tournaments
+
+/** A three-handed tournament table, ready for people to sit down at. */
+function cupHost(sent, extra = {}) {
+  return new TableHost({
+    code: 'CUP',
+    options: {
+      mode: 'tournament',
+      startingStack: 500,
+      smallBlind: 5,
+      bigBlind: 10,
+      levelMinutes: 5,
+      ...extra,
+    },
+    deliver: (token, msg) => sent.push({ token, msg }),
+  });
+}
+
+test('a tournament gives everybody the same stack, whatever they ask for', () => {
+  const host = cupHost([]);
+  host.handle('a', { t: 'hello', name: 'Ann' });
+  host.handle('b', { t: 'hello', name: 'Bo' });
+  host.handle('a', { t: 'sit', seat: 0, name: 'Ann', buyIn: 999_999 });
+  host.handle('b', { t: 'sit', seat: 1, name: 'Bo', buyIn: 20 });
+  eq(host.table.seats[0].chips, 500, 'the big spender gets a tournament stack');
+  eq(host.table.seats[1].chips, 500, 'and so does the careful one');
+});
+
+test('a cash table is unchanged and has no tournament on it', () => {
+  const host = new TableHost({
+    code: 'CASH', options: { startingStack: 1000 }, deliver: () => {},
+  });
+  eq(host.table.tourney, null);
+  host.handle('a', { t: 'hello', name: 'Ann' });
+  host.handle('a', { t: 'sit', seat: 0, name: 'Ann', buyIn: 250 });
+  eq(host.table.seats[0].chips, 250, 'and you buy in for whatever you like');
+});
+
+test('tournament blinds climb between hands, never inside one', () => {
+  const host = cupHost([]);
+  const { table } = host;
+  host.handle('a', { t: 'hello', name: 'Ann' });
+  host.handle('b', { t: 'hello', name: 'Bo' });
+  host.handle('a', { t: 'sit', seat: 0, name: 'Ann' });
+  host.handle('b', { t: 'sit', seat: 1, name: 'Bo' });
+  table.startHand();
+
+  host.tick();
+  assert(table.tourney.started, 'the clock starts with the first hand, not the table');
+  eq(table.tourney.entries, 2, 'and counts who is actually playing');
+
+  // Time is up, but a hand is live: putting the blinds up now would change
+  // the price of a call somebody has already thought about.
+  table.tourney.endsAt = Date.now() - 1;
+  host.tick();
+  eq(table.smallBlind, 5, 'nothing moves under a live hand');
+  eq(table.tourney.level, 0);
+
+  table.stage = 'idle';
+  host.tick();
+  eq(table.tourney.level, 1);
+  eq(table.smallBlind, 10, 'the second rung of the ladder');
+  eq(table.bigBlind, 20);
+  eq(table.minRaise, 20, 'and a raise is sized to the new blind');
+});
+
+test('busting gives you a place, and the last one left wins it', () => {
+  const sent = [];
+  const host = cupHost(sent);
+  const { table } = host;
+  for (const id of ['a', 'b', 'c']) host.handle(id, { t: 'hello', name: id });
+  host.handle('a', { t: 'sit', seat: 0, name: 'Ann' });
+  host.handle('b', { t: 'sit', seat: 1, name: 'Bo' });
+  host.handle('c', { t: 'sit', seat: 2, name: 'Cal' });
+  table.startHand();
+  host.tick();
+  eq(table.tourney.entries, 3);
+
+  // Cal loses the lot.
+  table.seats[2].chips = 0;
+  table.stage = 'handover';
+  host.startAt = 0;
+  sent.length = 0;
+  host.tick();
+
+  eq(table.tourney.out.length, 1);
+  eq(table.tourney.out[0].place, 3, 'first out of three finishes third');
+  const ko = sent.find((m) => m.msg.t === 'knockedout');
+  assert(ko, 'and is told where they came');
+  eq(ko.token, 'c');
+  eq(ko.msg.place, 3);
+  eq(ko.msg.of, 3);
+  assert(sent.some((m) => m.token === 'c' && m.msg.t === 'cashout' && m.msg.amount === 0),
+    'with nothing to bank, said out loud so no chips look stranded');
+  eq(table.players().length, 2, 'and the seat is given up');
+  eq(table.tourney.champion, null, 'two left is not a winner yet');
+
+  // Then Bo, which leaves one.
+  table.seats[1].chips = 0;
+  table.stage = 'handover';
+  host.startAt = 0;
+  sent.length = 0;
+  host.tick();
+
+  eq(table.tourney.out.length, 2);
+  eq(table.tourney.out[1].place, 2, 'second out finishes second');
+  assert(table.tourney.champion, 'somebody has won it');
+  eq(table.tourney.champion.name, 'Ann');
+  const won = sent.find((m) => m.msg.t === 'wontourney');
+  assert(won, 'and is told so');
+  eq(won.token, 'a');
+  eq(won.msg.of, 3);
+});
+
+test('two busting on the same hand take the two lowest places', () => {
+  const sent = [];
+  const host = cupHost(sent);
+  const { table } = host;
+  for (const id of ['a', 'b', 'c']) host.handle(id, { t: 'hello', name: id });
+  host.handle('a', { t: 'sit', seat: 0, name: 'Ann' });
+  host.handle('b', { t: 'sit', seat: 1, name: 'Bo' });
+  host.handle('c', { t: 'sit', seat: 2, name: 'Cal' });
+  table.startHand();
+  host.tick();
+
+  table.seats[1].chips = 0;
+  table.seats[2].chips = 0;
+  table.stage = 'handover';
+  host.startAt = 0;
+  host.tick();
+
+  eq(table.tourney.out.map((o) => o.place).sort().join(','), '2,3', 'third and second');
+  eq(table.tourney.champion.name, 'Ann', 'and the one still holding chips won');
+});
+
+test('a tournament will not let you buy any more chips', () => {
+  const sent = [];
+  const host = cupHost(sent);
+  host.handle('a', { t: 'hello', name: 'Ann' });
+  host.handle('b', { t: 'hello', name: 'Bo' });
+  host.handle('a', { t: 'sit', seat: 0, name: 'Ann' });
+  host.handle('b', { t: 'sit', seat: 1, name: 'Bo' });
+
+  for (const bad of ['rebuy', 'addchips', 'removechips', 'take', 'transfer']) {
+    sent.length = 0;
+    const before = host.table.seats[0].chips;
+    host.handle('a', { t: bad, amount: 100, fromSeat: 1, toSeat: 1 });
+    eq(host.table.seats[0].chips, before, `${bad} moves nothing`);
+    assert(sent.some((m) => m.msg.t === 'error'), `${bad} says why`);
+  }
+});
+
+test('you cannot sit down in a tournament once it is under way', () => {
+  const sent = [];
+  const host = cupHost(sent);
+  const { table } = host;
+  host.handle('a', { t: 'hello', name: 'Ann' });
+  host.handle('b', { t: 'hello', name: 'Bo' });
+  host.handle('a', { t: 'sit', seat: 0, name: 'Ann' });
+  host.handle('b', { t: 'sit', seat: 1, name: 'Bo' });
+
+  // Before the first hand, a latecomer is welcome.
+  host.handle('c', { t: 'hello', name: 'Cal' });
+  host.handle('c', { t: 'sit', seat: 2, name: 'Cal' });
+  eq(table.players().length, 3, 'still registering');
+
+  table.startHand();
+  host.tick();
+
+  host.handle('d', { t: 'hello', name: 'Dee' });
+  sent.length = 0;
+  host.handle('d', { t: 'sit', seat: 3, name: 'Dee' });
+  eq(table.players().length, 3, 'but not once the cards are out');
+  assert(sent.some((m) => m.token === 'd' && m.msg.t === 'error'), 'and is told why');
+});
+
+test('walking out of a tournament still counts as a finish', () => {
+  const sent = [];
+  const host = cupHost(sent);
+  const { table } = host;
+  for (const id of ['a', 'b', 'c']) host.handle(id, { t: 'hello', name: id });
+  host.handle('a', { t: 'sit', seat: 0, name: 'Ann' });
+  host.handle('b', { t: 'sit', seat: 1, name: 'Bo' });
+  host.handle('c', { t: 'sit', seat: 2, name: 'Cal' });
+  table.startHand();
+  host.tick();
+
+  sent.length = 0;
+  host.handle('c', { t: 'stand' });
+  eq(table.tourney.out.length, 1);
+  eq(table.tourney.out[0].name, 'Cal');
+  eq(table.tourney.out[0].place, 3, 'the place they would have had');
+  // Their chips go home with them: there is no server to hold a prize pool,
+  // and chips nobody can reach would simply leave the game.
+  const paid = sent.find((m) => m.token === 'c' && m.msg.t === 'cashout');
+  assert(paid && paid.msg.amount > 0, 'and they take their stack with them');
+});
+
+test('the level a tournament is on rides along in the state everyone sees', () => {
+  const host = cupHost([]);
+  host.handle('a', { t: 'hello', name: 'Ann' });
+  const snap = host.table.snapshot('a');
+  assert(snap.tourney, 'a tournament table says so');
+  eq(snap.tourney.on, true);
+  eq(snap.tourney.smallBlind, 5);
+  eq(snap.tourney.levelMs, 5 * 60_000);
+});
+
 test('a chip gift reaches the other player and tells the sender', () => {
   const sent = [];
   const host = new TableHost({

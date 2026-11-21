@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mw2lzmp0" />
+<link rel="stylesheet" href="style.css?v=mwq16enq" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
@@ -155,6 +155,19 @@
     </div>
 
     <div id="tab-create" class="tab-panel">
+      <div class="mode-pick">
+        <label class="mode-opt">
+          <input type="radio" name="tableMode" value="cash" checked />
+          <span><strong>Cash game</strong>
+            Buy in for what you like, top up when you run low, leave when you want.</span>
+        </label>
+        <label class="mode-opt">
+          <input type="radio" name="tableMode" value="tournament" />
+          <span><strong>Tournament</strong>
+            One stack each, blinds climb on a clock, last one with chips wins the lot.</span>
+        </label>
+      </div>
+
       <div class="row">
         <label class="field">
           <span>Small blind</span>
@@ -175,6 +188,10 @@
           <input id="seatsInput" type="number" value="6" min="2" max="9" />
         </label>
       </div>
+      <label class="field" id="levelField" hidden>
+        <span>Minutes a level</span>
+        <input id="levelInput" type="number" value="5" min="1" max="60" />
+      </label>
       <label class="toggle">
         <input type="checkbox" id="meanieInput" checked />
         <span>
@@ -239,6 +256,7 @@
     </button>
     <div id="hostBadge" class="chip host" hidden title="Your browser is running this table">Hosting</div>
     <div id="meanieBadge" class="chip meanie" hidden title="Run out of time and your whole stack goes in">Meanie</div>
+    <div id="tourneyChip" class="chip tourney" hidden title="Level, blinds, and how long until they go up"></div>
     <div class="spacer"></div>
     <div id="connDot" class="conn" title="Connection">●</div>
     <button id="sitOutBtn" class="ghost" hidden>Sit out</button>
@@ -762,6 +780,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mw2lzmp0"></script>
+<script type="module" src="app.js?v=mwq16enq"></script>
 </body>
 </html>

@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mw2lzmp0';
-import { TableHost, safePic, PIC_MAX } from './host.js?v=mw2lzmp0';
-import * as vault from './vault.js?v=mw2lzmp0';
-import * as friends from './friends.js?v=mw2lzmp0';
-import * as packs from './decks.js?v=mw2lzmp0';
-import * as cloud from './cloud.js?v=mw2lzmp0';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mw2lzmp0';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mw2lzmp0';
+import { HostNet, GuestNet } from './net.js?v=mwq16enq';
+import { TableHost, safePic, PIC_MAX } from './host.js?v=mwq16enq';
+import * as vault from './vault.js?v=mwq16enq';
+import * as friends from './friends.js?v=mwq16enq';
+import * as packs from './decks.js?v=mwq16enq';
+import * as cloud from './cloud.js?v=mwq16enq';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mwq16enq';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mwq16enq';
 
 const $ = (id) => document.getElementById(id);
 
@@ -23,7 +23,7 @@ function show(el, visible) {
  * Shown at the bottom of the screen. Goes up by one for each substantial
  * change, so it is clear at a glance whether a browser has the latest build.
  */
-const BUILD = 84;
+const BUILD = 85;
 
 const SUIT_GLYPH = { c: '♣', d: '♦', h: '♥', s: '♠' };
 
@@ -342,12 +342,22 @@ function initLobby() {
     startSession(playSolo);
   });
 
+  // Only a tournament has levels, so only a tournament asks how long one is.
+  for (const radio of document.querySelectorAll('input[name="tableMode"]')) {
+    radio.addEventListener('change', () => {
+      show($('levelField'), chosenMode() === 'tournament');
+    });
+  }
+
   $('createBtn').addEventListener('click', () => {
+    const mode = chosenMode();
     const options = {
+      mode,
       smallBlind: Number($('sbInput').value),
       bigBlind: Number($('bbInput').value),
       startingStack: Number($('stackInput').value),
       maxSeats: Number($('seatsInput').value),
+      levelMinutes: Number($('levelInput').value),
       meanie: $('meanieInput').checked,
     };
     if (options.bigBlind <= options.smallBlind) {
@@ -355,6 +365,11 @@ function initLobby() {
     }
     if (options.startingStack < options.bigBlind * 10) {
       return lobbyError('Give everyone at least 10 big blinds to start.');
+    }
+    // Blinds climb fast, and a short stack at a long table is over before it
+    // has begun. Twenty of them is the least that plays like a tournament.
+    if (mode === 'tournament' && options.startingStack < options.bigBlind * 20) {
+      return lobbyError('A tournament wants at least 20 big blinds each.');
     }
     startSession(() => hostTable(options));
   });
@@ -1385,6 +1400,57 @@ function ownedTile(item, kind, worn) {
 }
 
 /** Everyone else at this table a gift could go to: people, not bots. */
+/** Which kind of table the Create tab is set to make. */
+function chosenMode() {
+  const picked = document.querySelector('input[name="tableMode"]:checked');
+  return picked && picked.value === 'tournament' ? 'tournament' : 'cash';
+}
+
+/** True at a tournament table, which has no topping up and no cashing out. */
+function inTourney() {
+  return !!app.state?.tourney?.on;
+}
+
+function ordinal(n) {
+  const tens = n % 100;
+  if (tens >= 11 && tens <= 13) return `${n}th`;
+  return `${n}${['th', 'st', 'nd', 'rd'][n % 10] || 'th'}`;
+}
+
+/**
+ * The tournament chip in the header: the level, the blinds, and how long
+ * until they go up.
+ *
+ * Repainted once a second rather than only when the table changes, because
+ * a countdown that moves when somebody bets is not a countdown. The host's
+ * clock is the one that counts, so the offset the state carries is applied
+ * rather than trusting this device's idea of the time.
+ */
+function paintTourney() {
+  const el = $('tourneyChip');
+  if (!el) return;
+  const t = app.state && app.state.tourney;
+  if (!t || !t.on) {
+    show(el, false);
+    return;
+  }
+  show(el, true);
+  el.classList.toggle('done', !!t.champion);
+  if (t.champion) {
+    el.textContent = `${t.champion.name} won it`;
+    return;
+  }
+  const blinds = `${fmt(t.smallBlind)} / ${fmt(t.bigBlind)}`;
+  if (!t.started) {
+    el.textContent = `Tournament · ${blinds}`;
+    return;
+  }
+  const left = Math.max(0, t.endsAt - (Date.now() + app.clockOffset));
+  const mins = Math.floor(left / 60_000);
+  const secs = Math.floor((left % 60_000) / 1000);
+  el.textContent = `Level ${t.level + 1} · ${blinds} · ${mins}:${String(secs).padStart(2, '0')}`;
+}
+
 function giftTargets() {
   if (!app.code || !app.state || !mySeat()) return [];
   return (app.state.seats || []).filter((p) => p && !p.isMe && !p.bot);
@@ -2504,6 +2570,16 @@ function onMessage(msg) {
     case 'state': {
       if (typeof msg.now === 'number') app.clockOffset = msg.now - Date.now();
       render(msg.state);
+      paintTourney();
+      break;
+    }
+    case 'knockedout': {
+      toast(`You are out — ${ordinal(msg.place)} of ${msg.of}.`);
+      break;
+    }
+    case 'wontourney': {
+      toast(`You won it, out of ${msg.of}. All ${fmt(msg.chips)} chips are yours`
+        + ' — press Leave to put them in your vault.');
       break;
     }
     case 'added': {
@@ -2668,6 +2744,14 @@ function buyInBounds() {
   if (app.dialogMode !== 'sit' && app.addBounds) {
     return { ...app.addBounds, bal };
   }
+  // A tournament buy-in is not a choice. The table hands out one fixed
+  // stack however much is sent, so the slider has to agree with it: offer a
+  // range here and a player would take 1,000 out of their vault to sit down
+  // behind 200, and the difference would simply be gone.
+  if (inTourney()) {
+    const stack = cfg.startingStack || 1000;
+    return { min: stack, max: stack, bal };
+  }
   const min = Math.min(cfg.bigBlind || 10, bal);
   const max = Math.min(bal, maxBuyIn());
   return { min, max, bal };
@@ -2743,7 +2827,7 @@ function openAddChips(direction = 'add') {
     + (queued ? ` · <strong>${fmt(queued)}</strong> arriving after this hand` : '');
   modalError('');
   show($('botSection'), false);
-  show($('chipDirection'), true);
+  show($('chipDirection'), !inTourney());
   document.querySelectorAll('.dir').forEach((t) => t.classList.toggle('active', t.dataset.dir === direction));
 
   if (direction === 'take') {
@@ -2815,9 +2899,17 @@ function openSeatDialog(seat) {
 
   // Hosts can add bots; you can only sit down yourself if you're not already in.
   show($('botSection'), !!app.isHost);
-  const canSit = !seated && bal > 0;
+  const fixed = inTourney();
+  const canSit = !seated && bal >= (fixed ? min : 1);
   show($('buyInBlock'), canSit);
   show($('emptyVault'), !seated && bal <= 0);
+  // Nothing to slide when there is only one amount it can be.
+  $('buyInRange').disabled = fixed;
+  const quick = document.querySelector('.buyin-row');
+  if (quick) show(quick, !fixed);
+  if (fixed && !seated && bal < min) {
+    modalError(`A seat in this tournament costs ${fmt(min)}. Your vault is short.`);
+  }
 
   if (canSit) {
     $('buyInRange').min = String(min);
@@ -2913,6 +3005,12 @@ function initVaultUi() {
 
     const seat = app.dialogSeat;
     if (seat < 0) return;
+    // In a tournament the table gives out one fixed stack whatever is sent,
+    // so take exactly that or nothing: a short vault here would leave chips
+    // withdrawn that never turn up in front of anybody.
+    if (inTourney() && vault.balance() < app.buyIn) {
+      return modalError(`A seat here costs ${fmt(app.buyIn)}. Your vault is short.`);
+    }
     // Take the chips out now; refund if the table turns us away.
     const taken = vault.withdraw(app.buyIn);
     if (taken <= 0) return modalError('Not enough in your vault.');
@@ -3431,6 +3529,9 @@ function initGame() {
     send({ t: 'rebuy', amount });
   });
   $('startBtn').addEventListener('click', () => send({ t: 'start' }));
+  // One timer for the whole session. It does nothing at a cash table, and
+  // keeping it running saves having to tear one down on every leave.
+  setInterval(paintTourney, 1000);
 
   $('betRange').addEventListener('input', (e) => setBet(Number(e.target.value), true));
   $('betAmount').addEventListener('input', (e) => setBet(Number(e.target.value), true));
@@ -3818,10 +3919,12 @@ function renderActionBar(state, prev) {
   // Offered whenever there is room and something in the vault; if a hand is
   // running the table queues it rather than refusing.
   const canAdd = !!(me && vault.balance() > 0 && me.chips < maxBuyIn());
-  show($('addChipsBtn'), canAdd);
+  // None of this exists in a tournament: one stack each, and you play it.
+  const cash = !inTourney();
+  show($('addChipsBtn'), canAdd && cash);
   show($('startBtn'), canStart);
-  show($('rebuyBtn'), canRebuy);
-  show(idle, canStart || canRebuy || canAdd);
+  show($('rebuyBtn'), canRebuy && cash);
+  show(idle, canStart || (cash && (canRebuy || canAdd)));
 
   if (legal) {
     show(controls, true);

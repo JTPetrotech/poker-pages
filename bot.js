@@ -1,5 +1,5 @@
-import { makeDeck, cardValue, cardSuit } from './engine/cards.js?v=mw2lzmp0';
-import { bestHand, compareScores } from './engine/hand.js?v=mw2lzmp0';
+import { makeDeck, cardValue, cardSuit } from './engine/cards.js?v=mwq16enq';
+import { bestHand, compareScores } from './engine/hand.js?v=mwq16enq';
 
 /**
  * Computer opponents.

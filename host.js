@@ -1,8 +1,23 @@
-import { Table } from './engine/game.js?v=mw2lzmp0';
-import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mw2lzmp0';
-import { safeDeck, safeChip, deckById, chipById, DECKS, CHIP_SKINS } from './decks.js?v=mw2lzmp0';
+import { Table } from './engine/game.js?v=mwq16enq';
+import { decide, BOT_STYLES, BOT_NAMES } from './bot.js?v=mwq16enq';
+import { safeDeck, safeChip, deckById, chipById, DECKS, CHIP_SKINS } from './decks.js?v=mwq16enq';
 
 export const ACTION_TIMEOUT_MS = 45_000;
+
+/**
+ * The blind ladder, as multiples of the table's opening small blind.
+ *
+ * Roughly a half-step each level rather than a doubling, so a tournament
+ * tightens steadily instead of lurching. The last rung repeats forever,
+ * which is what stops a long heads-up going on all night.
+ */
+const BLIND_LADDER = [1, 2, 3, 5, 8, 12, 20, 30, 50, 80, 120, 200, 300, 500, 800, 1200];
+
+function ordinal(n) {
+  const tens = n % 100;
+  if (tens >= 11 && tens <= 13) return `${n}th`;
+  return `${n}${['th', 'st', 'nd', 'rd'][n % 10] || 'th'}`;
+}
 const HANDOVER_DELAY_MS = 6_000;
 const IDLE_START_DELAY_MS = 3_000;
 
@@ -75,6 +90,24 @@ export class TableHost {
       meanie: options.meanie !== false,
     });
     this.table.minRaise = bigBlind;
+
+    // A tournament is the same poker with three rules bolted on: one stack
+    // each, blinds that climb, and you are out when it is gone.
+    this.baseBlind = smallBlind;
+    this.table.tourney = options.mode === 'tournament' ? {
+      on: true,
+      level: 0,
+      smallBlind,
+      bigBlind,
+      levelMs: clampInt(options.levelMinutes, 1, 60, 5) * 60_000,
+      // Set when the first hand is dealt, not when the table opens: nobody
+      // should lose a level waiting for the last player to sit down.
+      started: false,
+      endsAt: 0,
+      entries: 0,
+      out: [],
+      champion: null,
+    } : null;
   }
 
   start() {
@@ -155,8 +188,13 @@ export class TableHost {
 
     switch (msg.t) {
       case 'sit':
+        if (this.#tourneyRunning()) {
+          throw new Error('The tournament has started. Watch this one out, or open another table.');
+        }
         table.sit(token, cleanName(msg.name), clampInt(msg.seat, 0, table.maxSeats - 1, 0), {
-          buyIn: Number(msg.buyIn) || table.startingStack,
+          // One stack each, the same for everybody. That is most of what
+          // makes a tournament a tournament.
+          buyIn: table.tourney ? table.startingStack : (Number(msg.buyIn) || table.startingStack),
           deck: safeDeck(msg.deck),
           chip: safeChip(msg.chip),
         });
@@ -218,6 +256,16 @@ export class TableHost {
         // Tell them what they're walking away with, so it reaches their vault.
         const seated = table.playerById(token);
         const cashOut = seated ? seated.chips : 0;
+        // Walking out of a tournament is still a finish, and it takes the
+        // place you would have had. The chips go home with them: there is no
+        // server here to hold a prize pool, and chips nobody can reach would
+        // just vanish from the game.
+        if (seated && this.#tourneyRunning()) {
+          const t = table.tourney;
+          const place = table.players().length;
+          t.out.push({ name: seated.name, place });
+          table.pushLog(`${seated.name} walked away, out in ${ordinal(place)}.`);
+        }
         table.stand(token);
         this.deliver(token, { t: 'cashout', amount: cashOut });
         break;
@@ -250,20 +298,28 @@ export class TableHost {
       case 'action':
         table.act(token, String(msg.action), Number(msg.amount) || 0);
         break;
+      // Everything that moves chips on or off the table is a cash-game
+      // thing. In a tournament you play the stack you bought in with, and
+      // the only way to get more is to win them.
       case 'rebuy':
+        if (table.tourney) throw new Error('No rebuys — one stack each, and you play it.');
         table.rebuy(token, Number(msg.amount) || table.startingStack);
         this.#scheduleStart(IDLE_START_DELAY_MS);
         break;
       case 'addchips':
+        if (table.tourney) throw new Error('No topping up in a tournament.');
         table.addChips(token, msg.amount);
         break;
       case 'removechips':
+        if (table.tourney) throw new Error('Chips stay on the table until you are out.');
         table.removeChips(token, msg.amount);
         break;
       case 'take':
+        if (table.tourney) throw new Error('Not in a tournament.');
         table.seizeChips(token, clampInt(msg.fromSeat, 0, table.maxSeats - 1, 0), msg.amount);
         break;
       case 'transfer':
+        if (table.tourney) throw new Error('Not in a tournament.');
         table.transferChips(token, clampInt(msg.toSeat, 0, table.maxSeats - 1, 0), msg.amount);
         break;
       case 'sitout':
@@ -373,10 +429,96 @@ export class TableHost {
     if (!this.startAt || at < this.startAt) this.startAt = at;
   }
 
+  /** The blinds at a given level, from the ladder above. */
+  #blindsFor(level) {
+    const step = BLIND_LADDER[Math.min(level, BLIND_LADDER.length - 1)];
+    const sb = this.baseBlind * step;
+    return { sb, bb: sb * 2 };
+  }
+
+  /**
+   * The tournament clock. Returns true when something changed.
+   *
+   * Blinds only ever go up between hands. Putting them up mid-pot would
+   * change the price of a bet somebody has already decided to call.
+   */
+  #tourneyTick(now) {
+    const t = this.table.tourney;
+    if (!t || !t.on || t.champion) return false;
+    const { table } = this;
+
+    if (!t.started) {
+      if (table.handNo === 0) return false;
+      t.started = true;
+      t.entries = table.players().length;
+      t.endsAt = now + t.levelMs;
+      table.pushLog(`Tournament under way — ${t.entries} players, ${t.smallBlind}/${t.bigBlind}.`);
+      return true;
+    }
+
+    if (now < t.endsAt || table.inHandStage()) return false;
+
+    t.level++;
+    const { sb, bb } = this.#blindsFor(t.level);
+    table.smallBlind = sb;
+    table.bigBlind = bb;
+    table.minRaise = bb;
+    t.smallBlind = sb;
+    t.bigBlind = bb;
+    t.endsAt = now + t.levelMs;
+    table.pushLog(`Level ${t.level + 1} — blinds ${sb}/${bb}.`);
+    return true;
+  }
+
+  /**
+   * Everyone with nothing left is out, and is told where they finished.
+   *
+   * Places count up from the bottom, so the first out of six finishes
+   * sixth. Two busting on the same hand both take the lower place, which is
+   * the kind reading and saves comparing who started the hand shorter.
+   */
+  #tourneyBust() {
+    const t = this.table.tourney;
+    if (!t || !t.on || !t.started || t.champion) return false;
+    const { table } = this;
+    const broke = table.players().filter((p) => p.chips <= 0);
+    if (!broke.length) return false;
+
+    const seated = table.players().length;
+    broke.forEach((p, i) => {
+      const place = seated - i;
+      t.out.push({ name: p.name, place });
+      table.pushLog(`${p.name} is out in ${ordinal(place)}.`);
+      if (!p.bot) {
+        this.deliver(p.id, { t: 'knockedout', place, of: t.entries });
+        // Nothing to bank, but it has to be said, or their own browser goes
+        // on believing there are chips of theirs stranded at this table.
+        this.deliver(p.id, { t: 'cashout', amount: 0 });
+      }
+      table.stand(p.id);
+    });
+
+    const left = table.players();
+    if (left.length === 1 && t.entries > 1) {
+      const won = left[0];
+      t.champion = { name: won.name, chips: won.chips };
+      table.pushLog(`${won.name} wins it, with all ${won.chips} chips.`);
+      if (!won.bot) this.deliver(won.id, { t: 'wontourney', chips: won.chips, of: t.entries });
+    }
+    return true;
+  }
+
+  /** True while a tournament is being played, rather than set up or over. */
+  #tourneyRunning() {
+    const t = this.table.tourney;
+    return !!(t && t.on && t.started && !t.champion);
+  }
+
   tick() {
     const { table } = this;
     const now = Date.now();
     let dirty = false;
+    if (this.#tourneyTick(now)) dirty = true;
 
     const key = `${table.handNo}:${table.stage}:${table.actingSeat}`;
     if (table.inHandStage() && table.actingSeat >= 0) {
@@ -400,7 +542,10 @@ export class TableHost {
       table.actionDeadline = 0;
     }
 
-    if (table.stage === 'handover' && !this.startAt) this.#scheduleStart(HANDOVER_DELAY_MS);
+    if (table.stage === 'handover' && !this.startAt) {
+      if (this.#tourneyBust()) dirty = true;
+      this.#scheduleStart(HANDOVER_DELAY_MS);
+    }
 
     if (this.startAt && now >= this.startAt && !table.inHandStage()) {
       this.startAt = 0;
