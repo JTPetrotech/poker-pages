@@ -2593,7 +2593,7 @@ test('the two new packs are six each, one ultra apiece', () => {
 });
 
 test('the newest packs are six each, one ultra apiece', () => {
-  for (const id of ['garden', 'frost', 'desert', 'dino', 'castle', 'circus']) {
+  for (const id of ['frost', 'desert', 'dino', 'castle', 'circus', 'champ']) {
     const contents = packs.packContents(id);
     eq(contents.length, 6, `${id} has six`);
     eq(contents.filter((d) => d.rarity === 'ultra').length, 1, `${id} has one ultra`);

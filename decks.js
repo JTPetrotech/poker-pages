@@ -64,6 +64,7 @@ export const PACKS = [
   { id: 'dino', name: 'Dinosaurs', blurb: 'A very long time ago.' },
   { id: 'castle', name: 'Castle', blurb: 'Stone, and whoever is holding it.' },
   { id: 'circus', name: 'Circus', blurb: 'In town for three nights only.' },
+  { id: 'champ', name: 'Champion', blurb: 'For whoever is still holding chips.' },
   // The milk pack. Not id 'milk': that is already a card skin, and keeping
   // the two namespaces clear of each other is worth the longer word.
   {
@@ -253,6 +254,13 @@ export const DECKS = [
   { id: 'trapeze', name: 'Trapeze', pack: 'circus', rarity: 'legendary' },
   { id: 'bigtop', name: 'Big Top', pack: 'circus', rarity: 'ultra' },
   { id: 'milkpop', name: 'Milk Popcorn', pack: 'circus', rarity: 'milk' },
+
+  { id: 'medal', name: 'Medal', pack: 'champ', rarity: 'common' },
+  { id: 'ribbon', name: 'Ribbon', pack: 'champ', rarity: 'common' },
+  { id: 'stopwatch', name: 'Stopwatch', pack: 'champ', rarity: 'rare' },
+  { id: 'bubbly', name: 'Bubbly', pack: 'champ', rarity: 'legendary' },
+  { id: 'podium', name: 'Podium', pack: 'champ', rarity: 'ultra' },
+  { id: 'milkcup', name: 'Milk Toast', pack: 'champ', rarity: 'milk' },
 ];
 
 /**
@@ -377,6 +385,12 @@ export const CHIP_SKINS = [
   { id: 'garnet', name: 'Garnet', rarity: 'rare' },
   { id: 'cinder', name: 'Cinder', rarity: 'legendary' },
   { id: 'kaleido', name: 'Kaleidoscope', rarity: 'ultra' },
+  { id: 'saffron', name: 'Saffron', rarity: 'common' },
+  { id: 'indigo', name: 'Indigo', rarity: 'common' },
+  { id: 'pearl', name: 'Pearl', rarity: 'common' },
+  { id: 'cobalt', name: 'Cobalt', rarity: 'rare' },
+  { id: 'apricot', name: 'Apricot', rarity: 'rare' },
+  { id: 'goldleaf', name: 'Gold Leaf', rarity: 'legendary' },
 ];
 
 /**

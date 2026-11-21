@@ -1705,13 +1705,108 @@ function bigtop() {
   return c.bytes();
 }
 
+// ---------------------------------------------------------------- podium
+
+/** The champion ultra: a cup under the lights, on the top step. */
+function podium() {
+  const c = canvas();
+  const rnd = rand(20261120);
+  const floor = 150;
+  const cx = W / 2;
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const d = Math.hypot((x - cx) / 90, (y - 62) / 110);
+      c.set(x, y, mix(44, 8, d), mix(30, 6, d), mix(58, 14, d));
+    }
+  }
+
+  // Two spotlights crossing on the cup, widening as they come down.
+  for (const from of [-1, 1]) {
+    for (let y = 0; y < floor; y++) {
+      const t = y / floor;
+      const mid = cx + from * (46 - t * 40);
+      const half = 5 + t * 20;
+      for (let x = Math.round(mid - half); x <= Math.round(mid + half); x++) {
+        const edge = 1 - Math.abs(x - mid) / half;
+        c.blend(x, y, 255, 244, 206, 0.1 * edge * (1 - t * 0.35));
+      }
+    }
+  }
+
+  // The steps: second, first, third, left to right.
+  const step = (x0, x1, top, face, side) => {
+    for (let y = top; y <= floor; y++) {
+      for (let x = x0; x <= x1; x++) {
+        c.set(x, y, x > x1 - 5 ? side[0] : face[0],
+          x > x1 - 5 ? side[1] : face[1], x > x1 - 5 ? side[2] : face[2]);
+      }
+    }
+    for (let x = x0; x <= x1; x++) c.blend(x, top, 255, 232, 180, 0.55);
+  };
+  step(14, 48, 126, [62, 56, 86], [44, 40, 64]);
+  step(84, 118, 134, [62, 56, 86], [44, 40, 64]);
+  step(48, 84, 112, [84, 74, 112], [60, 52, 84]);
+
+  // The cup, standing on the top step.
+  const base = 112;
+  const gold = (x, y, lit) => {
+    if (x < 0 || x >= W || y < 0 || y >= H) return;
+    c.set(x, y, lit ? 255 : 186, lit ? 230 : 140, lit ? 150 : 44);
+  };
+  // Foot, stem, then the bowl.
+  for (let y = base - 6; y < base; y++) {
+    for (let x = cx - 14; x <= cx + 14; x++) gold(Math.round(x), y, x < cx - 4);
+  }
+  for (let y = base - 16; y < base - 6; y++) {
+    for (let x = cx - 5; x <= cx + 5; x++) gold(Math.round(x), y, x < cx - 1);
+  }
+  for (let y = base - 54; y < base - 16; y++) {
+    const t = (y - (base - 54)) / 38;
+    const half = 22 * (1 - t * t * 0.72);
+    for (let x = Math.round(cx - half); x <= Math.round(cx + half); x++) {
+      gold(x, y, x < cx - half * 0.3);
+    }
+  }
+  // Handles, one each side.
+  for (const side of [-1, 1]) {
+    for (let a = -1.25; a <= 1.25; a += 0.03) {
+      const hx = cx + side * (21 + Math.cos(a) * 9);
+      const hy = base - 44 + Math.sin(a) * 13;
+      for (let w = -1.5; w <= 1.5; w += 0.5) gold(Math.round(hx + w), Math.round(hy), side < 0);
+    }
+  }
+  glow(c, Math.round(cx), base - 36, 40, 255, 216, 130, 0.45);
+  glow(c, Math.round(cx - 7), base - 44, 10, 255, 255, 240, 0.7);
+
+  // Confetti, because somebody has just won something.
+  for (let i = 0; i < 90; i++) {
+    const x = Math.floor(rnd() * W);
+    const y = Math.floor(rnd() * (floor - 6));
+    const pick = Math.floor(rnd() * 4);
+    const col = [[255, 214, 92], [238, 92, 118], [96, 186, 240], [150, 228, 150]][pick];
+    c.blend(x, y, col[0], col[1], col[2], 0.45 + rnd() * 0.5);
+    if (rnd() > 0.6) c.blend(x, y + 1, col[0], col[1], col[2], 0.4);
+  }
+
+  // The floor it all stands on.
+  for (let x = 0; x < W; x++) {
+    for (let y = floor + 1; y < H; y++) {
+      const t = Math.min(1, (y - floor) / 34);
+      c.set(x, y, mix(34, 12, t), mix(24, 8, t), mix(46, 18, t));
+    }
+    c.blend(x, floor, 255, 226, 170, 0.3);
+  }
+  return c.bytes();
+}
+
 // ------------------------------------------------------------------ write
 
 fs.mkdirSync(outDir, { recursive: true });
 const pictures = {
   galaxy, strip, melon, stadium, jackpot, milk, supra, aurora, invader, deep, dragoneye,
   highroller, encore, peacock, kraken, bloom, crystal, milkcrown,
-  mirage, longneck, citadel, bigtop,
+  mirage, longneck, citadel, bigtop, podium,
 };
 for (const [name, draw] of Object.entries(pictures)) {
   const file = path.join(outDir, `${name}.png`);

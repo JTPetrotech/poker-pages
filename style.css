@@ -3794,6 +3794,109 @@ kbd {
   line-height: 1.55;
 }
 
+/* ------------------------------------------------------------- champion */
+
+.deck-medal {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 238, 180, 0.6) 0 28%, transparent 56%),
+    repeating-conic-gradient(from 0deg at 50% 50%, rgba(255, 220, 130, 0.18) 0 7deg, transparent 7deg 14deg),
+    linear-gradient(170deg, #8a5f13 0%, #3a2505 100%);
+  --deck-edge: #ffd978;
+  --deck-glyph: "\1F947";
+}
+.deck-ribbon {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.36) 0 28%, transparent 56%),
+    repeating-linear-gradient(128deg, rgba(255, 255, 255, 0.18) 0 4px, transparent 4px 14px),
+    linear-gradient(170deg, #c63f6a 0%, #6a1430 100%);
+  --deck-edge: #ffb6cd;
+  --deck-glyph: "\1F380";
+}
+.deck-stopwatch {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.42) 0 26%, transparent 52%),
+    repeating-conic-gradient(from 0deg at 50% 50%, rgba(20, 30, 44, 0.5) 0 1.6deg, transparent 1.6deg 30deg),
+    linear-gradient(170deg, #cfd8e2 0%, #76828f 100%);
+  --deck-edge: #f2f7fc;
+  --deck-glyph: "\23F1\FE0F";
+}
+.deck-bubbly {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 246, 200, 0.55) 0 26%, transparent 54%),
+    radial-gradient(2.2px 2.2px at 26% 72%, rgba(255, 250, 210, 0.9) 50%, transparent 51%),
+    radial-gradient(1.8px 1.8px at 38% 54%, rgba(255, 250, 210, 0.9) 50%, transparent 51%),
+    radial-gradient(2.4px 2.4px at 66% 64%, rgba(255, 250, 210, 0.9) 50%, transparent 51%),
+    radial-gradient(1.6px 1.6px at 74% 40%, rgba(255, 250, 210, 0.9) 50%, transparent 51%),
+    linear-gradient(170deg, #2b5540 0%, #0d1f16 100%);
+  --deck-edge: #ffe9a4;
+  --deck-glyph: "\1F37E";
+}
+.deck-podium {
+  --deck-bg: url("backs/podium.png") center / cover no-repeat;
+  --deck-edge: #ffd98a;
+  --deck-glyph: "";
+}
+.deck-milkcup {
+  --deck-bg:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.92) 0 30%, transparent 58%),
+    repeating-conic-gradient(from 0deg at 50% 50%, rgba(226, 214, 180, 0.3) 0 6deg, transparent 6deg 20deg),
+    linear-gradient(160deg, #ffffff 0%, #f7f2e4 100%);
+  --deck-edge: #e2d7b8;
+  --deck-glyph: "\1F942";
+}
+
+/* ----------------------------------------------------- chips, tenth batch */
+
+.chipskin-saffron {
+  --tok-bg: radial-gradient(circle at 32% 26%, #ffcf6b, #c06a09 84%);
+  --tok-edge: #ffe6ab;
+  --tok-face:
+    repeating-conic-gradient(from 8deg, rgba(255,255,255,0.3) 0 8deg, rgba(255,255,255,0) 8deg 24deg);
+  --tok-inset: 2px;
+}
+.chipskin-indigo {
+  --tok-bg: radial-gradient(circle at 34% 28%, #6a74c8, #1d2050 84%);
+  --tok-edge: #b4bcf2;
+  --tok-face:
+    repeating-linear-gradient(60deg, rgba(255,255,255,0.28) 0 2px, rgba(255,255,255,0) 2px 9px);
+  --tok-inset: 2px;
+}
+.chipskin-pearl {
+  --tok-bg: radial-gradient(circle at 34% 28%, #ffffff, #d6cfc0 86%);
+  --tok-edge: #fffdf6;
+  --tok-face:
+    radial-gradient(circle at 38% 32%, rgba(255,255,255,0.85) 0 20%, rgba(255,255,255,0) 48%);
+  --tok-inset: 2px;
+}
+.chipskin-cobalt {
+  --tok-bg: radial-gradient(circle at 32% 26%, #4f9cf0, #0a2f6b 86%);
+  --tok-edge: #a6d2ff;
+  --tok-glow: 0 0 7px rgba(80, 150, 240, 0.6);
+  --tok-face:
+    conic-gradient(from 40deg, rgba(220,238,255,0) 0 22%, rgba(220,238,255,0.65) 34%,
+                   rgba(220,238,255,0) 46%, rgba(220,238,255,0) 72%,
+                   rgba(220,238,255,0.55) 84%, rgba(220,238,255,0) 94%);
+  --tok-inset: 1px;
+}
+.chipskin-apricot {
+  --tok-bg: radial-gradient(circle at 32% 26%, #ffc89a, #d2702c 86%);
+  --tok-edge: #ffe3c8;
+  --tok-glow: 0 0 7px rgba(255, 170, 110, 0.55);
+  --tok-face:
+    repeating-conic-gradient(from 14deg, rgba(255,240,220,0.4) 0 6deg, rgba(255,240,220,0) 6deg 20deg);
+  --tok-inset: 1px;
+}
+.chipskin-goldleaf {
+  --tok-bg: radial-gradient(circle at 34% 28%, #fff1b8, #9c6c08 86%);
+  --tok-edge: #fff6cf;
+  --tok-glow: 0 0 10px rgba(255, 210, 100, 0.7);
+  --tok-face:
+    repeating-conic-gradient(from 0deg, rgba(255,245,200,0.55) 0 3deg, rgba(255,245,200,0) 3deg 15deg),
+    radial-gradient(circle at 40% 32%, rgba(255,255,255,0.6) 0 16%, rgba(255,255,255,0) 40%);
+  --tok-inset: 1px;
+  --tok-spin: tok-spin 9s linear infinite;
+}
+
 /* ---------------------------------------------------- castle and circus */
 
 .deck-banner {
