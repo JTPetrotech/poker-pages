@@ -138,6 +138,16 @@ input { font: inherit; }
 }
 .ghost:hover { color: var(--text); border-color: #9fb0bd; background: var(--bg-2); }
 
+/* The way out to the Arcade is a real <a>, not a scripted button, so it still
+   works if the modules never load. These classes were written for <button>,
+   which gets the alignment and the lack of an underline for free. */
+a.ghost, a.corner-pill {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  font: inherit;
+}
+
 .error {
   margin: 12px 0 0;
   padding: 9px 11px;

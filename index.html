@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Side Pot" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="apple-touch-icon" href="icon-180.png" />
-<link rel="stylesheet" href="style.css?v=mwq1dv9r" />
+<link rel="stylesheet" href="style.css?v=mwsw8py1" />
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
@@ -80,6 +80,10 @@
 <!-- ------------------------------------------------------------ lobby -->
 <div id="lobby" class="lobby">
   <div class="corner-left">
+    <!-- Back to the hub the games live on. A plain link, so it works even if
+         the modules below never load. -->
+    <a class="corner-pill" href="https://jtpetrotech.github.io/"
+       title="Back to The Arcade">Arcade</a>
     <button id="lobbyFriends" class="corner-pill" title="Friends">Friends</button>
     <button id="lobbyDecks" class="corner-pill" title="Shop">Shop</button>
     <button id="lobbyOwned" class="corner-pill" title="Collection">Collection</button>
@@ -261,6 +265,8 @@
     <div id="connDot" class="conn" title="Connection">●</div>
     <button id="sitOutBtn" class="ghost" hidden>Sit out</button>
     <button id="leaveBtn" class="ghost">Leave</button>
+    <a class="ghost" href="https://jtpetrotech.github.io/"
+       title="Leave the table and go back to The Arcade">Arcade</a>
     <button id="panelToggle" class="ghost" aria-label="Toggle chat">Chat</button>
     <button id="adminBtn" class="ghost admin-btn" hidden>Admin</button>
     <button id="friendsBtn" class="ghost">Friends</button>
@@ -780,6 +786,6 @@
   </div>
 </div>
 
-<script type="module" src="app.js?v=mwq1dv9r"></script>
+<script type="module" src="app.js?v=mwsw8py1"></script>
 </body>
 </html>

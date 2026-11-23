@@ -5,6 +5,12 @@ No server, no accounts, nothing to install.
 
 **Play: https://jtpetrotech.github.io/poker-pages/**
 
+The lobby and the table both have an Arcade link back to the hub the games
+live on at `https://jtpetrotech.github.io/`. It is a plain `<a href>` rather
+than a scripted button, so the way out still works even if the modules never
+load. At a table it sits next to Leave: Leave puts you back in the lobby,
+Arcade takes you out of the game altogether.
+
 ## How it works
 
 One player creates a table and becomes the **host**. Their browser runs the
