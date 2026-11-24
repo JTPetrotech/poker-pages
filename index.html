@@ -788,5 +788,8 @@
 
 <script src="padnav.js"></script>
 <script type="module" src="app.js?v=mwub0z5f"></script>
+<!-- Signed in on the Arcade, the vault, friends and table look are kept in
+     the account (the Arcade's account/sync.js). Anywhere else this fails quietly. -->
+<script type="module">import('/account/sync.js').then((m) => m.syncGame('poker', ['pn.profile.v1', 'pn.friends.v1', 'pn.look.v1'])).catch(() => {});</script>
 </body>
 </html>
