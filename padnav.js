@@ -18,6 +18,11 @@
  *   PadNav.onStart = function(){ togglePause(); };   // called in play too
  *   PadNav.root    = function(){ return el('ovPause'); };  // optional fence
  *
+ * While a pad is driving a menu a small legend of the buttons sits along the
+ * bottom (PadNav.hints = false turns it off), and the page gets a 'padnav'
+ * event, detail {using: true|false}, whenever the pad takes over or hands
+ * back to the mouse.
+ *
  * Anything else that should be reachable, a clickable <div>, gets data-pad.
  * data-pad-default marks where focus lands first; data-pad-back marks the
  * control B should press.
@@ -32,7 +37,9 @@
     onBack: null,
     root: null,
     /* true from the first press on a controller until the mouse moves */
-    using: false
+    using: false,
+    /* the button legend along the bottom; a game with its own sets false */
+    hints: true
   };
 
   var SEL = 'a[href],button,input:not([type=hidden]),select,textarea,summary,' +
@@ -41,15 +48,33 @@
      be able to do by accident. */
   var BACK_RE = /^\s*(?:[←‹<]\s*)?(back|close|cancel|resume|not now)\b|^\s*[×✕✖]\s*$/i;
 
+  /* The highlight takes the colour of whatever it sits on (a card's --accent)
+     and breathes, so it reads as "you are here" rather than a browser outline.
+     The hint bar shows the buttons as the pad draws them: green A, red B. */
   var css = document.createElement('style');
   css.textContent =
-    '.pn-focus{outline:3px solid #ffd34d!important;outline-offset:3px!important;' +
-    'box-shadow:0 0 0 7px rgba(255,211,77,.28)!important;transition:outline-color .1s}' +
-    '#pn-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:2147483647;' +
-    'background:rgba(10,12,16,.92);color:#fff;font:600 14px/1.35 system-ui,sans-serif;' +
-    'padding:10px 16px;border-radius:10px;border:1px solid rgba(255,211,77,.5);' +
-    'pointer-events:none;opacity:0;transition:opacity .25s;max-width:90vw;text-align:center}' +
-    '#pn-toast.on{opacity:1}';
+    '.pn-focus{--pn-c:var(--accent,#ffd34d);outline:2px solid var(--pn-c)!important;outline-offset:4px!important;' +
+    'animation:pn-pulse 1.6s ease-in-out infinite!important;position:relative;z-index:1;scroll-margin:24px 0 84px}' +
+    '@keyframes pn-pulse{0%,100%{box-shadow:0 0 0 3px rgba(0,0,0,.55),0 0 14px 2px var(--pn-c)}' +
+    '50%{box-shadow:0 0 0 3px rgba(0,0,0,.55),0 0 26px 7px var(--pn-c)}}' +
+    '@media (prefers-reduced-motion:reduce){.pn-focus{animation:none!important;box-shadow:0 0 0 3px rgba(0,0,0,.55),0 0 18px 4px var(--pn-c)!important}}' +
+    '.pn-bar{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));z-index:2147483646;' +
+    'display:flex;align-items:center;gap:16px;padding:8px 16px 8px 10px;border-radius:999px;' +
+    'background:rgba(8,11,16,.86);border:1px solid rgba(255,255,255,.12);' +
+    'box-shadow:0 10px 30px rgba(0,0,0,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);' +
+    'color:#e9f0f8;font:700 13px/1 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.02em;' +
+    'pointer-events:none;opacity:0;transform:translate(-50%,14px);transition:opacity .25s,transform .25s;' +
+    'white-space:nowrap;max-width:calc(100vw - 24px)}' +
+    '.pn-bar.on{opacity:1;transform:translate(-50%,0)}' +
+    '.pn-bar span{display:inline-flex;align-items:center;gap:7px}' +
+    '.pn-g{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;' +
+    'font:800 12px/1 system-ui,sans-serif;color:#fff;box-shadow:inset 0 -2px 0 rgba(0,0,0,.3)}' +
+    '.pn-a{background:#2fb35a}.pn-b{background:#e0453a}.pn-s{background:#3b4656;border-radius:7px;width:auto;padding:0 6px;font-size:9px;letter-spacing:.06em}' +
+    '.pn-d{position:relative;width:20px;height:20px;background:none;box-shadow:none}' +
+    '.pn-d:before,.pn-d:after{content:"";position:absolute;background:#c9d4e2;border-radius:2px}' +
+    '.pn-d:before{left:7px;top:0;width:6px;height:20px}.pn-d:after{top:7px;left:0;width:20px;height:6px}' +
+    '.pn-bar.toast{border-color:rgba(47,179,90,.7)}' +
+    '@media (max-width:420px){.pn-bar{gap:11px;font-size:12px}.pn-bar .pn-opt{display:none}}';
   (document.head || document.documentElement).appendChild(css);
 
   /* ------------------------------------------------------------ finding -- */
@@ -268,13 +293,42 @@
   var toast = null, toastT = 0;
   function say(msg){
     if (!document.body) return;
-    if (!toast){ toast = document.createElement('div'); toast.id = 'pn-toast'; document.body.appendChild(toast); }
+    if (!toast){
+      toast = document.createElement('div'); toast.className = 'pn-bar toast';
+      toast.style.bottom = 'calc(max(16px,env(safe-area-inset-bottom)) + 50px)';
+      document.body.appendChild(toast);
+    }
     toast.textContent = msg;
     toast.classList.add('on');
     clearTimeout(toastT);
-    toastT = setTimeout(function(){ toast.classList.remove('on'); }, 3800);
+    toastT = setTimeout(function(){ toast.classList.remove('on'); }, 3200);
   }
   var greeted = false;
+
+  /* The legend along the bottom while a pad is driving a menu. Built from
+     fixed strings only. A game that wants its own says PadNav.hints = false. */
+  var bar = null, barOn = false;
+  function legend(show){
+    if (show === barOn || !document.body) return;
+    barOn = show;
+    if (!bar){
+      bar = document.createElement('div'); bar.className = 'pn-bar'; bar.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(bar);
+    }
+    if (show){
+      bar.innerHTML =
+        '<span><i class="pn-g pn-d"></i>Move</span>' +
+        '<span><i class="pn-g pn-a">A</i>Select</span>' +
+        '<span><i class="pn-g pn-b">B</i>Back</span>' +
+        (PN.onStart ? '<span class="pn-opt"><i class="pn-g pn-s">START</i>Pause</span>' : '');
+    }
+    bar.classList.toggle('on', show);
+  }
+  function setUsing(v){
+    if (PN.using === v) return;
+    PN.using = v;
+    try { dispatchEvent(new CustomEvent('padnav', { detail: { using: v } })); } catch (e) {}
+  }
 
   /* ------------------------------------------------------------- polling -- */
   /* The Gamepad API has no button events, so every pad is read each frame. */
@@ -312,9 +366,10 @@
     var anyEdge = false; for (var e in edges){ anyEdge = true; break; }
     if (anyEdge && !greeted && act){
       greeted = true;
-      say('Controller ready — D-pad to move, A to select, B to go back');
+      say('Controller ready');
     }
-    if (anyEdge) PN.using = true;
+    if (anyEdge) setUsing(true);
+    legend(PN.using && act && PN.hints !== false);
 
     if (edges[9]){
       if (PN.onStart) PN.onStart();
@@ -328,7 +383,7 @@
     /* one diagonal at a time: whichever axis is pressed is the move */
     var dir = dirY ? 'y' + dirY : dirX ? 'x' + dirX : null;
     if (dir){
-      if (dir !== held){ held = dir; repeatAt = now + 380; PN.using = true; go(dir); }
+      if (dir !== held){ held = dir; repeatAt = now + 380; setUsing(true); go(dir); }
       else if (now >= repeatAt){ repeatAt = now + 110; go(dir); }
     } else held = null;
 
@@ -351,7 +406,8 @@
   addEventListener('mousemove', function(ev){
     if (Math.abs(ev.clientX - mx) + Math.abs(ev.clientY - my) < 6) return;
     mx = ev.clientX; my = ev.clientY;
-    PN.using = false;
+    setUsing(false);
+    legend(false);
     if (cur){ cur.classList.remove('pn-focus'); cur = null; }
   }, { passive: true });
 
