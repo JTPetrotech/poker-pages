@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mwsw8py1';
-import { TableHost, safePic, PIC_MAX } from './host.js?v=mwsw8py1';
-import * as vault from './vault.js?v=mwsw8py1';
-import * as friends from './friends.js?v=mwsw8py1';
-import * as packs from './decks.js?v=mwsw8py1';
-import * as cloud from './cloud.js?v=mwsw8py1';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mwsw8py1';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mwsw8py1';
+import { HostNet, GuestNet } from './net.js?v=mwu9l7no';
+import { TableHost, safePic, PIC_MAX } from './host.js?v=mwu9l7no';
+import * as vault from './vault.js?v=mwu9l7no';
+import * as friends from './friends.js?v=mwu9l7no';
+import * as packs from './decks.js?v=mwu9l7no';
+import * as cloud from './cloud.js?v=mwu9l7no';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mwu9l7no';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mwu9l7no';
 
 const $ = (id) => document.getElementById(id);
 
@@ -2942,6 +2942,13 @@ function initVaultUi() {
   });
 
   $('modalClose').addEventListener('click', closeSeatDialog);
+  // Controller: padnav.js drives the page; keep it inside whichever dialog is on top.
+  if (window.PadNav) {
+    window.PadNav.root = () => {
+      const open = [...document.querySelectorAll('.modal')].filter((m) => !m.hidden);
+      return open.length ? open[open.length - 1] : null;
+    };
+  }
   $('modal').addEventListener('click', (e) => {
     if (e.target === $('modal')) closeSeatDialog();
   });
@@ -3927,6 +3934,8 @@ function renderActionBar(state, prev) {
   show(idle, canStart || (cash && (canRebuy || canAdd)));
 
   if (legal) {
+    // Your turn just came round: on a controller, start on Call/Check.
+    if (controls.hidden && window.PadNav && window.PadNav.using) setTimeout(() => window.PadNav.reset(), 30);
     show(controls, true);
     waiting.textContent = '';
 
