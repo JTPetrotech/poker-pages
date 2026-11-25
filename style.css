@@ -4307,3 +4307,121 @@ kbd {
   cursor: pointer;
 }
 .tier-btn.on { border-color: var(--accent); color: var(--accent); background: #f0f7ff; }
+
+/* ---------------------------------------------------------------- polish: the lobby
+   Layered last so it sits over the rules above without touching them. The
+   lobby becomes the table itself: felt with a little weave, a rail around the
+   edge, a few suits drifting in the cloth, and the card in the middle as a
+   proper panel with a gold edge. Both themes get it; dark keeps its own
+   colours through the same variables. */
+.lobby {
+  background:
+    radial-gradient(60% 50% at 50% 30%, rgba(255, 255, 255, 0.10), transparent 70%),
+    repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.035) 0 2px, transparent 2px 5px),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 5px),
+    radial-gradient(90% 70% at 50% 35%, #1d9a70 0%, var(--felt) 48%, var(--felt-dark) 100%);
+}
+/* the rail: a padded ring round the edge of the table */
+.lobby::before {
+  content: "";
+  position: fixed;
+  inset: 14px;
+  border-radius: 48% / 40%;
+  border: 14px solid var(--rail);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 220, 150, 0.18),
+    inset 0 10px 30px rgba(0, 0, 0, 0.45),
+    0 0 0 2px rgba(0, 0, 0, 0.25);
+  opacity: 0.55;
+  pointer-events: none;
+}
+/* suits printed faintly into the cloth */
+.lobby::after {
+  content: "♠  ♥  ♣  ♦";
+  position: fixed;
+  left: 0; right: 0; bottom: 7vh;
+  text-align: center;
+  font-size: clamp(40px, 9vw, 92px);
+  letter-spacing: 0.4em;
+  color: rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+}
+/* both sit under everything in the lobby: .lobby is its own stacking context */
+.lobby::before, .lobby::after { z-index: -1; }
+
+.lobby-card {
+  position: relative;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 30px 70px -18px rgba(0, 0, 0, 0.6),
+    0 0 0 6px rgba(255, 255, 255, 0.08);
+  animation: spRise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.lobby-card::before {
+  content: "";
+  position: absolute;
+  left: 22%; right: 22%; top: -1px;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent, var(--gold), #f3d27a, var(--gold), transparent);
+}
+@keyframes spRise { from { opacity: 0; transform: translateY(14px) scale(0.985); } }
+
+.lobby-card h1 {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.lobby-card h1::before {
+  content: "♠";
+  display: inline-grid;
+  place-items: center;
+  width: 1.25em; height: 1.25em;
+  margin-right: 10px;
+  vertical-align: 0.06em;
+  font-size: 0.72em;
+  border-radius: 50%;
+  color: #fff;
+  background: radial-gradient(circle at 35% 30%, #f3d27a, var(--gold) 70%);
+  box-shadow: 0 4px 12px rgba(154, 116, 32, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.chip-hero svg { filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.22)); }
+
+/* the two tabs as one segmented control */
+.lobby-tabs {
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--line);
+}
+.lobby-tabs .tab { border: 0; border-radius: 9px; transition: background 0.15s, color 0.15s, box-shadow 0.15s; }
+.lobby-tabs .tab.active,
+:root[data-theme="dark"] .lobby-tabs .tab.active {
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 0 0 1px var(--line);
+}
+
+.field input { transition: border-color 0.15s, box-shadow 0.15s; }
+.field input:focus { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent); }
+
+.primary {
+  border-radius: 12px;
+  box-shadow: 0 4px 0 #11592f, 0 12px 24px -10px rgba(31, 138, 77, 0.8);
+  transition: transform 0.12s, box-shadow 0.12s, filter 0.12s;
+}
+.primary:hover:not(:disabled), .primary.pn-focus { transform: translateY(-2px); box-shadow: 0 6px 0 #11592f, 0 16px 30px -10px rgba(31, 138, 77, 0.9); }
+.primary:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #11592f; }
+
+.solo-btn { border-radius: 12px; transition: transform 0.14s, border-color 0.14s, background 0.14s, box-shadow 0.14s; }
+.solo-btn:hover:not(:disabled), .solo-btn.pn-focus { transform: translateY(-2px); box-shadow: 0 12px 26px -14px rgba(31, 138, 77, 0.9); }
+
+.corner-pill, .corner-gear { transition: transform 0.14s, box-shadow 0.14s, background 0.14s; }
+.corner-pill:hover, .corner-gear:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lobby-card { animation: none; }
+  .primary, .solo-btn, .corner-pill, .corner-gear { transition: none; }
+}

@@ -1,11 +1,11 @@
-import { HostNet, GuestNet } from './net.js?v=mwub0z5f';
-import { TableHost, safePic, PIC_MAX } from './host.js?v=mwub0z5f';
-import * as vault from './vault.js?v=mwub0z5f';
-import * as friends from './friends.js?v=mwub0z5f';
-import * as packs from './decks.js?v=mwub0z5f';
-import * as cloud from './cloud.js?v=mwub0z5f';
-import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mwub0z5f';
-import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mwub0z5f';
+import { HostNet, GuestNet } from './net.js?v=mwvg4vrz';
+import { TableHost, safePic, PIC_MAX } from './host.js?v=mwvg4vrz';
+import * as vault from './vault.js?v=mwvg4vrz';
+import * as friends from './friends.js?v=mwvg4vrz';
+import * as packs from './decks.js?v=mwvg4vrz';
+import * as cloud from './cloud.js?v=mwvg4vrz';
+import { bestHand, HAND_FREQUENCY, SEVEN_CARD_HANDS } from './engine/hand.js?v=mwvg4vrz';
+import { cardValue, cardSuit, RANK_NAMES, RANK_PLURALS } from './engine/cards.js?v=mwvg4vrz';
 
 const $ = (id) => document.getElementById(id);
 
